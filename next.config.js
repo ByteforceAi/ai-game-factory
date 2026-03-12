@@ -4,8 +4,10 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   
-  // API Route 타임아웃 (게임 생성에 최대 60초)
-  serverExternalPackages: ['@anthropic-ai/sdk'],
+  // Anthropic SDK를 서버사이드 번들에서 외부 패키지로 처리
+  experimental: {
+    serverComponentsExternalPackages: ['@anthropic-ai/sdk'],
+  },
   
   headers: async () => [
     {
