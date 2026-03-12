@@ -30,45 +30,47 @@ export default function GeneratingOverlay({
   }, [streamingCode]);
 
   return (
-    <div className="glass-card p-6 md:p-8 animate-[slideUp_0.6s_ease] relative overflow-hidden">
-      <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-cyber-cyan/50 to-transparent animate-scan-beam" />
-
-      {/* Status header */}
-      <div className="flex items-center gap-4 mb-5">
-        <div className="w-10 h-10 rounded-full border-[3px] border-cyber-cyan/10 border-t-cyber-cyan animate-spin flex-shrink-0" />
-        <div>
-          <p className="font-orbitron text-sm text-cyber-cyan tracking-[3px]">
-            GENERATING GAME
-          </p>
-          <p className="font-mono text-[12px] text-cyber-cyan/60 mt-1">
-            {statusMsg}
-          </p>
-        </div>
-      </div>
-
-      {/* Live code preview */}
-      {streamingCode && (
-        <div className="mt-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-cyber-green shadow-[0_0_6px_rgba(0,230,118,0.5)] animate-pulse" />
-            <span className="font-mono text-[10px] text-cyber-cyan/40 tracking-[2px]">
-              LIVE CODE OUTPUT
-            </span>
+    <div className="liquid-glass p-6 md:p-8 animate-slide-up">
+      <div className="relative z-10">
+        {/* Status */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-10 h-10 rounded-full bg-glass-accent/10 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full border-2 border-glass-accent/20 border-t-glass-accent animate-spin" />
           </div>
-          <pre
-            ref={codeRef}
-            className="w-full h-[300px] p-4 bg-black/60 border border-cyber-cyan/10 rounded-lg text-[11px] text-cyber-text/70 font-mono overflow-auto leading-relaxed"
-          >
-            {streamingCode}
-          </pre>
+          <div>
+            <p className="text-[15px] font-semibold text-glass-text tracking-tight">
+              게임 생성 중
+            </p>
+            <p className="text-[13px] text-glass-text-secondary mt-0.5">
+              {statusMsg}
+            </p>
+          </div>
         </div>
-      )}
 
-      {/* Meta info */}
-      <div className="mt-4 flex justify-center gap-5 font-mono text-[11px] text-cyber-text/30">
-        <span>MODEL: claude-sonnet-4</span>
-        <span>•</span>
-        <span>STREAMING: ACTIVE</span>
+        {/* Live code output */}
+        {streamingCode && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-glass-green animate-pulse-soft" />
+              <span className="text-[11px] text-glass-text-muted font-medium tracking-wider uppercase">
+                Live Output
+              </span>
+            </div>
+            <pre
+              ref={codeRef}
+              className="w-full h-[300px] p-4 bg-[#1e1e2e] border border-black/[0.06] rounded-[14px] text-[11px] text-[#cdd6f4]/80 font-mono overflow-auto leading-relaxed code-cursor"
+            >
+              {streamingCode}
+            </pre>
+          </div>
+        )}
+
+        {/* Meta */}
+        <div className="mt-4 flex justify-center gap-4 text-[11px] text-glass-text-muted">
+          <span>Claude Sonnet</span>
+          <span>·</span>
+          <span>Streaming</span>
+        </div>
       </div>
     </div>
   );

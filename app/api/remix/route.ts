@@ -1,34 +1,28 @@
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
-const GAME_SYSTEM_PROMPT = `You are a game developer AI. The user will describe a game idea in Korean or English. You must generate a COMPLETE, PLAYABLE HTML5 game using only HTML, CSS, and vanilla JavaScript in a single HTML file.
+const REMIX_SYSTEM_PROMPT = `You are a game developer AI that MODIFIES existing HTML5 games. The user will provide existing game HTML code and a modification request.
 
 CRITICAL REQUIREMENTS:
-- The game MUST be a complete, single HTML file with inline CSS and JS
+- You MUST return the COMPLETE modified HTML file (not just the changed parts)
+- Keep all existing game logic intact unless the modification specifically changes it
+- The game MUST remain a complete, single HTML file with inline CSS and JS
 - Use <canvas> element for the game (id="gameCanvas")
-- The canvas should be 600x400 pixels
-- Include a score display
-- Include game over logic
-- Use keyboard controls (arrow keys or WASD) and/or mouse/touch
-- Make it fun and polished with smooth animations
-- Include a brief instruction text at the start
-- Use clean, colorful visuals with gradients and shadows
-- The game must be immediately playable
-- All text in the game should be in Korean
 - DO NOT use any external libraries or CDNs
 - DO NOT include any explanation text - ONLY output the raw HTML code
 - Start directly with <!DOCTYPE html> and end with </html>
 - Make sure the game loop uses requestAnimationFrame
 - Handle edge cases (boundaries, collisions properly)
+- All text in the game should be in Korean
 
-IMPORTANT - GLOBAL VARIABLES:
-- You MUST declare these as global variables: var score = 0; var gameOver = false;
-- Use a global "keys" object for keyboard state: var keys = {};
-- This allows the parent page to detect game over and inject mobile touch controls.
+IMPORTANT - GLOBAL VARIABLES (must keep these):
+- var score = 0; var gameOver = false;
+- var keys = {};
+- These allow the parent page to detect game over and inject mobile touch controls.
 
-RESPOND WITH ONLY THE HTML CODE. No markdown, no backticks, no explanation.`;
+RESPOND WITH ONLY THE MODIFIED HTML CODE. No markdown, no backticks, no explanation.`;
 
-// Simple in-memory rate limiting (use Vercel KV in production)
+// Rate limiting shared with generate
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW = 60 * 1000;
@@ -60,18 +54,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { prompt } = await request.json();
+    const { html, prompt } = await request.json();
 
-    if (!prompt || typeof prompt !== 'string') {
+    if (!html || typeof html !== 'string') {
       return new Response(
-        JSON.stringify({ error: '게임 아이디어를 입력해주세요.' }),
+        JSON.stringify({ error: '게임 코드가 필요합니다.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    if (prompt.length > 500) {
+    if (!prompt || typeof prompt !== 'string') {
       return new Response(
-        JSON.stringify({ error: '프롬프트는 500자 이내로 입력해주세요.' }),
+        JSON.stringify({ error: '수정 요청을 입력해주세요.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -80,11 +74,19 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
+    const userMessage = `Here is the current game HTML code:
+
+\`\`\`html
+${html}
+\`\`\`
+
+Please modify this game with the following request: ${prompt}`;
+
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
-      system: GAME_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 12000,
+      system: REMIX_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
     });
 
     const encoder = new TextEncoder();
@@ -115,10 +117,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('Game generation error:', error);
+    console.error('Remix error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: `게임 생성 중 오류가 발생했습니다: ${message}` }),
+      JSON.stringify({ error: `게임 수정 중 오류가 발생했습니다: ${message}` }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

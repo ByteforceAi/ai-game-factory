@@ -33,89 +33,72 @@ export default function GalleryPage() {
   }, []);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <header className="relative z-10 pt-8 pb-4 text-center">
-        <Link href="/">
-          <h1 className="font-orbitron text-xl md:text-2xl font-extrabold tracking-[6px] bg-gradient-to-r from-cyber-cyan via-cyber-text to-cyber-cyan bg-clip-text text-transparent">
-            AI GAME FACTORY
-          </h1>
-        </Link>
-        <p className="font-mono text-[11px] text-cyber-cyan/50 tracking-[4px] mt-2">
-          COMMUNITY GALLERY
-        </p>
-      </header>
-
-      <main className="relative z-10 max-w-[1000px] mx-auto px-4 md:px-6 pb-16">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <span className="font-orbitron text-[13px] text-cyber-cyan tracking-[2px]">
-              RECENT.GAMES
-            </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-cyber-cyan/30 to-transparent ml-3 w-20" />
-          </div>
-          <Link
-            href="/"
-            className="px-4 py-2 bg-cyber-cyan/8 border border-cyber-cyan/20 rounded-lg text-cyber-cyan text-[11px] font-orbitron tracking-[2px] transition-all hover:bg-cyber-cyan/15"
-          >
-            + 게임 만들기
-          </Link>
+    <div className="max-w-[900px] mx-auto px-4 md:px-6 py-8 md:py-12">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gradient tracking-tight">갤러리</h1>
+          <p className="text-[13px] text-glass-text-secondary mt-1">커뮤니티가 만든 게임들</p>
         </div>
+        <Link href="/" className="btn-glass text-[13px]">
+          + 게임 만들기
+        </Link>
+      </div>
 
-        {loading ? (
-          <div className="glass-card p-12 text-center">
-            <div className="w-10 h-10 mx-auto mb-4 rounded-full border-[3px] border-cyber-cyan/10 border-t-cyber-cyan animate-spin" />
-            <p className="font-mono text-sm text-cyber-text/40">로딩 중...</p>
+      {loading ? (
+        <div className="liquid-glass p-16 text-center">
+          <div className="relative z-10">
+            <div className="w-8 h-8 mx-auto mb-3 rounded-full border-2 border-glass-accent/20 border-t-glass-accent animate-spin" />
+            <p className="text-[14px] text-glass-text-secondary">로딩 중...</p>
           </div>
-        ) : games.length === 0 ? (
-          <div className="glass-card p-12 text-center">
-            <p className="font-orbitron text-lg text-cyber-cyan/40 tracking-[3px] mb-3">
-              NO GAMES YET
+        </div>
+      ) : games.length === 0 ? (
+        <div className="liquid-glass p-16 text-center">
+          <div className="relative z-10">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-glass-accent/10 flex items-center justify-center text-3xl">
+              🎮
+            </div>
+            <p className="text-[16px] font-semibold text-glass-text mb-2">
+              아직 공유된 게임이 없습니다
             </p>
-            <p className="text-sm text-cyber-text/40 mb-6">
-              아직 공유된 게임이 없습니다. 첫 번째 게임을 만들어보세요!
+            <p className="text-[14px] text-glass-text-secondary mb-6">
+              첫 번째 게임을 만들어보세요!
             </p>
-            <Link href="/" className="inline-block px-6 py-3 btn-neon text-[13px]">
+            <Link href="/" className="btn-glass text-[14px]">
               게임 만들러 가기
             </Link>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {games.map((game) => (
-              <Link
-                key={game.id}
-                href={`/play/${game.id}`}
-                className="glass-card p-5 group cursor-pointer transition-all hover:border-cyber-cyan/30 hover:shadow-[0_0_20px_rgba(0,229,255,0.15)]"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyber-cyan/20 to-cyber-cyan/5 flex items-center justify-center text-cyber-cyan text-sm">
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {games.map((game) => (
+            <Link
+              key={game.id}
+              href={`/play/${game.id}`}
+              className="liquid-glass p-5 group cursor-pointer"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-[12px] bg-glass-accent/10 flex items-center justify-center text-lg">
                     🎮
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-body text-cyber-text truncate group-hover:text-cyber-cyan transition-colors">
-                      {game.title}
-                    </h3>
-                  </div>
+                  <h3 className="text-[14px] font-semibold text-glass-text truncate group-hover:text-glass-accent transition-colors flex-1">
+                    {game.title}
+                  </h3>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-cyber-text/30">
+                  <span className="text-[12px] text-glass-text-muted">
                     {timeAgo(game.createdAt)}
                   </span>
-                  <span className="font-mono text-[10px] text-cyber-cyan/40 group-hover:text-cyber-cyan transition-colors tracking-wider">
-                    PLAY →
+                  <span className="text-[12px] text-glass-accent/60 group-hover:text-glass-accent transition-colors font-medium">
+                    플레이 →
                   </span>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <footer className="relative z-10 text-center pb-8">
-        <div className="w-48 h-px mx-auto mb-4 bg-gradient-to-r from-transparent via-cyber-cyan/20 to-transparent" />
-        <span className="font-mono text-[10px] text-cyber-text/20 tracking-[3px]">
-          POWERED BY BYTEFORCE × CLAUDE AI
-        </span>
-      </footer>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

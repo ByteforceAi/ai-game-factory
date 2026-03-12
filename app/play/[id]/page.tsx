@@ -35,5 +35,5 @@ export default async function PlayPage({ params }: PageProps) {
     notFound();
   }
 
-  return <PlayClient gameHtml={game.html} gameTitle={game.title} />;
+  return <PlayClient gameHtml={game.html} gameTitle={game.title} gameId={id} />;
 }

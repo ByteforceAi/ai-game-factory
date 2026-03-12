@@ -38,3 +38,6 @@ ai-game-factory-boilerplate/
 ai-game-factory-boilerplate.tar.gz
 *.docx
 .claude/
+
+.vercel
+.playwright-mcp/
