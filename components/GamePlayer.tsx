@@ -260,10 +260,28 @@ export default function GamePlayer({
         </button>
       </div>
 
+      {/* Remix CTA */}
+      <div className="mt-4 liquid-glass p-4 cursor-pointer group" onClick={onEditCode}>
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-glass-accent/10 flex items-center justify-center shrink-0">
+            <span className="text-lg">✨</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-[14px] font-medium text-glass-text group-hover:text-glass-accent transition-colors">
+              이 게임을 수정해볼까요?
+            </p>
+            <p className="text-[12px] text-glass-text-secondary">
+              코드 편집 탭에서 AI 리믹스로 게임을 커스터마이즈하세요
+            </p>
+          </div>
+          <span className="text-glass-text-muted group-hover:text-glass-accent transition-colors">→</span>
+        </div>
+      </div>
+
       {/* Tips */}
-      <div className="mt-5 liquid-glass-sm p-4">
+      <div className="mt-4 liquid-glass-sm p-4">
         <div className="relative z-10 flex flex-wrap gap-4 text-[13px] text-glass-text-secondary">
-          <span>🎮 방향키/WASD 또는 터치로 조작</span>
+          <span>🎮 터치 드래그로 이동, 탭으로 발사</span>
           <span>🏆 게임 오버 시 순위 등록</span>
           <span>📤 친구에게 공유하고 대결하기</span>
         </div>

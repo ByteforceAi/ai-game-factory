@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import GameIdeaInput from '@/components/GameIdeaInput';
+import GameIdeaWizard from '@/components/GameIdeaWizard';
 import GeneratingOverlay, { STATUS_MESSAGES } from '@/components/GeneratingOverlay';
 import GamePlayer from '@/components/GamePlayer';
 import GameEditor from '@/components/GameEditor';
@@ -18,7 +19,7 @@ function cleanHtml(raw: string): string {
   return html.trim();
 }
 
-type View = 'welcome' | 'create' | 'generating' | 'demoGenerating' | 'playing' | 'playingDemo';
+type View = 'welcome' | 'wizard' | 'create' | 'generating' | 'demoGenerating' | 'playing' | 'playingDemo';
 
 export default function Home() {
   const [view, setView] = useState<View>('welcome');
@@ -119,6 +120,61 @@ export default function Home() {
   const applyEditedCode = (code: string) => {
     setGameCode(code);
     setActiveTab('play');
+  };
+
+  const generateFromWizard = (enrichedPrompt: string) => {
+    setIdea(enrichedPrompt);
+    // Trigger generation directly with the enriched prompt
+    setGenerating(true);
+    setError('');
+    setView('generating');
+    setStreamingCode('');
+    setStatusMsg('AI 엔진 초기화 중...');
+
+    let msgIndex = 0;
+    statusIntervalRef.current = setInterval(() => {
+      msgIndex = (msgIndex + 1) % STATUS_MESSAGES.length;
+      setStatusMsg(STATUS_MESSAGES[msgIndex]);
+    }, 2500);
+
+    fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: enrichedPrompt }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('스트리밍을 시작할 수 없습니다.');
+        const decoder = new TextDecoder();
+        let accumulated = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulated += decoder.decode(value, { stream: true });
+          setStreamingCode(accumulated);
+        }
+        const finalHtml = cleanHtml(accumulated);
+        if (!finalHtml.startsWith('<!DOCTYPE') && !finalHtml.startsWith('<html') && !finalHtml.startsWith('<')) {
+          throw new Error('유효한 게임 코드를 생성하지 못했습니다.');
+        }
+        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
+        setGameCode(finalHtml);
+        setView('playing');
+        setActiveTab('play');
+        setCurrentDemo(null);
+        setStatusMsg('');
+      })
+      .catch((err: unknown) => {
+        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
+        setError(err instanceof Error ? err.message : '게임 생성 중 오류');
+        setView('wizard');
+        setStatusMsg('');
+      })
+      .finally(() => setGenerating(false));
   };
 
   /** Theatrical demo — fake AI code generation animation */
@@ -226,22 +282,40 @@ export default function Home() {
               </h2>
               <div className="divider-glass flex-1" />
             </div>
-            <button
-              onClick={() => setView('create')}
-              className="liquid-glass w-full py-6 text-center cursor-pointer group"
-            >
-              <div className="relative z-10">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-glass-accent/10 flex items-center justify-center">
-                  <span className="text-glass-accent text-xl">+</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => setView('wizard')}
+                className="liquid-glass py-6 text-center cursor-pointer group"
+              >
+                <div className="relative z-10">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-glass-accent/10 flex items-center justify-center">
+                    <span className="text-glass-accent text-xl">💬</span>
+                  </div>
+                  <p className="text-[15px] font-semibold text-glass-text group-hover:text-glass-accent transition-colors">
+                    AI와 대화하며 만들기
+                  </p>
+                  <p className="text-[13px] text-glass-text-secondary mt-1">
+                    AI가 질문하고, 당신이 선택하면 맞춤 게임 완성
+                  </p>
                 </div>
-                <p className="text-[15px] font-semibold text-glass-text group-hover:text-glass-accent transition-colors">
-                  나만의 게임 만들기
-                </p>
-                <p className="text-[13px] text-glass-text-secondary mt-1">
-                  자연어로 게임 아이디어를 설명하면 AI가 코드를 작성합니다
-                </p>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={() => setView('create')}
+                className="liquid-glass py-6 text-center cursor-pointer group"
+              >
+                <div className="relative z-10">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-glass-accent/10 flex items-center justify-center">
+                    <span className="text-glass-accent text-xl">⚡</span>
+                  </div>
+                  <p className="text-[15px] font-semibold text-glass-text group-hover:text-glass-accent transition-colors">
+                    바로 생성하기
+                  </p>
+                  <p className="text-[13px] text-glass-text-secondary mt-1">
+                    프롬프트 한 줄로 즉시 게임 코드 생성
+                  </p>
+                </div>
+              </button>
+            </div>
           </section>
 
           {/* Footer */}
@@ -254,6 +328,15 @@ export default function Home() {
               Powered by ByteForce × Claude AI
             </span>
           </footer>
+        </div>
+      )}
+
+      {view === 'wizard' && (
+        <div className="py-8 md:py-12 animate-fade-in">
+          <GameIdeaWizard
+            onGenerate={generateFromWizard}
+            onBack={reset}
+          />
         </div>
       )}
 

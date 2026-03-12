@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 8000,
+      max_tokens: 12000,
       system: GAME_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     });

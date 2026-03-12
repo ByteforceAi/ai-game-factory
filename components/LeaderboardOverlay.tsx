@@ -27,22 +27,32 @@ export default function LeaderboardOverlay({
   const [myRank, setMyRank] = useState(0);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle');
 
-  // Load existing leaderboard on mount
+  // Load existing leaderboard (API with localStorage fallback)
   useEffect(() => {
+    const localKey = `lb_${gameId}`;
+    // Try API first, fall back to localStorage
     fetch(`/api/leaderboard?gameId=${gameId}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.leaderboard?.length > 0) {
           setLeaderboard(data.leaderboard.slice(0, 10));
+          try { localStorage.setItem(localKey, JSON.stringify(data.leaderboard.slice(0, 10))); } catch {}
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to localStorage
+        try {
+          const local = JSON.parse(localStorage.getItem(localKey) || '[]');
+          if (local.length > 0) setLeaderboard(local);
+        } catch {}
+      });
   }, [gameId]);
 
   const submitScore = async () => {
     if (!name.trim()) return;
     setPhase('submitting');
 
+    const localKey = `lb_${gameId}`;
     try {
       const res = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -50,10 +60,24 @@ export default function LeaderboardOverlay({
         body: JSON.stringify({ gameId, name: name.trim(), score }),
       });
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setLeaderboard(data.leaderboard || []);
       setMyRank(data.rank || 0);
+      try { localStorage.setItem(localKey, JSON.stringify(data.leaderboard || [])); } catch {}
       setPhase('board');
     } catch {
+      // Fallback: save to localStorage
+      try {
+        const current: LeaderboardEntry[] = JSON.parse(localStorage.getItem(localKey) || '[]');
+        const entry: LeaderboardEntry = { name: name.trim(), score, ts: Date.now() };
+        current.push(entry);
+        current.sort((a, b) => b.score - a.score || a.ts - b.ts);
+        const trimmed = current.slice(0, 10);
+        localStorage.setItem(localKey, JSON.stringify(trimmed));
+        setLeaderboard(trimmed);
+        const rank = trimmed.findIndex(e => e.name === entry.name && e.score === entry.score && e.ts === entry.ts);
+        setMyRank(rank + 1);
+      } catch {}
       setPhase('board');
     }
   };
