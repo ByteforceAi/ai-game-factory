@@ -3,14 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.html$/,
-      type: 'asset/source',
-    });
-    return config;
-  },
-
   headers: async () => [
     {
       source: '/api/:path*',
