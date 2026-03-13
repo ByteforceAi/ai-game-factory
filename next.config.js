@@ -1,14 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Vercel 배포 최적화
   reactStrictMode: true,
   poweredByHeader: false,
-  
-  // Anthropic SDK를 서버사이드 번들에서 외부 패키지로 처리
-  experimental: {
-    serverComponentsExternalPackages: ['@anthropic-ai/sdk'],
+
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.html$/,
+      type: 'asset/source',
+    });
+    return config;
   },
-  
+
   headers: async () => [
     {
       source: '/api/:path*',
