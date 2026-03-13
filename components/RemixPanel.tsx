@@ -44,7 +44,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
           fontWeight: 600,
           margin: 0,
         }}>
-          🎨 리믹스
+          ✨ 바이브 코딩하기
         </h3>
         <button
           onClick={onBack}
@@ -106,7 +106,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
         marginTop: '14px',
         textAlign: 'center',
       }}>
-        리믹스를 선택하면 게임 코드가 자동으로 수정됩니다
+        프리셋을 선택하면 AI가 코드를 수정합니다
       </p>
     </div>
   );
