@@ -1,55 +1,229 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ParticleBackground from './ParticleBackground';
 
 interface IntroScreenProps {
   onComplete: () => void;
 }
 
-const BOOT_LINES = [
-  { text: 'NEURAL ENGINE v4.0', delay: 0 },
-  { text: 'Initializing core modules...', delay: 200 },
-  { text: 'Loading Phaser.js 3.80 runtime ✓', delay: 600 },
-  { text: 'Loading Three.js r168 renderer ✓', delay: 900 },
-  { text: 'WebGL 2.0 context acquired ✓', delay: 1200 },
-  { text: 'Physics engine: Arcade ✓', delay: 1500 },
-  { text: 'Touch input handler: ready ✓', delay: 1700 },
-  { text: 'AI code generation pipeline: online ✓', delay: 2000 },
-  { text: '', delay: 2300 },
-  { text: 'All systems operational.', delay: 2400 },
-  { text: 'VIBE CODING SIMULATOR — READY', delay: 2800 },
+/* ──────────────────────────────────────────────
+   Code Materializer: each step has code to "type"
+   and a UI element to materialize simultaneously
+   ────────────────────────────────────────────── */
+interface MaterialStep {
+  code: string;
+  uiKey: string; // which UI element to materialize
+  delay: number; // ms from start
+  typeDuration: number; // ms to type this code
+}
+
+const MATERIAL_STEPS: MaterialStep[] = [
+  {
+    code: '// initializing vibe-coding-ai...\n',
+    uiKey: 'none',
+    delay: 0,
+    typeDuration: 600,
+  },
+  {
+    code: '<div class="terminal-frame"\n  backdrop-filter: blur(20px)\n  border-radius: 16px\n  border: 1px solid rgba(255,255,255,0.06)>\n',
+    uiKey: 'frame',
+    delay: 700,
+    typeDuration: 900,
+  },
+  {
+    code: '  <header>\n    ● ● ● vibe-coding-ai — terminal\n  </header>\n\n',
+    uiKey: 'header',
+    delay: 1800,
+    typeDuration: 600,
+  },
+  {
+    code: '  <prompt cursor="blink">\n    > 만들고 싶은 게임을 선택하세요\n  </prompt>\n\n',
+    uiKey: 'prompt',
+    delay: 2600,
+    typeDuration: 700,
+  },
+  {
+    code: '  <chips layout="flex" gap="8px">\n    <chip glow="#00FFFF">우주 슈팅게임</chip>\n    <chip glow="#FF00FF">네온 플랫포머</chip>\n    <chip glow="#00CCFF">3D 러너</chip>\n    <chip glow="#B400FF">테트리스</chip>\n  </chips>\n\n',
+    uiKey: 'chips',
+    delay: 3500,
+    typeDuration: 1100,
+  },
+  {
+    code: '  <statusbar>\n    ● ONLINE  PHASER.JS  THREE.JS  WEBGL 2.0\n  </statusbar>\n',
+    uiKey: 'statusbar',
+    delay: 4800,
+    typeDuration: 600,
+  },
+  {
+    code: '</div>\n\n// neural.engine.connect();\n// ready.',
+    uiKey: 'ready',
+    delay: 5600,
+    typeDuration: 500,
+  },
 ];
 
-type Phase = 'idle' | 'booting' | 'transitioning';
+const TOTAL_DURATION = 6800; // ms until transition starts
+
+type Phase = 'idle' | 'materializing' | 'transitioning';
+
+/** Dracula-ish syntax highlight for the materializer code */
+function highlightMaterialCode(text: string): React.ReactNode[] {
+  const result: React.ReactNode[] = [];
+  const lines = text.split('\n');
+
+  for (let li = 0; li < lines.length; li++) {
+    if (li > 0) result.push('\n');
+    const line = lines[li];
+    let pos = 0;
+    let keyC = 0;
+
+    while (pos < line.length) {
+      const rem = line.slice(pos);
+      const k = `${li}-${keyC++}`;
+
+      // Comments
+      const cm = rem.match(/^\/\/.*/);
+      if (cm) {
+        result.push(<span key={k} style={{ color: '#6272a4', fontStyle: 'italic' }}>{cm[0]}</span>);
+        pos += cm[0].length;
+        continue;
+      }
+
+      // Tags
+      const tag = rem.match(/^(<\/?[a-zA-Z][a-zA-Z0-9-]*)/);
+      if (tag) {
+        result.push(<span key={k} style={{ color: '#ff79c6' }}>{tag[0]}</span>);
+        pos += tag[0].length;
+        continue;
+      }
+
+      // Closing >
+      const cl = rem.match(/^>/);
+      if (cl) {
+        result.push(<span key={k} style={{ color: '#ff79c6' }}>{'>'}</span>);
+        pos += 1;
+        continue;
+      }
+
+      // Attributes key=
+      const attr = rem.match(/^([a-zA-Z-]+)=/);
+      if (attr) {
+        result.push(<span key={k} style={{ color: '#50fa7b' }}>{attr[1]}</span>);
+        result.push(<span key={k + 'e'} style={{ color: '#6272a4' }}>=</span>);
+        pos += attr[0].length;
+        continue;
+      }
+
+      // Strings
+      const str = rem.match(/^"[^"]*"/);
+      if (str) {
+        result.push(<span key={k} style={{ color: '#f1fa8c' }}>{str[0]}</span>);
+        pos += str[0].length;
+        continue;
+      }
+
+      // Korean text inside tags
+      const kr = rem.match(/^[가-힣\s]+/);
+      if (kr) {
+        result.push(<span key={k} style={{ color: '#f8f8f2' }}>{kr[0]}</span>);
+        pos += kr[0].length;
+        continue;
+      }
+
+      // Dots (traffic light)
+      const dots = rem.match(/^● ● ●/);
+      if (dots) {
+        result.push(
+          <span key={k}>
+            <span style={{ color: '#ff5f57' }}>●</span>{' '}
+            <span style={{ color: '#febc2e' }}>●</span>{' '}
+            <span style={{ color: '#28c840' }}>●</span>
+          </span>
+        );
+        pos += dots[0].length;
+        continue;
+      }
+
+      // Single dot
+      if (rem[0] === '●') {
+        result.push(<span key={k} style={{ color: '#28c840' }}>●</span>);
+        pos += 1;
+        continue;
+      }
+
+      // CSS-like properties
+      const css = rem.match(/^([a-z-]+):\s/);
+      if (css) {
+        result.push(<span key={k} style={{ color: '#8be9fd' }}>{css[1]}</span>);
+        result.push(': ');
+        pos += css[0].length;
+        continue;
+      }
+
+      // Numbers
+      const num = rem.match(/^-?\d+\.?\d*(px|%|em)?/);
+      if (num) {
+        result.push(<span key={k} style={{ color: '#bd93f9' }}>{num[0]}</span>);
+        pos += num[0].length;
+        continue;
+      }
+
+      // Default
+      result.push(rem[0]);
+      pos += 1;
+    }
+  }
+  return result;
+}
 
 export default function IntroScreen({ onComplete }: IntroScreenProps) {
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
-  const [visibleLines, setVisibleLines] = useState<number>(0);
+  const [codeText, setCodeText] = useState('');
+  const [visibleUI, setVisibleUI] = useState<Set<string>>(new Set());
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
   const handleStart = useCallback(() => {
     if (phase !== 'idle') return;
-    setPhase('booting');
+    setPhase('materializing');
 
-    // Show boot lines one by one
-    BOOT_LINES.forEach((line, i) => {
-      setTimeout(() => {
-        setVisibleLines(i + 1);
-      }, line.delay);
+    // For each step: type the code char by char, then reveal the UI element
+    let accumulated = '';
+
+    MATERIAL_STEPS.forEach((step) => {
+      const chars = step.code.split('');
+      const charDelay = step.typeDuration / chars.length;
+
+      // Type each character
+      chars.forEach((char, ci) => {
+        setTimeout(() => {
+          accumulated += char;
+          setCodeText(accumulated);
+        }, step.delay + ci * charDelay);
+      });
+
+      // Reveal UI element when typing finishes
+      if (step.uiKey !== 'none') {
+        setTimeout(() => {
+          setVisibleUI(prev => new Set(prev).add(step.uiKey));
+        }, step.delay + step.typeDuration * 0.6); // reveal at 60% of typing
+      }
     });
 
-    // After all lines shown, start transition
-    const lastDelay = BOOT_LINES[BOOT_LINES.length - 1].delay;
+    // Transition out
     setTimeout(() => {
       setPhase('transitioning');
       setFadeOut(true);
-      setTimeout(() => onComplete(), 800);
-    }, lastDelay + 600);
+      setTimeout(() => onComplete(), 1000);
+    }, TOTAL_DURATION);
   }, [phase, onComplete]);
+
+  const highlighted = useMemo(() => highlightMaterialCode(codeText), [codeText]);
+
+  const uiVisible = (key: string) => visibleUI.has(key);
 
   return (
     <div style={{
@@ -62,7 +236,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
       overflow: 'hidden',
       background: '#050510',
       opacity: fadeOut ? 0 : 1,
-      transition: 'opacity 0.8s ease-out',
+      transition: 'opacity 1s ease-out',
     }}>
       <ParticleBackground />
 
@@ -76,11 +250,11 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
         opacity: mounted ? 1 : 0,
         transform: mounted ? 'translateY(0)' : 'translateY(20px)',
         transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+        width: 'min(520px, 92vw)',
       }}>
-        {/* Phase: idle — Show logo + start button */}
+        {/* ═══ Phase: idle — Logo + START ═══ */}
         {phase === 'idle' && (
           <>
-            {/* Subtle top label */}
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: '9px',
@@ -92,7 +266,6 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               AI-POWERED GAME DEVELOPMENT
             </span>
 
-            {/* Main title */}
             <div style={{ textAlign: 'center' }}>
               <h1 style={{
                 fontFamily: "'JetBrains Mono', monospace",
@@ -118,10 +291,8 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               </div>
             </div>
 
-            {/* Shimmer line */}
             <div className="shimmer-line" style={{ width: '120px' }} />
 
-            {/* Start button — the main CTA */}
             <button
               onClick={handleStart}
               style={{
@@ -136,8 +307,6 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 borderRadius: '12px',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                position: 'relative',
-                overflow: 'hidden',
                 marginTop: '20px',
               }}
               onMouseEnter={(e) => {
@@ -156,7 +325,6 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               START
             </button>
 
-            {/* Subtle hint */}
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: '9px',
@@ -169,124 +337,256 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
           </>
         )}
 
-        {/* Phase: booting — Terminal boot sequence */}
-        {(phase === 'booting' || phase === 'transitioning') && (
+        {/* ═══ Phase: materializing — Code + UI in parallel ═══ */}
+        {(phase === 'materializing' || phase === 'transitioning') && (
           <div style={{
-            width: 'min(440px, 90vw)',
-            background: 'rgba(5,5,16,0.8)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '16px',
-            padding: '24px',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            display: 'flex',
+            gap: '24px',
+            width: '100%',
+            alignItems: 'flex-start',
           }}>
-            {/* Terminal header */}
+            {/* LEFT: Code stream */}
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginBottom: '20px',
-              paddingBottom: '12px',
-              borderBottom: '1px solid rgba(255,255,255,0.04)',
+              flex: '0 0 48%',
+              maxHeight: '420px',
+              overflow: 'hidden',
+              position: 'relative',
             }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f57' }} />
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#febc2e' }} />
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#28c840' }} />
-              <span style={{
+              {/* Top fade */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '30px',
+                background: 'linear-gradient(to bottom, #050510, transparent)',
+                zIndex: 3,
+                pointerEvents: 'none',
+              }} />
+
+              <pre style={{
+                margin: 0,
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: '10px',
-                color: 'rgba(255,255,255,0.2)',
-                marginLeft: '12px',
-                letterSpacing: '0.05em',
+                lineHeight: 1.7,
+                color: '#e2e8f0',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                direction: 'ltr',
               }}>
-                system boot
-              </span>
-            </div>
-
-            {/* Boot lines */}
-            <div style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '11px',
-              lineHeight: 1.9,
-              minHeight: '240px',
-            }}>
-              {BOOT_LINES.slice(0, visibleLines).map((line, i) => {
-                const isLast = i === visibleLines - 1;
-                const isReady = line.text.includes('READY');
-                const hasCheck = line.text.includes('✓');
-
-                if (line.text === '') return <div key={i} style={{ height: '12px' }} />;
-
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      color: isReady
-                        ? 'var(--ai-emerald)'
-                        : hasCheck
-                          ? 'rgba(255,255,255,0.5)'
-                          : i === 0
-                            ? 'var(--ai-indigo)'
-                            : 'rgba(255,255,255,0.3)',
-                      opacity: isLast ? 1 : 0.8,
-                      animation: isLast ? 'fadeSlideIn 0.3s ease-out' : undefined,
-                      textShadow: isReady ? '0 0 20px rgba(16,185,129,0.4)' : undefined,
-                      fontWeight: isReady || i === 0 ? 600 : 400,
-                    }}
-                  >
-                    {!isReady && !hasCheck && i > 0 && (
-                      <span style={{ color: 'rgba(99,102,241,0.4)', marginRight: '8px' }}>{'>'}</span>
-                    )}
-                    {hasCheck ? (
-                      <>
-                        <span>{line.text.replace(' ✓', '')}</span>
-                        <span style={{ color: 'var(--ai-emerald)', marginLeft: '8px' }}>✓</span>
-                      </>
-                    ) : (
-                      line.text
-                    )}
-                    {isLast && phase === 'booting' && (
-                      <span style={{
-                        display: 'inline-block',
-                        width: '7px',
-                        height: '14px',
-                        background: 'var(--ai-indigo)',
-                        animation: 'blink 0.6s ease-in-out infinite',
-                        marginLeft: '4px',
-                        verticalAlign: 'middle',
-                        borderRadius: '1px',
-                      }} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Progress bar at bottom */}
-            {phase === 'booting' && (
-              <div style={{
-                marginTop: '16px',
-                height: '2px',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '1px',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  height: '100%',
-                  width: `${Math.round((visibleLines / BOOT_LINES.length) * 100)}%`,
-                  background: 'linear-gradient(90deg, var(--ai-indigo), var(--ai-violet), var(--ai-cyan))',
-                  backgroundSize: '200% 100%',
-                  animation: 'shimmer-bar 2s linear infinite',
-                  transition: 'width 0.3s ease',
+                {highlighted}
+                <span style={{
+                  display: 'inline-block',
+                  width: '6px',
+                  height: '13px',
+                  background: 'linear-gradient(180deg, var(--ai-indigo), var(--ai-violet))',
+                  animation: 'blink 0.6s ease-in-out infinite',
+                  marginLeft: '1px',
+                  verticalAlign: 'middle',
+                  boxShadow: '0 0 8px rgba(99,102,241,0.6)',
                   borderRadius: '1px',
                 }} />
+              </pre>
+
+              {/* Bottom fade */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '40px',
+                background: 'linear-gradient(to top, #050510, transparent)',
+                zIndex: 3,
+                pointerEvents: 'none',
+              }} />
+            </div>
+
+            {/* RIGHT: Materializing UI */}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0',
+              position: 'relative',
+            }}>
+              {/* Terminal frame */}
+              <div style={{
+                background: uiVisible('frame') ? 'rgba(5,5,16,0.7)' : 'transparent',
+                border: uiVisible('frame') ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+                borderRadius: '14px',
+                padding: uiVisible('frame') ? '16px' : '16px',
+                backdropFilter: uiVisible('frame') ? 'blur(20px)' : 'none',
+                WebkitBackdropFilter: uiVisible('frame') ? 'blur(20px)' : 'none',
+                opacity: uiVisible('frame') ? 1 : 0,
+                transform: uiVisible('frame') ? 'scale(1)' : 'scale(0.95)',
+                transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                minHeight: '260px',
+                boxShadow: uiVisible('frame')
+                  ? '0 0 40px rgba(99,102,241,0.08), 0 8px 32px rgba(0,0,0,0.3)'
+                  : 'none',
+              }}>
+                {/* Header dots */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  paddingBottom: '10px',
+                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  opacity: uiVisible('header') ? 1 : 0,
+                  transform: uiVisible('header') ? 'translateY(0)' : 'translateY(-8px)',
+                  transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}>
+                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ff5f57' }} />
+                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#febc2e' }} />
+                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#28c840' }} />
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '8px',
+                    color: 'rgba(255,255,255,0.2)',
+                    marginLeft: '8px',
+                    letterSpacing: '0.05em',
+                  }}>
+                    vibe-coding-ai
+                  </span>
+                </div>
+
+                {/* Prompt line */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '11px',
+                  opacity: uiVisible('prompt') ? 1 : 0,
+                  transform: uiVisible('prompt') ? 'translateX(0)' : 'translateX(-12px)',
+                  transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}>
+                  <span style={{ color: 'var(--ai-cyan)', fontWeight: 600 }}>{'>'}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)' }}>만들고 싶은 게임을 선택하세요</span>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '6px',
+                    height: '12px',
+                    background: 'var(--ai-indigo)',
+                    animation: uiVisible('prompt') ? 'blink 0.6s ease-in-out infinite' : 'none',
+                    borderRadius: '1px',
+                  }} />
+                </div>
+
+                {/* Chips */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '6px',
+                  marginTop: '4px',
+                  opacity: uiVisible('chips') ? 1 : 0,
+                  transform: uiVisible('chips') ? 'translateY(0)' : 'translateY(10px)',
+                  transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}>
+                  {[
+                    { label: '우주 슈팅게임', color: '#00FFFF' },
+                    { label: '네온 플랫포머', color: '#FF00FF' },
+                    { label: '3D 러너', color: '#00CCFF' },
+                    { label: '테트리스', color: '#B400FF' },
+                  ].map((chip, i) => (
+                    <div
+                      key={chip.label}
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '9px',
+                        fontWeight: 500,
+                        padding: '5px 10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${chip.color}30`,
+                        color: `${chip.color}cc`,
+                        background: `${chip.color}08`,
+                        opacity: uiVisible('chips') ? 1 : 0,
+                        transform: uiVisible('chips') ? 'scale(1)' : 'scale(0.8)',
+                        transition: `all 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${i * 100}ms`,
+                      }}
+                    >
+                      {chip.label}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Spacer */}
+                <div style={{ flex: 1 }} />
+
+                {/* Status bar */}
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'center',
+                  opacity: uiVisible('statusbar') ? 1 : 0,
+                  transform: uiVisible('statusbar') ? 'translateY(0)' : 'translateY(8px)',
+                  transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <div style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--ai-emerald)',
+                      boxShadow: '0 0 6px rgba(16,185,129,0.5)',
+                    }} />
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '8px',
+                      color: 'var(--ai-emerald)',
+                      letterSpacing: '0.1em',
+                    }}>
+                      ONLINE
+                    </span>
+                  </div>
+                  {['PHASER.JS', 'THREE.JS', 'WEBGL 2.0'].map(t => (
+                    <span key={t} style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '7px',
+                      color: 'rgba(255,255,255,0.2)',
+                      letterSpacing: '0.08em',
+                      padding: '2px 6px',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: '4px',
+                    }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
-            )}
+
+              {/* Ready glow */}
+              {uiVisible('ready') && (
+                <div style={{
+                  textAlign: 'center',
+                  marginTop: '12px',
+                  animation: 'fadeSlideIn 0.4s ease-out',
+                }}>
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '9px',
+                    fontWeight: 600,
+                    letterSpacing: '0.15em',
+                    color: 'var(--ai-emerald)',
+                    textShadow: '0 0 16px rgba(16,185,129,0.5)',
+                  }}>
+                    READY
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Bottom version label */}
+      {/* Bottom version label — idle only */}
       {phase === 'idle' && (
         <div style={{
           position: 'absolute',
