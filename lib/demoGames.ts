@@ -1418,30 +1418,34 @@ canvas {
 </body>
 </html>`;
 
+// Import Phaser.js powered games
+import { NEON_SHOOTER_HTML } from './games/neonShooter';
+import { NEON_PLATFORMER_HTML } from './games/neonPlatformer';
+
 export const DEMO_GAMES: DemoGame[] = [
   {
-    id: 'emoji-burger',
-    title: '이모지 버거 캐치',
-    description: '하늘에서 떨어지는 음식을 잡아라! 독을 피하고 3목숨을 지켜라',
-    prompt: '이모지로 만든 캐주얼 음식 잡기 게임',
+    id: 'neon-shooter',
+    title: '네온 슈터',
+    description: 'Phaser.js 물리엔진 기반 네온 우주 슈터. 보스전 + 파워업 + 파티클',
+    prompt: 'Phaser 3 Arcade Physics 수직 스크롤 슈터',
     icon: '◆',
-    accentColor: '#FF8C00',
-    html: EMOJI_BURGER_HTML,
+    accentColor: '#00FFFF',
+    html: NEON_SHOOTER_HTML,
   },
   {
-    id: 'burger-dodge',
-    title: '햄버거 장애물 피하기',
-    description: '5레인에서 장애물을 피해라! 파워업으로 생존하는 캐주얼 게임',
-    prompt: '5레인 장애물 피하기. 스와이프/틸트 조작, 쉴드/슬로우 파워업',
+    id: 'neon-platformer',
+    title: '네온 러너',
+    description: 'Phaser.js 물리 플랫포머. 더블점프 + 벽타기 + 프로시저럴 맵',
+    prompt: 'Phaser 3 Physics 무한 러너 플랫포머',
     icon: '◈',
-    accentColor: '#FF6B6B',
-    html: HAMBURGER_DODGE_HTML,
+    accentColor: '#FF00FF',
+    html: NEON_PLATFORMER_HTML,
   },
   {
     id: 'temple-runner',
     title: '템플 러너',
-    description: '3D 끝없는 러너! 장애물을 피하고 코인을 모아라',
-    prompt: 'Three.js 3D 1인칭 끝없는 러너',
+    description: 'Three.js 3D 1인칭 러너. 실시간 장애물 회피 + 코인 수집',
+    prompt: 'Three.js WebGL 3D 1인칭 끝없는 러너',
     icon: '▸▸',
     accentColor: '#00CCFF',
     html: TEMPLE_RUNNER_HTML,
@@ -1449,7 +1453,7 @@ export const DEMO_GAMES: DemoGame[] = [
   {
     id: 'tetris',
     title: '테트리스',
-    description: '클래식 테트리스! 줄을 완성하고 높은 점수를 노려라',
+    description: '클래식 테트리스. 줄 완성 콤보 + 레벨업 속도 증가',
     prompt: '클래식 10x20 테트리스',
     icon: '⊞',
     accentColor: '#B400FF',

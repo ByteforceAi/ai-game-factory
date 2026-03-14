@@ -167,98 +167,108 @@ export default function Home() {
 
   return (
     <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--bg-deep)',
+      height: '100dvh',
+      width: '100vw',
+      position: 'relative',
+      overflow: 'hidden',
+      background: '#000',
     }}>
-      {/* Top Bar — Cinematic HUD */}
-      <div className="bar-cinematic" style={{
+      {/* Game — Full Screen */}
+      <iframe
+        ref={iframeRef}
+        title="game"
+        sandbox="allow-scripts allow-same-origin"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Top HUD — Overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 20,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '8px 16px',
-        borderBottom: '1px solid var(--border-dim)',
-        flexShrink: 0,
+        padding: '8px 12px',
+        background: 'linear-gradient(to bottom, rgba(5,5,16,0.7) 0%, transparent 100%)',
+        pointerEvents: 'none',
       }}>
         <button
           onClick={handleReset}
           style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-dim)',
-            color: 'var(--text-dim)',
+            background: 'rgba(0,0,0,0.5)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            color: 'rgba(255,255,255,0.7)',
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '11px',
+            fontSize: '10px',
             cursor: 'pointer',
             padding: '6px 12px',
             borderRadius: '8px',
-            transition: 'all 0.3s',
+            pointerEvents: 'auto',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
         >
           EXIT
         </button>
         <span style={{
-          color: 'var(--text-bright)',
-          fontSize: '14px',
+          color: 'rgba(255,255,255,0.9)',
+          fontSize: '13px',
           fontWeight: 600,
           fontFamily: "'JetBrains Mono', monospace",
-          letterSpacing: '0.05em',
+          letterSpacing: '0.08em',
+          textShadow: '0 2px 8px rgba(0,0,0,0.8)',
         }}>
           {selectedGame?.title}
         </span>
         <button
           onClick={handleRestart}
           style={{
-            background: 'rgba(99,102,241,0.1)',
-            border: '1px solid rgba(99,102,241,0.2)',
-            color: 'var(--ai-indigo)',
+            background: 'rgba(99,102,241,0.3)',
+            border: '1px solid rgba(99,102,241,0.4)',
+            color: '#a5b4fc',
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '11px',
+            fontSize: '10px',
             cursor: 'pointer',
             padding: '6px 12px',
             borderRadius: '8px',
             fontWeight: 500,
-            transition: 'all 0.3s',
+            pointerEvents: 'auto',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
         >
           RESTART
         </button>
       </div>
 
-      {/* Game Area */}
-      <div style={{
-        flex: 1,
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 0,
-      }}>
-        <iframe
-          ref={iframeRef}
-          title="game"
-          sandbox="allow-scripts allow-same-origin"
-          style={{ width: '100%', height: '100%', border: 'none' }}
-        />
-
-        {/* Game Over Overlay */}
-        {showLeaderboard && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(5,5,16,0.85)',
-            backdropFilter: 'blur(30px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(30px) saturate(150%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingTop: '8vh',
-            gap: '12px',
-            zIndex: 10,
-            overflowY: 'auto',
-            padding: '8vh 20px 20px',
-          }}>
+      {/* Game Over Overlay */}
+      {showLeaderboard && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(5,5,16,0.85)',
+          backdropFilter: 'blur(30px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(30px) saturate(150%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          paddingTop: '8vh',
+          gap: '12px',
+          zIndex: 30,
+          overflowY: 'auto',
+          padding: '8vh 20px 20px',
+        }}>
             <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)' }}>
               FINAL SCORE
             </span>
@@ -419,31 +429,37 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Bottom Dev Tools Bar */}
-      <div className="bar-cinematic" style={{
+      {/* Bottom Dev Tools Bar — Overlay */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 20,
         display: 'flex',
         gap: '8px',
-        padding: '8px 16px',
-        borderTop: '1px solid var(--border-dim)',
-        flexShrink: 0,
+        padding: '8px 12px',
+        background: 'linear-gradient(to top, rgba(5,5,16,0.7) 0%, transparent 100%)',
         alignItems: 'center',
+        pointerEvents: 'none',
       }}>
         <button
           onClick={() => setShowCode(!showCode)}
           style={{
             flex: 1,
-            background: showCode ? 'rgba(99,102,241,0.1)' : 'var(--bg-surface)',
-            border: showCode ? '1px solid rgba(99,102,241,0.25)' : '1px solid var(--border-dim)',
-            color: showCode ? 'var(--ai-indigo)' : 'var(--text-dim)',
+            background: showCode ? 'rgba(99,102,241,0.3)' : 'rgba(0,0,0,0.5)',
+            border: showCode ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.15)',
+            color: showCode ? '#a5b4fc' : 'rgba(255,255,255,0.7)',
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: 500,
-            padding: '10px',
-            borderRadius: '10px',
+            padding: '8px',
+            borderRadius: '8px',
             cursor: 'pointer',
-            transition: 'all 0.3s',
+            pointerEvents: 'auto',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
         >
           {'</>'} CODE
@@ -452,33 +468,39 @@ export default function Home() {
           onClick={() => setShowRemix(!showRemix)}
           style={{
             flex: 1,
-            background: showRemix ? 'rgba(16,185,129,0.1)' : 'var(--bg-surface)',
-            border: showRemix ? '1px solid rgba(16,185,129,0.25)' : '1px solid var(--border-dim)',
-            color: showRemix ? 'var(--ai-emerald)' : 'var(--text-dim)',
+            background: showRemix ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.5)',
+            border: showRemix ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.15)',
+            color: showRemix ? '#6ee7b7' : 'rgba(255,255,255,0.7)',
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: 500,
-            padding: '10px',
-            borderRadius: '10px',
+            padding: '8px',
+            borderRadius: '8px',
             cursor: 'pointer',
-            transition: 'all 0.3s',
+            pointerEvents: 'auto',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
         >
           VIBE CODING
         </button>
-        <span className="mono-xs" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>
+        <span className="mono-xs" style={{ fontSize: '9px', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.4)' }}>
           {lineCount} LOC
         </span>
       </div>
 
-      {/* Code Panel */}
+      {/* Code Panel — Overlay */}
       {showCode && (
         <div style={{
+          position: 'absolute',
+          bottom: '50px',
+          left: 0,
+          right: 0,
           maxHeight: '40vh',
           overflow: 'auto',
-          flexShrink: 0,
+          zIndex: 25,
         }}>
-          <div className="code-terminal" style={{ padding: '12px 16px', minHeight: '100px' }}>
+          <div className="code-terminal" style={{ padding: '12px 16px', minHeight: '100px', background: 'rgba(5,5,16,0.95)' }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -508,13 +530,16 @@ export default function Home() {
         </div>
       )}
 
+      {/* Remix Panel — Overlay */}
       {showRemix && selectedGame && (
-        <RemixPanel
-          gameId={selectedGame.id}
-          gameHtml={gameCode}
-          onApplyRemix={handleApplyRemix}
-          onBack={() => setShowRemix(false)}
-        />
+        <div style={{ position: 'absolute', bottom: '50px', left: 0, right: 0, zIndex: 25 }}>
+          <RemixPanel
+            gameId={selectedGame.id}
+            gameHtml={gameCode}
+            onApplyRemix={handleApplyRemix}
+            onBack={() => setShowRemix(false)}
+          />
+        </div>
       )}
 
       {showShare && selectedGame && (

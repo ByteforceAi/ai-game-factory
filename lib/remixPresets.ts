@@ -212,9 +212,71 @@ const dodgeRemixes: RemixPreset[] = [
   },
 ];
 
+// --- Neon Shooter Remixes ---
+// Actual vars: sc.fireRate = 180, sc.lives = 3, bossHp = 20 + sc.wave * 5
+const shooterRemixes: RemixPreset[] = [
+  {
+    id: 'shooter-rapid',
+    label: '래피드 파이어',
+    icon: '⚡',
+    description: '발사 속도 3배 증가',
+    apply: (html) =>
+      html.replace(/sc\.fireRate = 180/, 'sc.fireRate = 60'),
+  },
+  {
+    id: 'shooter-tank',
+    label: '탱크 모드',
+    icon: '🛡️',
+    description: '목숨 5개로 시작',
+    apply: (html) =>
+      html.replace(/sc\.lives = 3/, 'sc.lives = 5')
+           .replace(/LIVES: 3/, 'LIVES: 5'),
+  },
+  {
+    id: 'shooter-boss',
+    label: '보스 러시',
+    icon: '👹',
+    description: '보스 체력 절반, 더 자주 출현',
+    apply: (html) =>
+      html.replace(/var bossHp = 20 \+ sc\.wave \* 5/, 'var bossHp = 10 + sc.wave * 2'),
+  },
+];
+
+// --- Neon Platformer Remixes ---
+// Actual vars: GRAVITY = 720, PLAYER_SPEED = 260, JUMP_VEL = -420, DOUBLE_JUMP_VEL = -380
+const platformerRemixes: RemixPreset[] = [
+  {
+    id: 'plat-moon',
+    label: '달 중력',
+    icon: '🌙',
+    description: '중력 절반, 더 높이 점프',
+    apply: (html) =>
+      html.replace(/const GRAVITY = 720/, 'const GRAVITY = 360')
+           .replace(/const JUMP_VEL = -420/, 'const JUMP_VEL = -350'),
+  },
+  {
+    id: 'plat-sonic',
+    label: '소닉 스피드',
+    icon: '💨',
+    description: '이동속도 2배, 스크롤 빨라짐',
+    apply: (html) =>
+      html.replace(/const PLAYER_SPEED = 260/, 'const PLAYER_SPEED = 500')
+           .replace(/const PLATFORM_SCROLL_SPEED = 160/, 'const PLATFORM_SCROLL_SPEED = 280'),
+  },
+  {
+    id: 'plat-super',
+    label: '슈퍼 점프',
+    icon: '🚀',
+    description: '점프력 1.5배, 더블점프 강화',
+    apply: (html) =>
+      html.replace(/const JUMP_VEL = -420/, 'const JUMP_VEL = -600')
+           .replace(/const DOUBLE_JUMP_VEL = -380/, 'const DOUBLE_JUMP_VEL = -550'),
+  },
+];
+
 export const GAME_REMIX_CONFIGS: GameRemixConfig[] = [
-  { gameId: 'emoji-burger', presets: burgerRemixes },
-  { gameId: 'burger-dodge', presets: dodgeRemixes },
+  { gameId: 'neon-shooter', presets: shooterRemixes },
+  { gameId: 'neon-platformer', presets: platformerRemixes },
   { gameId: 'temple-runner', presets: runnerRemixes },
   { gameId: 'tetris', presets: tetrisRemixes },
 ];
