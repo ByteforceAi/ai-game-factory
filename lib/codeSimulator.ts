@@ -1,5 +1,5 @@
 // Code Streaming Simulator
-// Simulates AI code generation by streaming pre-built HTML line by line
+// Simulates LLM-style token-by-token code generation
 
 export const GENERATE_STATUS_MESSAGES = [
   '게임 엔진 초기화 중...',
@@ -32,20 +32,135 @@ export interface SimulationCallbacks {
   onComplete: (fullCode: string) => void;
 }
 
+/**
+ * Tokenize HTML source into LLM-like tokens.
+ * Groups: tags, attributes, strings, keywords, whitespace, words.
+ */
+function tokenize(source: string): string[] {
+  const tokens: string[] = [];
+  // Split into lines first, then tokenize each line
+  const lines = source.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Tokenize the line into small chunks (2-6 chars) to simulate token output
+    let pos = 0;
+    while (pos < line.length) {
+      const remaining = line.slice(pos);
+
+      // HTML tag opening/closing
+      const tagMatch = remaining.match(/^<\/?[a-zA-Z][a-zA-Z0-9]*\s*/);
+      if (tagMatch) {
+        tokens.push(tagMatch[0]);
+        pos += tagMatch[0].length;
+        continue;
+      }
+
+      // HTML attribute like: key="value" or key='value'
+      const attrMatch = remaining.match(/^[a-zA-Z\-]+\s*=\s*["'][^"']*["']\s*/);
+      if (attrMatch && attrMatch[0].length <= 60) {
+        // Split long attributes into smaller pieces
+        const attr = attrMatch[0];
+        if (attr.length > 15) {
+          tokens.push(attr.slice(0, Math.ceil(attr.length / 2)));
+          tokens.push(attr.slice(Math.ceil(attr.length / 2)));
+        } else {
+          tokens.push(attr);
+        }
+        pos += attr.length;
+        continue;
+      }
+
+      // Closing >
+      const closeTag = remaining.match(/^\/?\s*>/);
+      if (closeTag) {
+        tokens.push(closeTag[0]);
+        pos += closeTag[0].length;
+        continue;
+      }
+
+      // Leading whitespace (indent)
+      const wsMatch = remaining.match(/^\s{2,}/);
+      if (wsMatch) {
+        tokens.push(wsMatch[0]);
+        pos += wsMatch[0].length;
+        continue;
+      }
+
+      // JS keywords / identifiers
+      const wordMatch = remaining.match(/^(var|let|const|function|return|if|else|for|while|this|new|class|import|export|default|true|false|null|undefined|typeof|instanceof|switch|case|break|continue|throw|try|catch|finally|async|await)\b/);
+      if (wordMatch) {
+        tokens.push(wordMatch[0]);
+        pos += wordMatch[0].length;
+        continue;
+      }
+
+      // Numbers
+      const numMatch = remaining.match(/^-?\d+\.?\d*/);
+      if (numMatch) {
+        tokens.push(numMatch[0]);
+        pos += numMatch[0].length;
+        continue;
+      }
+
+      // String literals (short)
+      const strMatch = remaining.match(/^['"][^'"]{0,20}['"]/);
+      if (strMatch) {
+        tokens.push(strMatch[0]);
+        pos += strMatch[0].length;
+        continue;
+      }
+
+      // Operators and punctuation
+      const opMatch = remaining.match(/^(===|!==|=>|<=|>=|\|\||&&|[+\-*/%=<>!&|^~?:;,.()\[\]{}])/);
+      if (opMatch) {
+        tokens.push(opMatch[0]);
+        pos += opMatch[0].length;
+        continue;
+      }
+
+      // Generic word/identifier
+      const identMatch = remaining.match(/^[a-zA-Z_$][a-zA-Z0-9_$]*/);
+      if (identMatch) {
+        tokens.push(identMatch[0]);
+        pos += identMatch[0].length;
+        continue;
+      }
+
+      // Fallback: single character
+      tokens.push(remaining[0]);
+      pos += 1;
+    }
+
+    // Add newline between lines (except last)
+    if (i < lines.length - 1) {
+      tokens.push('\n');
+    }
+  }
+  return tokens;
+}
+
+/**
+ * Simulate LLM-style code generation with variable-speed token streaming.
+ * - Fast for whitespace, tags, boilerplate
+ * - Slower for logic, function bodies
+ * - Occasional "thinking" pauses
+ */
 export function simulateCodeGeneration(
   gameHtml: string,
   callbacks: SimulationCallbacks,
   durationMs: number = 6000,
   statusMessages: string[] = GENERATE_STATUS_MESSAGES
 ): { cancel: () => void } {
-  const lines = gameHtml.split('\n');
-  const totalLines = lines.length;
+  const tokens = tokenize(gameHtml);
+  const totalTokens = tokens.length;
   let cancelled = false;
-  let currentLine = 0;
+  let currentToken = 0;
   let accumulated = '';
   let startTime = 0;
   let statusIndex = 0;
+  let lineCount = 1;
 
+  // Status message rotation
   const statusInterval = setInterval(() => {
     if (cancelled) return;
     statusIndex = (statusIndex + 1) % statusMessages.length;
@@ -54,8 +169,9 @@ export function simulateCodeGeneration(
 
   callbacks.onStatusChange(statusMessages[0]);
 
-  function easeInOut(t: number): number {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  // Easing function for overall progress
+  function easeInOutQuart(t: number): number {
+    return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
   }
 
   function tick(timestamp: number) {
@@ -64,12 +180,20 @@ export function simulateCodeGeneration(
 
     const elapsed = timestamp - startTime;
     const rawProgress = Math.min(elapsed / durationMs, 1);
-    const easedProgress = easeInOut(rawProgress);
-    const targetLine = Math.floor(easedProgress * totalLines);
+    const easedProgress = easeInOutQuart(rawProgress);
 
-    while (currentLine < targetLine && currentLine < totalLines) {
-      accumulated += (currentLine > 0 ? '\n' : '') + lines[currentLine];
-      currentLine++;
+    // Target token based on eased progress
+    const targetToken = Math.floor(easedProgress * totalTokens);
+
+    // Emit tokens up to target, batching a few at a time for performance
+    const batchSize = Math.max(1, Math.min(8, targetToken - currentToken));
+    const emitUntil = Math.min(currentToken + batchSize, targetToken, totalTokens);
+
+    while (currentToken < emitUntil) {
+      const token = tokens[currentToken];
+      accumulated += token;
+      if (token === '\n') lineCount++;
+      currentToken++;
     }
 
     callbacks.onCodeChunk(accumulated);
@@ -78,8 +202,13 @@ export function simulateCodeGeneration(
     if (rawProgress < 1) {
       requestAnimationFrame(tick);
     } else {
-      // Ensure we emit all lines
-      accumulated = gameHtml;
+      // Ensure all tokens emitted
+      while (currentToken < totalTokens) {
+        accumulated += tokens[currentToken];
+        if (tokens[currentToken] === '\n') lineCount++;
+        currentToken++;
+      }
+      accumulated = gameHtml; // Ensure exact match
       callbacks.onCodeChunk(accumulated);
       callbacks.onProgress(100);
       clearInterval(statusInterval);

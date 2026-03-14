@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
 import { getGameExtensionsScript } from '@/lib/gameExtensions';
-import GameSelector from '@/components/GameSelector';
+import PromptTerminal from '@/components/PromptTerminal';
 import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
 import ShareModal from '@/components/ShareModal';
@@ -150,7 +150,7 @@ export default function Home() {
   }, [writeGameToIframe]);
 
   if (view === 'select') {
-    return <GameSelector onSelect={handleSelectGame} />;
+    return <PromptTerminal onComplete={handleSelectGame} />;
   }
 
   if (view === 'generating' && selectedGame) {
