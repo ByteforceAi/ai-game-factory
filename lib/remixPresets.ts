@@ -1,5 +1,6 @@
 // Remix Presets — predefined code modifications for each game
 // Each preset modifies the game HTML via string replacement
+// IMPORTANT: All regex patterns are verified against actual game HTML in demoGames.ts
 
 export interface RemixPreset {
   id: string;
@@ -15,6 +16,7 @@ export interface GameRemixConfig {
 }
 
 // --- Emoji Burger Game Remixes ---
+// Actual vars: baseSpeed = 2, spawnRate = 60, player.size, #1a1a2e, #16213e
 const burgerRemixes: RemixPreset[] = [
   {
     id: 'burger-speed',
@@ -22,10 +24,7 @@ const burgerRemixes: RemixPreset[] = [
     icon: '⚡',
     description: '음식이 2배 빠르게 떨어져요',
     apply: (html) =>
-      html.replace(/fallSpeed\s*=\s*[\d.]+/g, (m) => {
-        const val = parseFloat(m.split('=')[1]);
-        return `fallSpeed = ${val * 2}`;
-      }),
+      html.replace(/var baseSpeed\s*=\s*[\d.]+/, 'var baseSpeed = 4'),
   },
   {
     id: 'burger-neon',
@@ -36,24 +35,24 @@ const burgerRemixes: RemixPreset[] = [
       html
         .replace(/#1a1a2e/g, '#0d0221')
         .replace(/#16213e/g, '#150533')
-        .replace(
-          /ctx\.shadowColor\s*=\s*['"][^'"]*['"]/g,
-          "ctx.shadowColor = '#ff00ff'"
-        )
-        .replace(
-          /ctx\.shadowBlur\s*=\s*\d+/g,
-          'ctx.shadowBlur = 20'
-        ),
+        .replace(/#FFD700/g, '#ff00ff')
+        .replace(/#44FF44/g, '#00ffff'),
   },
   {
     id: 'burger-giant',
     label: '거대 이모지',
     icon: '🔍',
-    description: '이모지 크기 1.5배 확대',
+    description: '이모지와 플레이어 크기 1.5배 확대',
     apply: (html) =>
-      html.replace(/fontSize\s*=\s*([\d.]+)/g, (_, val) => {
-        return `fontSize = ${parseFloat(val) * 1.5}`;
-      }),
+      html
+        .replace(
+          /player\.size\s*=\s*Math\.min\(canvas\.width,\s*canvas\.height\)\s*\*\s*0\.08/g,
+          'player.size = Math.min(canvas.width, canvas.height) * 0.12'
+        )
+        .replace(
+          /size:\s*player\.size\s*\*\s*\(0\.7/g,
+          'size: player.size * (1.0'
+        ),
   },
   {
     id: 'burger-more-food',
@@ -61,14 +60,13 @@ const burgerRemixes: RemixPreset[] = [
     icon: '🍔',
     description: '한 번에 더 많은 음식 등장',
     apply: (html) =>
-      html.replace(/spawnInterval\s*=\s*[\d.]+/g, (m) => {
-        const val = parseFloat(m.split('=')[1]);
-        return `spawnInterval = ${val * 0.5}`;
-      }),
+      html.replace(/var spawnRate\s*=\s*60/, 'var spawnRate = 25'),
   },
 ];
 
 // --- Temple Runner Game Remixes ---
+// Actual vars: baseSpeed=18, maxSpeed=55, scene.background=0x1a0a2e, scene.fog=0x1a0a2e
+// laneX=[-2.4,0,2.4], lanes=[0,1,2], wallMat color:0xcc3300, coinMat color:0xffcc00
 const runnerRemixes: RemixPreset[] = [
   {
     id: 'runner-turbo',
@@ -76,10 +74,9 @@ const runnerRemixes: RemixPreset[] = [
     icon: '🏎️',
     description: '시작 속도 2배, 더 빠른 가속',
     apply: (html) =>
-      html.replace(/baseSpeed\s*=\s*[\d.]+/g, (m) => {
-        const val = parseFloat(m.split('=')[1]);
-        return `baseSpeed = ${val * 2}`;
-      }),
+      html
+        .replace(/baseSpeed=18/, 'baseSpeed=36')
+        .replace(/maxSpeed=55/, 'maxSpeed=80'),
   },
   {
     id: 'runner-night',
@@ -88,20 +85,27 @@ const runnerRemixes: RemixPreset[] = [
     description: '어두운 밤 테마 + 네온 장애물',
     apply: (html) =>
       html
-        .replace(/0x87CEEB/g, '0x0a0a2e')
-        .replace(/0x228B22/g, '0x1a1a3e')
-        .replace(/fog\.color\.set\([^)]+\)/g, "fog.color.set(0x0a0a2e)"),
+        .replace(/0x1a0a2e/g, '0x020010')
+        .replace(/0x2a1a3a/g, '0x0a0520')
+        .replace(/0x3a2a4a/g, '0x150a30')
+        .replace(/color:0xcc3300/g, 'color:0xff0066')
+        .replace(/color:0xddcc00/g, 'color:0x00ffcc')
+        .replace(/color:0x00ccff/g, 'color:0xff00ff')
+        .replace(/emissive:0x441100/g, 'emissive:0x660033')
+        .replace(/emissive:0x443300/g, 'emissive:0x006644'),
   },
   {
     id: 'runner-coins',
     label: '코인 러시',
     icon: '💰',
-    description: '코인 2배 등장, 보너스 점수',
+    description: '코인 크기 2배 + 점수 2배',
     apply: (html) =>
-      html.replace(/coinInterval\s*=\s*[\d.]+/g, (m) => {
-        const val = parseFloat(m.split('=')[1]);
-        return `coinInterval = ${val * 0.5}`;
-      }),
+      html
+        .replace(
+          /new THREE\.OctahedronGeometry\(0\.4\)/,
+          'new THREE.OctahedronGeometry(0.8)'
+        )
+        .replace(/score\+=10/g, 'score+=20'),
   },
   {
     id: 'runner-wide',
@@ -110,12 +114,20 @@ const runnerRemixes: RemixPreset[] = [
     description: '3레인 → 5레인으로 확장',
     apply: (html) =>
       html
-        .replace(/lanes\s*=\s*\[-?\d+,\s*\d+,\s*-?\d+\]/g, 'lanes = [-4, -2, 0, 2, 4]')
-        .replace(/laneCount\s*=\s*3/g, 'laneCount = 5'),
+        .replace(
+          /laneX=\[-2\.4,0,2\.4\]/,
+          'laneX=[-4.8,-2.4,0,2.4,4.8]'
+        )
+        .replace(
+          /var lanes=\[0,1,2\]/,
+          'var lanes=[0,1,2,3,4]'
+        )
+        .replace(/currentLane=1/, 'currentLane=2'),
   },
 ];
 
 // --- Tetris Game Remixes ---
+// Actual vars: COLS=10, dropInterval=1000, COLORS={I:'#00f5ff',...}, #0a0a0a background
 const tetrisRemixes: RemixPreset[] = [
   {
     id: 'tetris-speed',
@@ -123,10 +135,7 @@ const tetrisRemixes: RemixPreset[] = [
     icon: '⚡',
     description: '기본 속도 2배, 하드코어 모드',
     apply: (html) =>
-      html.replace(/dropInterval\s*=\s*[\d.]+/g, (m) => {
-        const val = parseFloat(m.split('=')[1]);
-        return `dropInterval = ${val * 0.5}`;
-      }),
+      html.replace(/dropInterval=1000/, 'dropInterval=500'),
   },
   {
     id: 'tetris-wide',
@@ -134,7 +143,7 @@ const tetrisRemixes: RemixPreset[] = [
     icon: '📐',
     description: '10칸 → 15칸 넓은 보드',
     apply: (html) =>
-      html.replace(/COLS\s*=\s*10/g, 'COLS = 15'),
+      html.replace(/COLS=10/, 'COLS=15'),
   },
   {
     id: 'tetris-retro',
@@ -150,18 +159,15 @@ const tetrisRemixes: RemixPreset[] = [
         .replace(/#ff0044/g, '#00aa22')
         .replace(/#0066ff/g, '#00ff41')
         .replace(/#ff8800/g, '#00cc33')
-        .replace(/#0a0a0a/g, '#000000'),
+        .replace(/#0a0a0a/g, '#000800'),
   },
   {
-    id: 'tetris-gravity',
-    label: '중력 모드',
-    icon: '🌍',
-    description: '줄 클리어 시 빈 공간으로 블록 낙하',
+    id: 'tetris-marathon',
+    label: '마라톤 모드',
+    icon: '🏃',
+    description: '보드 높이 30칸! 긴 게임을 즐기세요',
     apply: (html) =>
-      html.replace(
-        /\/\/ gravity-hook/g,
-        '// gravity mode enabled'
-      ),
+      html.replace(/ROWS=20/, 'ROWS=30'),
   },
 ];
 
