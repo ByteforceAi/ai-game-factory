@@ -62,9 +62,7 @@ export default function Home() {
         const data = await res.json();
         setLeaderboard(data.leaderboard || []);
       }
-    } catch {
-      // KV not available — ignore silently
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -88,11 +86,7 @@ export default function Home() {
       const res = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gameId: selectedGame.id,
-          name: playerName.trim(),
-          score: gameScore,
-        }),
+        body: JSON.stringify({ gameId: selectedGame.id, name: playerName.trim(), score: gameScore }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -100,11 +94,7 @@ export default function Home() {
         setMyRank(data.rank || null);
         setScoreSubmitted(true);
       }
-    } catch {
-      // KV not available — ignore
-    } finally {
-      setSubmittingScore(false);
-    }
+    } catch {} finally { setSubmittingScore(false); }
   };
 
   const handleSelectGame = (game: DemoGame) => {
@@ -173,13 +163,7 @@ export default function Home() {
     );
   }
 
-  // --- Glass style constants ---
-  const glassBar = {
-    background: 'rgba(255,255,255,0.55)',
-    backdropFilter: 'blur(40px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-    borderColor: 'rgba(255,255,255,0.4)',
-  };
+  const lineCount = gameCode.split('\n').length;
 
   return (
     <div style={{
@@ -187,53 +171,52 @@ export default function Home() {
       display: 'flex',
       flexDirection: 'column',
     }}>
-      {/* Top Bar — frosted glass */}
-      <div style={{
+      {/* Top Bar — Minimal HUD */}
+      <div className="glass-surface" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 16px',
-        borderBottom: `1px solid ${glassBar.borderColor}`,
-        background: glassBar.background,
-        backdropFilter: glassBar.backdropFilter,
-        WebkitBackdropFilter: glassBar.WebkitBackdropFilter,
+        padding: '8px 16px',
+        borderBottom: '0.5px solid rgba(255,255,255,0.4)',
         flexShrink: 0,
       }}>
         <button
           onClick={handleReset}
           style={{
-            background: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            color: '#6b7280',
-            fontSize: '13px',
+            background: 'rgba(0,0,0,0.03)',
+            border: '0.5px solid rgba(0,0,0,0.08)',
+            color: 'var(--text-secondary)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
             cursor: 'pointer',
             padding: '6px 12px',
-            borderRadius: '10px',
+            borderRadius: '8px',
           }}
         >
-          ← 나가기
+          ← EXIT
         </button>
         <span style={{
-          color: '#1e1b4b',
-          fontSize: '15px',
+          color: 'var(--text-primary)',
+          fontSize: '14px',
           fontWeight: 600,
         }}>
-          {selectedGame?.icon} {selectedGame?.title}
+          {selectedGame?.title}
         </span>
         <button
           onClick={handleRestart}
           style={{
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.15)',
-            color: '#6366f1',
-            fontSize: '13px',
+            background: 'rgba(99,102,241,0.06)',
+            border: '0.5px solid rgba(99,102,241,0.15)',
+            color: 'var(--ai-indigo)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
             cursor: 'pointer',
             padding: '6px 12px',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontWeight: 500,
           }}
         >
-          ↻ 다시
+          ↻ RESTART
         </button>
       </div>
 
@@ -250,14 +233,10 @@ export default function Home() {
           ref={iframeRef}
           title="game"
           sandbox="allow-scripts allow-same-origin"
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-          }}
+          style={{ width: '100%', height: '100%', border: 'none' }}
         />
 
-        {/* Game Over Overlay — frosted glass */}
+        {/* Game Over Overlay */}
         {showLeaderboard && (
           <div style={{
             position: 'absolute',
@@ -275,20 +254,19 @@ export default function Home() {
             overflowY: 'auto',
             padding: '8vh 20px 20px',
           }}>
-            <div style={{ fontSize: '40px' }}>🏆</div>
+            <span className="mono-label" style={{ fontSize: '10px', letterSpacing: '0.15em' }}>
+              FINAL SCORE
+            </span>
             <div style={{
-              color: '#1e1b4b',
-              fontSize: '28px',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '48px',
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              lineHeight: 1,
             }}>
-              {gameScore} 점
+              <span className="text-gradient-gold">{gameScore}</span>
             </div>
 
-            {/* Name input + submit */}
+            {/* Name input */}
             {!scoreSubmitted ? (
               <div style={{
                 display: 'flex',
@@ -307,13 +285,12 @@ export default function Home() {
                   style={{
                     flex: 1,
                     background: 'rgba(255,255,255,0.7)',
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '12px',
+                    border: '0.5px solid rgba(0,0,0,0.1)',
+                    borderRadius: '10px',
                     padding: '10px 14px',
-                    color: '#1e1b4b',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     outline: 'none',
-                    backdropFilter: 'blur(10px)',
                   }}
                 />
                 <button
@@ -321,78 +298,82 @@ export default function Home() {
                   disabled={!playerName.trim() || submittingScore}
                   style={{
                     background: playerName.trim()
-                      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                      : 'rgba(0,0,0,0.06)',
+                      ? 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))'
+                      : 'rgba(0,0,0,0.04)',
                     border: 'none',
-                    color: playerName.trim() ? '#fff' : '#9ca3af',
-                    fontSize: '13px',
+                    color: playerName.trim() ? '#fff' : 'var(--text-muted)',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '12px',
                     fontWeight: 600,
                     padding: '10px 16px',
-                    borderRadius: '12px',
+                    borderRadius: '10px',
                     cursor: playerName.trim() ? 'pointer' : 'default',
                     whiteSpace: 'nowrap',
+                    boxShadow: playerName.trim() ? '0 4px 12px rgba(99,102,241,0.25)' : 'none',
                   }}
                 >
-                  {submittingScore ? '...' : '등록'}
+                  {submittingScore ? '...' : 'SUBMIT'}
                 </button>
               </div>
             ) : myRank && (
-              <div style={{ color: '#16a34a', fontSize: '14px', fontWeight: 600 }}>
-                🎉 {myRank}위에 등록되었습니다!
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                color: 'var(--ai-emerald)',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}>
+                RANKED #{myRank}
               </div>
             )}
 
             {/* Leaderboard */}
             {leaderboard.length > 0 && (
-              <div style={{
+              <div className="glass-card" style={{
                 width: '100%',
                 maxWidth: '300px',
                 marginTop: '8px',
-                background: 'rgba(255,255,255,0.5)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                borderRadius: '16px',
                 padding: '14px',
-                border: '1px solid rgba(255,255,255,0.5)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                borderRadius: '14px',
               }}>
-                <div style={{
-                  color: '#6b7280',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.5px',
-                  marginBottom: '8px',
-                }}>
-                  순위
+                <div className="mono-label" style={{ marginBottom: '10px', fontSize: '9px', letterSpacing: '0.12em' }}>
+                  LEADERBOARD
                 </div>
                 {leaderboard.slice(0, 10).map((entry, i) => {
-                  const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                   const isMe = scoreSubmitted && myRank === i + 1;
+                  const rankColors = ['#f59e0b', '#94a3b8', '#b45309'];
                   return (
                     <div key={`${entry.name}-${entry.ts}`} style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '6px 0',
-                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                      padding: '5px 0',
+                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                      borderLeft: i < 3 ? `2px solid ${rankColors[i]}` : '2px solid transparent',
+                      paddingLeft: '8px',
                     }}>
                       <span style={{
-                        color: isMe ? '#d97706' : '#1e1b4b',
-                        fontSize: '13px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '12px',
+                        color: isMe ? 'var(--ai-indigo)' : 'var(--text-body)',
                         fontWeight: isMe ? 700 : 400,
                       }}>
-                        <span style={{ display: 'inline-block', width: '28px', textAlign: 'center' }}>
-                          {medal}
+                        <span style={{
+                          display: 'inline-block',
+                          width: '24px',
+                          color: i < 3 ? rankColors[i] : 'var(--text-muted)',
+                          fontWeight: 600,
+                        }}>
+                          {String(i + 1).padStart(2, '0')}
                         </span>
                         {entry.name}
                       </span>
                       <span style={{
-                        color: isMe ? '#d97706' : '#6b7280',
-                        fontSize: '13px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '12px',
+                        color: isMe ? 'var(--ai-indigo)' : 'var(--text-muted)',
                         fontWeight: isMe ? 700 : 400,
                       }}>
-                        {entry.score}점
+                        {entry.score}
                       </span>
                     </div>
                   );
@@ -415,83 +396,87 @@ export default function Home() {
                   background: 'rgba(255,255,255,0.6)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(139,92,246,0.3)',
-                  color: '#7c3aed',
-                  fontSize: '14px',
+                  border: '0.5px solid rgba(99,102,241,0.2)',
+                  color: 'var(--ai-indigo)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '12px',
                   fontWeight: 600,
                   padding: '12px',
-                  borderRadius: '14px',
+                  borderRadius: '12px',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(139,92,246,0.08)',
                 }}
               >
-                📤 공유
+                ↗ SHARE
               </button>
               <button
                 onClick={handleRestart}
                 style={{
                   flex: 1,
-                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
                   border: 'none',
                   color: '#fff',
-                  fontSize: '14px',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '12px',
                   fontWeight: 600,
                   padding: '12px',
-                  borderRadius: '14px',
+                  borderRadius: '12px',
                   cursor: 'pointer',
                   boxShadow: '0 4px 16px rgba(99,102,241,0.25)',
                 }}
               >
-                🔄 다시
+                ↻ RETRY
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Action Bar — frosted glass */}
-      <div style={{
+      {/* Bottom Dev Tools Bar */}
+      <div className="glass-surface" style={{
         display: 'flex',
         gap: '8px',
-        padding: '10px 16px',
-        borderTop: `1px solid ${glassBar.borderColor}`,
-        background: glassBar.background,
-        backdropFilter: glassBar.backdropFilter,
-        WebkitBackdropFilter: glassBar.WebkitBackdropFilter,
+        padding: '8px 16px',
+        borderTop: '0.5px solid rgba(255,255,255,0.4)',
         flexShrink: 0,
+        alignItems: 'center',
       }}>
         <button
           onClick={() => setShowCode(!showCode)}
           style={{
             flex: 1,
-            background: showCode ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)',
-            border: showCode ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(0,0,0,0.08)',
-            color: showCode ? '#6366f1' : '#6b7280',
-            fontSize: '13px',
+            background: showCode ? 'rgba(99,102,241,0.1)' : 'rgba(0,0,0,0.03)',
+            border: showCode ? '0.5px solid rgba(99,102,241,0.25)' : '0.5px solid rgba(0,0,0,0.06)',
+            color: showCode ? 'var(--ai-indigo)' : 'var(--text-secondary)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
             fontWeight: 500,
             padding: '10px',
-            borderRadius: '12px',
+            borderRadius: '10px',
             cursor: 'pointer',
           }}
         >
-          {'</>'} 코드 보기
+          {'</>'} CODE
         </button>
         <button
           onClick={() => setShowRemix(!showRemix)}
           style={{
             flex: 1,
-            background: showRemix ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.04)',
-            border: showRemix ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(0,0,0,0.08)',
-            color: showRemix ? '#059669' : '#6b7280',
-            fontSize: '13px',
+            background: showRemix ? 'rgba(16,185,129,0.1)' : 'rgba(0,0,0,0.03)',
+            border: showRemix ? '0.5px solid rgba(16,185,129,0.25)' : '0.5px solid rgba(0,0,0,0.06)',
+            color: showRemix ? 'var(--ai-emerald)' : 'var(--text-secondary)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
             fontWeight: 500,
             padding: '10px',
-            borderRadius: '12px',
+            borderRadius: '10px',
             cursor: 'pointer',
           }}
         >
-          ✨ 바이브 코딩하기
+          ◇ REMIX
         </button>
+        <span className="mono-metric" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>
+          {lineCount} LOC
+        </span>
       </div>
 
       {/* Code Panel */}
@@ -499,40 +484,35 @@ export default function Home() {
         <div style={{
           maxHeight: '40vh',
           overflow: 'auto',
-          background: 'rgba(255,255,255,0.45)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          borderTop: '1px solid rgba(255,255,255,0.4)',
-          padding: '12px 16px',
           flexShrink: 0,
         }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '8px',
-          }}>
-            <span style={{ color: '#6b7280', fontSize: '12px' }}>
-              {selectedGame?.title}.html — {gameCode.split('\n').length} lines
-            </span>
-            <button
-              onClick={() => setShowCode(false)}
-              style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '13px', cursor: 'pointer' }}
-            >
-              ✕
-            </button>
+          <div className="code-terminal" style={{ padding: '12px 16px', minHeight: '100px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              paddingBottom: '8px',
+            }}>
+              <span className="mono-label" style={{ color: '#64748b' }}>
+                {selectedGame?.title}.html — {lineCount} lines
+              </span>
+              <button
+                onClick={() => setShowCode(false)}
+                style={{ background: 'none', border: 'none', color: '#475569', fontSize: '12px', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                ✕
+              </button>
+            </div>
+            <pre style={{
+              margin: 0,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+            }}>
+              {gameCode}
+            </pre>
           </div>
-          <pre style={{
-            color: '#312e81',
-            fontSize: '10px',
-            lineHeight: 1.5,
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-all',
-            fontFamily: "'Fira Code', 'Courier New', monospace",
-          }}>
-            {gameCode}
-          </pre>
         </div>
       )}
 
@@ -554,18 +534,14 @@ export default function Home() {
       )}
 
       {vibeGenerating && pendingVibeHtml && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 50,
-        }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           <CodeStreamView
             gameHtml={pendingVibeHtml}
             gameTitle={`${selectedGame?.title} — ${vibePresetLabel}`}
             onComplete={handleVibeComplete}
             duration={3500}
             statusMessages={VIBE_STATUS_MESSAGES}
-            completionText="바이브 코딩 완료!"
+            completionText="VIBE CODING COMPLETE"
           />
         </div>
       )}

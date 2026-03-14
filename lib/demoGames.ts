@@ -984,31 +984,474 @@ initGrid();spawn();requestAnimationFrame(loop);
 </html>
 `;
 
+const HAMBURGER_DODGE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hamburger Dodge</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function() {
+  "use strict";
+
+  var baseSpeed = 3;
+  var spawnRate = 45;
+  var lives = 3;
+  var maxLives = 3;
+
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+
+  var W, H, laneW, playerY, playerLane, score, gameOver, gameStarted;
+  var obstacles, particles, powerUps, shakeX, shakeY, shakeDur;
+  var frame, speedMult, spawnTimer, shieldActive, shieldTimer, slowActive, slowTimer;
+  var touchStartX, touchStartY, tiltSupported, lastTilt;
+  var currentLives;
+  var lanes = 5;
+  var playerSize, obstacleSize;
+  var animPlayerX;
+  var bgStars = [];
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    laneW = W / lanes;
+    playerSize = Math.min(laneW * 0.7, 60);
+    obstacleSize = Math.min(laneW * 0.65, 55);
+    playerY = H - playerSize - 30;
+    generateStars();
+  }
+
+  function generateStars() {
+    bgStars = [];
+    for (var i = 0; i < 80; i++) {
+      bgStars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.5 + 0.5,
+        a: Math.random() * 0.5 + 0.3,
+        s: Math.random() * 0.3 + 0.1
+      });
+    }
+  }
+
+  function init() {
+    playerLane = 2;
+    animPlayerX = laneX(playerLane);
+    score = 0;
+    gameOver = false;
+    gameStarted = false;
+    obstacles = [];
+    particles = [];
+    powerUps = [];
+    shakeX = 0; shakeY = 0; shakeDur = 0;
+    frame = 0;
+    speedMult = 1;
+    spawnTimer = 0;
+    shieldActive = false; shieldTimer = 0;
+    slowActive = false; slowTimer = 0;
+    currentLives = lives;
+    touchStartX = null;
+    touchStartY = null;
+    lastTilt = 0;
+  }
+
+  function laneX(lane) {
+    return lane * laneW + laneW / 2;
+  }
+
+  function spawnObstacle() {
+    var lane = Math.floor(Math.random() * lanes);
+    var types = ['\\u{1F697}', '\\u{1F4A3}', '\\u{1F525}', '\\u{1FAA8}'];
+    var type = types[Math.floor(Math.random() * types.length)];
+    obstacles.push({
+      x: laneX(lane),
+      y: -obstacleSize,
+      type: type,
+      size: obstacleSize,
+      speed: (baseSpeed + Math.random() * 1.5) * speedMult,
+      rot: 0,
+      rotSpeed: (Math.random() - 0.5) * 0.05
+    });
+  }
+
+  function spawnPowerUp() {
+    var lane = Math.floor(Math.random() * lanes);
+    var types = ['\\u2B50', '\\u23F3'];
+    var type = types[Math.floor(Math.random() * types.length)];
+    powerUps.push({
+      x: laneX(lane),
+      y: -obstacleSize,
+      type: type,
+      size: obstacleSize,
+      speed: baseSpeed * 0.7 * speedMult,
+      pulse: 0
+    });
+  }
+
+  function emitParticles(x, y, color, count) {
+    for (var i = 0; i < count; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = Math.random() * 4 + 2;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        decay: Math.random() * 0.03 + 0.02,
+        size: Math.random() * 6 + 3,
+        color: color
+      });
+    }
+  }
+
+  function triggerShake(intensity, dur) {
+    shakeDur = dur;
+    shakeX = (Math.random() - 0.5) * intensity;
+    shakeY = (Math.random() - 0.5) * intensity;
+  }
+
+  function movePlayer(dir) {
+    if (gameOver) return;
+    if (!gameStarted) gameStarted = true;
+    var newLane = playerLane + dir;
+    if (newLane >= 0 && newLane < lanes) {
+      playerLane = newLane;
+    }
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-1);
+    else if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1);
+    else if (e.key === ' ' || e.key === 'Enter') {
+      if (gameOver) { init(); gameStarted = true; }
+    }
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('touchstart', function(e) {
+    if (gameOver) { init(); gameStarted = true; return; }
+    var t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', function(e) {
+    if (touchStartX === null) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - touchStartX;
+    var dy = t.clientY - touchStartY;
+    if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy)) {
+      movePlayer(dx > 0 ? 1 : -1);
+    } else {
+      if (t.clientX < W / 2) movePlayer(-1);
+      else movePlayer(1);
+    }
+    touchStartX = null;
+    e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('click', function(e) {
+    if (gameOver) { init(); gameStarted = true; return; }
+    if (e.clientX < W / 2) movePlayer(-1);
+    else movePlayer(1);
+  });
+
+  tiltSupported = false;
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', function(e) {
+      if (e.gamma === null) return;
+      tiltSupported = true;
+      var tilt = e.gamma;
+      var threshold = 12;
+      var now = Date.now();
+      if (now - lastTilt < 200) return;
+      if (tilt < -threshold) { movePlayer(-1); lastTilt = now; }
+      else if (tilt > threshold) { movePlayer(1); lastTilt = now; }
+    });
+  }
+
+  function collides(a, b, margin) {
+    margin = margin || 0;
+    var dx = a.x - b.x;
+    var dy = a.y - b.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    return dist < (a.size / 2 + b.size / 2) - margin;
+  }
+
+  function update() {
+    if (gameOver || !gameStarted) return;
+    frame++;
+    speedMult = 1 + frame * 0.0003;
+    var targetX = laneX(playerLane);
+    animPlayerX += (targetX - animPlayerX) * 0.25;
+    var adjustedRate = Math.max(12, spawnRate - frame * 0.008);
+    spawnTimer++;
+    var timeMult = slowActive ? 0.4 : 1;
+    if (spawnTimer >= adjustedRate / timeMult) {
+      spawnTimer = 0;
+      spawnObstacle();
+      if (Math.random() < Math.min(0.4, frame * 0.0001)) spawnObstacle();
+    }
+    if (frame % 300 === 0 && Math.random() < 0.6) spawnPowerUp();
+    if (shieldActive) { shieldTimer--; if (shieldTimer <= 0) shieldActive = false; }
+    if (slowActive) { slowTimer--; if (slowTimer <= 0) slowActive = false; }
+    var player = { x: animPlayerX, y: playerY, size: playerSize };
+    for (var i = obstacles.length - 1; i >= 0; i--) {
+      var o = obstacles[i];
+      o.y += o.speed * timeMult;
+      o.rot += o.rotSpeed;
+      if (o.y > H + 50) { obstacles.splice(i, 1); continue; }
+      if (collides(player, o, 8)) {
+        obstacles.splice(i, 1);
+        if (shieldActive) { emitParticles(o.x, o.y, '#FFD700', 15); continue; }
+        currentLives--;
+        emitParticles(animPlayerX, playerY, '#FF4444', 25);
+        triggerShake(12, 15);
+        if (currentLives <= 0) {
+          gameOver = true;
+          emitParticles(animPlayerX, playerY, '#FF8800', 40);
+          window.parent.postMessage({ type: 'gameOver', score: score }, '*');
+        }
+      }
+    }
+    for (var j = powerUps.length - 1; j >= 0; j--) {
+      var p = powerUps[j];
+      p.y += p.speed * timeMult;
+      p.pulse += 0.08;
+      if (p.y > H + 50) { powerUps.splice(j, 1); continue; }
+      if (collides(player, p, 5)) {
+        powerUps.splice(j, 1);
+        emitParticles(p.x, p.y, '#00FF88', 20);
+        if (p.type === '\\u2B50') { shieldActive = true; shieldTimer = 300; }
+        else if (p.type === '\\u23F3') { slowActive = true; slowTimer = 240; }
+      }
+    }
+    for (var k = particles.length - 1; k >= 0; k--) {
+      var pt = particles[k];
+      pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.1;
+      pt.life -= pt.decay;
+      if (pt.life <= 0) particles.splice(k, 1);
+    }
+    if (shakeDur > 0) {
+      shakeDur--;
+      shakeX = (Math.random() - 0.5) * shakeDur * 0.8;
+      shakeY = (Math.random() - 0.5) * shakeDur * 0.8;
+    } else { shakeX = 0; shakeY = 0; }
+    score = Math.floor(frame / 3);
+  }
+
+  function drawEmoji(emoji, x, y, size, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (rot) ctx.rotate(rot);
+    ctx.font = size + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, 0, 0);
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.save();
+    ctx.clearRect(0, 0, W, H);
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#1a1a2e');
+    grad.addColorStop(1, '#16213e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    for (var s = 0; s < bgStars.length; s++) {
+      var st = bgStars[s];
+      st.y += st.s;
+      if (st.y > H) { st.y = 0; st.x = Math.random() * W; }
+      ctx.globalAlpha = st.a + Math.sin(frame * 0.02 + s) * 0.15;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (var l = 1; l < lanes; l++) {
+      var lx = l * laneW;
+      ctx.beginPath();
+      ctx.setLineDash([10, 20]);
+      ctx.moveTo(lx, 0);
+      ctx.lineTo(lx, H);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.translate(shakeX, shakeY);
+    for (var j = 0; j < powerUps.length; j++) {
+      var pu = powerUps[j];
+      var sc = 1 + Math.sin(pu.pulse) * 0.12;
+      ctx.save();
+      ctx.translate(pu.x, pu.y);
+      ctx.scale(sc, sc);
+      ctx.shadowColor = pu.type === '\\u2B50' ? '#FFD700' : '#00BFFF';
+      ctx.shadowBlur = 18;
+      ctx.font = pu.size + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pu.type, 0, 0);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+    for (var i = 0; i < obstacles.length; i++) {
+      var o = obstacles[i];
+      drawEmoji(o.type, o.x, o.y, o.size, o.rot);
+    }
+    if (!gameOver) {
+      ctx.save();
+      if (shieldActive) {
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 25;
+        ctx.strokeStyle = 'rgba(255,215,0,' + (0.4 + Math.sin(frame * 0.1) * 0.3) + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(animPlayerX, playerY, playerSize * 0.55, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (slowActive) { ctx.shadowColor = '#00BFFF'; ctx.shadowBlur = 20; }
+      var bob = Math.sin(frame * 0.08) * 3;
+      drawEmoji('\\u{1F354}', animPlayerX, playerY + bob, playerSize, 0);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+    for (var k = 0; k < particles.length; k++) {
+      var pt = particles[k];
+      ctx.globalAlpha = pt.life;
+      ctx.fillStyle = pt.color;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.size * pt.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + Math.max(18, W * 0.045) + 'px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Score: ' + score, 15, 15);
+    if (slowActive) { ctx.fillStyle = '#00BFFF'; ctx.font = Math.max(14, W * 0.032) + 'px sans-serif'; ctx.fillText('SLOW', 15, 50); }
+    if (shieldActive) { ctx.fillStyle = '#FFD700'; ctx.font = Math.max(14, W * 0.032) + 'px sans-serif'; ctx.fillText('SHIELD', 15, slowActive ? 75 : 50); }
+    ctx.textAlign = 'right';
+    ctx.font = Math.max(20, W * 0.05) + 'px serif';
+    var heartsStr = '';
+    for (var h = 0; h < maxLives; h++) heartsStr += h < currentLives ? '\\u2764\\uFE0F' : '\\u{1F5A4}';
+    ctx.fillText(heartsStr, W - 15, 12);
+    ctx.restore();
+    if (!gameStarted && !gameOver) {
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + Math.max(28, W * 0.07) + 'px sans-serif';
+      ctx.fillText('Hamburger Dodge', W / 2, H * 0.32);
+      ctx.font = Math.max(16, W * 0.04) + 'px sans-serif';
+      ctx.fillStyle = '#cccccc';
+      ctx.fillText('Dodge the obstacles!', W / 2, H * 0.43);
+      ctx.fillText('Swipe / Tap / Arrow Keys', W / 2, H * 0.51);
+      ctx.font = 'bold ' + Math.max(18, W * 0.045) + 'px sans-serif';
+      ctx.fillStyle = '#FFD700';
+      var pulse = 0.7 + Math.sin(Date.now() * 0.004) * 0.3;
+      ctx.globalAlpha = pulse;
+      ctx.fillText('Tap to Start', W / 2, H * 0.63);
+      ctx.globalAlpha = 1;
+    }
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FF4444';
+      ctx.font = 'bold ' + Math.max(32, W * 0.08) + 'px sans-serif';
+      ctx.fillText('GAME OVER', W / 2, H * 0.35);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold ' + Math.max(24, W * 0.06) + 'px sans-serif';
+      ctx.fillText('Score: ' + score, W / 2, H * 0.47);
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = Math.max(16, W * 0.04) + 'px sans-serif';
+      ctx.fillText('Tap to Retry', W / 2, H * 0.58);
+    }
+  }
+
+  function loop() { update(); draw(); requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize);
+  resize();
+  init();
+  loop();
+})();
+</script>
+</body>
+</html>`;
+
 export const DEMO_GAMES: DemoGame[] = [
   {
     id: 'emoji-burger',
-    title: '이모지 햄버거 먹기',
-    description: '하늘에서 떨어지는 음식을 잡아라! 독은 피하고 🍔',
-    prompt: '이모지로 만든 캐주얼 음식 잡기 게임. 터치/마우스로 좌우 이동, 음식 이모지를 잡으면 점수, 독을 피하면서 3목숨을 지켜라!',
-    icon: '🍔',
+    title: '이모지 버거 캐치',
+    description: '하늘에서 떨어지는 음식을 잡아라! 독을 피하고 3목숨을 지켜라',
+    prompt: '이모지로 만든 캐주얼 음식 잡기 게임',
+    icon: '◆',
     accentColor: '#FF8C00',
     html: EMOJI_BURGER_HTML,
   },
   {
+    id: 'burger-dodge',
+    title: '햄버거 장애물 피하기',
+    description: '5레인에서 장애물을 피해라! 파워업으로 생존하는 캐주얼 게임',
+    prompt: '5레인 장애물 피하기. 스와이프/틸트 조작, 쉴드/슬로우 파워업',
+    icon: '◈',
+    accentColor: '#FF6B6B',
+    html: HAMBURGER_DODGE_HTML,
+  },
+  {
     id: 'temple-runner',
     title: '템플 러너',
-    description: '3D 끝없는 러너! 장애물을 피하고 코인을 모아라 🏃',
-    prompt: 'Three.js 3D 1인칭 끝없는 러너. 3레인 좌우 이동, 점프, 장애물 회피, 코인 수집. 속도 점진적 증가.',
-    icon: '🏃',
+    description: '3D 끝없는 러너! 장애물을 피하고 코인을 모아라',
+    prompt: 'Three.js 3D 1인칭 끝없는 러너',
+    icon: '▸▸',
     accentColor: '#00CCFF',
     html: TEMPLE_RUNNER_HTML,
   },
   {
     id: 'tetris',
     title: '테트리스',
-    description: '클래식 테트리스! 줄을 완성하고 높은 점수를 노려라 🧱',
-    prompt: '클래식 10x20 테트리스. 7종 테트로미노, 줄 클리어, 레벨 시스템, 네온 비주얼. 모바일 터치 버튼 포함.',
-    icon: '🧱',
+    description: '클래식 테트리스! 줄을 완성하고 높은 점수를 노려라',
+    prompt: '클래식 10x20 테트리스',
+    icon: '⊞',
     accentColor: '#B400FF',
     html: TETRIS_HTML,
   },

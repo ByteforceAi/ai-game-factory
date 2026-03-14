@@ -5,13 +5,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --glass-bg: #f5f5f7;
-  --glass-surface: #ffffff;
-  --glass-border: rgba(0,0,0,0.08);
-  --glass-text: #1d1d1f;
-  --glass-text-secondary: #86868b;
-  --glass-accent: #007AFF;
-  --glass-blur: 20px;
+  --ai-indigo: #6366f1;
+  --ai-violet: #8b5cf6;
+  --ai-cyan: #06b6d4;
+  --ai-emerald: #10b981;
+  --text-primary: #0f172a;
+  --text-body: #334155;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --glass-surface: rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.5);
 }
 
 * {
@@ -21,257 +24,209 @@
 body {
   background: linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 25%, #fce7f3 50%, #e0f2fe 75%, #ede9fe 100%);
   background-attachment: fixed;
-  color: var(--glass-text);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================
-   LIQUID GLASS CARD - Light Mode
-   Three-Layer System (Apple WWDC 2025 style)
+   TECH GRID OVERLAY
    ============================================ */
-.liquid-glass {
-  position: relative;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 0.5px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.06),
-    0 2px 12px rgba(0, 0, 0, 0.04),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.95);
-  isolation: isolate;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-
-/* Layer 1: Inner specular highlight */
-.liquid-glass::before {
+.tech-grid::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.8) 0%,
-    rgba(255, 255, 255, 0.3) 30%,
-    rgba(255, 255, 255, 0) 60%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Layer 2: Subtle bottom edge */
-.liquid-glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 100%
-  );
-  box-shadow: inset 0 -0.5px 0 rgba(0, 0, 0, 0.04);
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: grid-drift 12s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-.liquid-glass:hover {
-  box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.1),
-    0 4px 16px rgba(0, 0, 0, 0.06),
-    inset 0 0.5px 0 rgba(255, 255, 255, 1);
-  transform: translateY(-2px);
-}
-
-/* Small variant */
-.liquid-glass-sm {
-  position: relative;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 0.5px solid rgba(255, 255, 255, 0.7);
-  border-radius: 14px;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.05),
-    0 1px 6px rgba(0, 0, 0, 0.03),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.9);
-  isolation: isolate;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Pill/Chip variant */
-.liquid-glass-pill {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 0.5px solid rgba(0, 0, 0, 0.06);
-  border-radius: 100px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.liquid-glass-pill:hover {
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+@keyframes grid-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(40px); }
 }
 
 /* ============================================
-   LIQUID GLASS BUTTON — Primary
+   SHIMMER LINE
    ============================================ */
-.btn-glass {
+.shimmer-line {
   position: relative;
-  background: var(--glass-accent);
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  border: none;
-  border-radius: 14px;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow:
-    0 4px 16px rgba(0, 122, 255, 0.25),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  height: 1px;
+  background: rgba(99,102,241,0.1);
 }
 
-.btn-glass:hover {
-  background: #0071E3;
-  box-shadow:
-    0 6px 24px rgba(0, 122, 255, 0.35),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
+.shimmer-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--ai-indigo), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -60%; }
+  100% { left: 100%; }
+}
+
+/* ============================================
+   STATUS DOT
+   ============================================ */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ai-emerald);
+  animation: dot-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(16,185,129,0.4);
+}
+
+.status-dot-active {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ai-indigo);
+  animation: dot-pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(99,102,241,0.4);
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  50% { opacity: 0.4; box-shadow: 0 0 2px currentColor; }
+}
+
+/* ============================================
+   GLITCH COMPLETION EFFECT
+   ============================================ */
+@keyframes glitch-complete {
+  0% { filter: hue-rotate(0deg); transform: skewX(0); }
+  25% { filter: hue-rotate(20deg); transform: skewX(1deg); }
+  50% { filter: hue-rotate(-10deg); transform: skewX(-0.5deg); }
+  75% { filter: hue-rotate(5deg); transform: skewX(0.2deg); }
+  100% { filter: hue-rotate(0deg); transform: skewX(0); }
+}
+
+/* ============================================
+   LIQUID GLASS SURFACES
+   ============================================ */
+.glass-surface {
+  background: var(--glass-surface);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid var(--glass-border);
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(255,255,255,0.5);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 8px 32px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.04);
   transform: translateY(-1px);
 }
 
-.btn-glass:active {
-  transform: scale(0.97);
-  box-shadow:
-    0 2px 8px rgba(0, 122, 255, 0.2);
-}
-
-.btn-glass:disabled {
-  opacity: 0.4;
-  cursor: default;
-  transform: none;
-}
-
-/* Secondary glass button */
-.btn-glass-secondary {
-  position: relative;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--glass-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Noto Sans KR', sans-serif;
+/* ============================================
+   MONOSPACE LABEL
+   ============================================ */
+.mono-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
   font-weight: 500;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 14px;
-  padding: 11px 24px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.btn-glass-secondary:hover {
-  background: rgba(0, 0, 0, 0.07);
-  border-color: rgba(0, 0, 0, 0.15);
-}
-
-.btn-glass-secondary:active {
-  transform: scale(0.97);
-}
-
-.btn-glass-secondary:disabled {
-  opacity: 0.4;
-  cursor: default;
-  transform: none;
+.mono-metric {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 /* ============================================
-   AMBIENT BACKGROUND — Light Mode
+   GRADIENT TEXT
    ============================================ */
-.ambient-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
+.text-gradient-ai {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.4;
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ============================================
-   SCROLLBAR — Light
+   SCROLLBAR
    ============================================ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.15); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.3); }
 
-/* ============================================
-   TEXT SELECTION
-   ============================================ */
 ::selection {
-  background: rgba(0, 122, 255, 0.2);
-  color: #1d1d1f;
+  background: rgba(99,102,241,0.2);
+  color: #0f172a;
 }
 
-/* ============================================
-   FOCUS
-   ============================================ */
 *:focus-visible {
-  outline: 3px solid rgba(0, 122, 255, 0.4);
+  outline: 2px solid rgba(99,102,241,0.4);
   outline-offset: 2px;
 }
 
 /* ============================================
-   UTILITIES
+   AMBIENT ORBS
    ============================================ */
-.text-gradient {
-  background: linear-gradient(135deg, #1d1d1f 0%, #515154 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, 20px) scale(1.1); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20px, -30px) scale(1.05); }
+}
+@keyframes float3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(15px, -25px) scale(1.08); }
 }
 
-.text-gradient-blue {
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
-.divider-glass {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0,0,0,0.08) 20%,
-    rgba(0,0,0,0.08) 80%,
-    transparent 100%
-  );
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ============================================
-   CODE STREAMING ANIMATION
+   CODE TERMINAL
    ============================================ */
-@keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.code-cursor::after {
-  content: '▋';
-  color: var(--glass-accent);
-  animation: cursor-blink 1s step-end infinite;
+.code-terminal {
+  background: rgba(15,23,42,0.95);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.6;
 }

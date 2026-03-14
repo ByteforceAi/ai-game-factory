@@ -171,8 +171,50 @@ const tetrisRemixes: RemixPreset[] = [
   },
 ];
 
+// --- Hamburger Dodge Game Remixes ---
+// Actual vars: baseSpeed = 3, spawnRate = 45, lives = 3, lanes = 5, #1a1a2e, #16213e
+const dodgeRemixes: RemixPreset[] = [
+  {
+    id: 'dodge-turbo',
+    label: '터보 모드',
+    icon: '⚡',
+    description: '장애물 속도 2배! 극한의 도전',
+    apply: (html) =>
+      html.replace(/var baseSpeed = 3/, 'var baseSpeed = 6'),
+  },
+  {
+    id: 'dodge-tank',
+    label: '탱크 모드',
+    icon: '🛡️',
+    description: '목숨 5개로 시작! 오래 살아남자',
+    apply: (html) =>
+      html
+        .replace(/var lives = 3/, 'var lives = 5')
+        .replace(/var maxLives = 3/, 'var maxLives = 5'),
+  },
+  {
+    id: 'dodge-neon',
+    label: '네온 테마',
+    icon: '🌈',
+    description: '사이버펑크 네온 배경',
+    apply: (html) =>
+      html
+        .replace(/#1a1a2e/g, '#0d0221')
+        .replace(/#16213e/g, '#150533'),
+  },
+  {
+    id: 'dodge-chaos',
+    label: '카오스 모드',
+    icon: '💥',
+    description: '장애물 폭탄! 스폰 속도 3배',
+    apply: (html) =>
+      html.replace(/var spawnRate = 45/, 'var spawnRate = 15'),
+  },
+];
+
 export const GAME_REMIX_CONFIGS: GameRemixConfig[] = [
   { gameId: 'emoji-burger', presets: burgerRemixes },
+  { gameId: 'burger-dodge', presets: dodgeRemixes },
   { gameId: 'temple-runner', presets: runnerRemixes },
   { gameId: 'tetris', presets: tetrisRemixes },
 ];

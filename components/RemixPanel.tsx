@@ -24,12 +24,9 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
   };
 
   return (
-    <div style={{
+    <div className="glass-surface" style={{
       padding: '20px',
-      background: 'rgba(255,255,255,0.55)',
-      backdropFilter: 'blur(40px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-      borderTop: '1px solid rgba(255,255,255,0.4)',
+      borderTop: '0.5px solid rgba(255,255,255,0.4)',
       maxHeight: '50vh',
       overflowY: 'auto',
     }}>
@@ -39,32 +36,38 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
         justifyContent: 'space-between',
         marginBottom: '16px',
       }}>
-        <h3 style={{
-          color: '#1e1b4b',
-          fontSize: '16px',
-          fontWeight: 600,
-          margin: 0,
-        }}>
-          ✨ 바이브 코딩하기
-        </h3>
+        <div>
+          <span className="mono-label" style={{ fontSize: '9px', letterSpacing: '0.12em' }}>
+            AI CODE MODIFICATION
+          </span>
+          <h3 style={{
+            color: 'var(--text-primary)',
+            fontSize: '15px',
+            fontWeight: 600,
+            margin: '4px 0 0',
+          }}>
+            바이브 코딩
+          </h3>
+        </div>
         <button
           onClick={onBack}
           style={{
             background: 'none',
             border: 'none',
-            color: '#9ca3af',
-            fontSize: '13px',
+            color: 'var(--text-muted)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '11px',
             cursor: 'pointer',
             padding: '4px 8px',
           }}
         >
-          닫기 ✕
+          CLOSE ✕
         </button>
       </div>
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
         gap: '10px',
       }}>
         {presets.map((preset) => (
@@ -72,6 +75,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
             key={preset.id}
             onClick={() => handleApply(preset)}
             disabled={applying !== null}
+            className="glass-card"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -79,38 +83,32 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
               gap: '6px',
               padding: '14px',
               background: applying === preset.id
-                ? 'rgba(99,102,241,0.12)'
+                ? 'rgba(99,102,241,0.1)'
                 : 'rgba(255,255,255,0.5)',
               border: applying === preset.id
-                ? '1px solid rgba(99,102,241,0.4)'
-                : '1px solid rgba(0,0,0,0.06)',
-              borderRadius: '14px',
+                ? '1px solid rgba(99,102,241,0.3)'
+                : '0.5px solid rgba(0,0,0,0.04)',
               cursor: applying ? 'wait' : 'pointer',
               textAlign: 'left',
-              transition: 'all 0.2s',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             }}
           >
-            <span style={{ fontSize: '24px' }}>{preset.icon}</span>
-            <span style={{ color: '#1e1b4b', fontSize: '13px', fontWeight: 600 }}>
+            <span style={{ fontSize: '20px' }}>{preset.icon}</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}>
               {preset.label}
             </span>
-            <span style={{ color: '#6b7280', fontSize: '11px', lineHeight: 1.3 }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.3 }}>
               {preset.description}
             </span>
           </button>
         ))}
       </div>
 
-      <p style={{
-        color: '#9ca3af',
-        fontSize: '11px',
+      <p className="mono-label" style={{
         marginTop: '14px',
         textAlign: 'center',
+        fontSize: '9px',
       }}>
-        프리셋을 선택하면 AI가 코드를 수정합니다
+        ▸ SELECT A PRESET TO MODIFY GAME CODE
       </p>
     </div>
   );
