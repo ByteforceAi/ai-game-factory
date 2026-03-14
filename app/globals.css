@@ -9,205 +9,203 @@
   --ai-violet: #8b5cf6;
   --ai-cyan: #06b6d4;
   --ai-emerald: #10b981;
-  --text-primary: #0f172a;
-  --text-body: #334155;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --glass-surface: rgba(255,255,255,0.72);
-  --glass-border: rgba(255,255,255,0.5);
+  --bg-deep: #050510;
+  --bg-surface: rgba(255,255,255,0.04);
+  --bg-surface-hover: rgba(255,255,255,0.08);
+  --border-dim: rgba(255,255,255,0.06);
+  --border-glow: rgba(99,102,241,0.3);
+  --text-bright: #f1f5f9;
+  --text-body: #cbd5e1;
+  --text-dim: #64748b;
+  --text-muted: #475569;
 }
 
-* {
-  -webkit-tap-highlight-color: transparent;
-}
+* { -webkit-tap-highlight-color: transparent; }
 
 body {
-  background: linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 25%, #fce7f3 50%, #e0f2fe 75%, #ede9fe 100%);
-  background-attachment: fixed;
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', 'Helvetica Neue', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-bright);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================
-   TECH GRID OVERLAY
+   MONOSPACE SYSTEM LABELS
    ============================================ */
-.tech-grid::before {
+.mono-xs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.mono-sm {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.mono-md {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ============================================
+   GLOW TEXT
+   ============================================ */
+.text-glow-indigo {
+  color: var(--ai-indigo);
+  text-shadow: 0 0 20px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.15);
+}
+
+.text-glow-cyan {
+  color: var(--ai-cyan);
+  text-shadow: 0 0 20px rgba(6,182,212,0.4), 0 0 40px rgba(6,182,212,0.15);
+}
+
+.text-glow-emerald {
+  color: var(--ai-emerald);
+  text-shadow: 0 0 20px rgba(16,185,129,0.4);
+}
+
+/* ============================================
+   CINEMATIC CARD
+   ============================================ */
+.card-cinematic {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-cinematic::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  animation: grid-drift 12s linear infinite;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, transparent 50%, rgba(6,182,212,0.03) 100%);
   pointer-events: none;
-  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.4s;
 }
 
-@keyframes grid-drift {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(40px); }
+.card-cinematic:hover {
+  border-color: var(--border-glow);
+  box-shadow:
+    0 0 30px rgba(99,102,241,0.08),
+    0 8px 32px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transform: translateY(-2px);
+}
+
+.card-cinematic:hover::before {
+  opacity: 1;
 }
 
 /* ============================================
-   SHIMMER LINE
+   CINEMATIC BAR (top/bottom HUD)
+   ============================================ */
+.bar-cinematic {
+  background: rgba(5,5,16,0.85);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-color: var(--border-dim);
+}
+
+/* ============================================
+   GLOW BUTTON
+   ============================================ */
+.btn-glow {
+  background: linear-gradient(135deg, var(--ai-indigo), var(--ai-violet));
+  border: none;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+}
+
+.btn-glow:hover {
+  box-shadow: 0 4px 30px rgba(99,102,241,0.5), 0 0 60px rgba(99,102,241,0.15);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   CODE TERMINAL
+   ============================================ */
+.code-terminal {
+  background: rgba(5,5,16,0.95);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* ============================================
+   STATUS DOT
+   ============================================ */
+.status-dot-green {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ai-emerald);
+  box-shadow: 0 0 8px rgba(16,185,129,0.6);
+  animation: dot-glow 2s ease-in-out infinite;
+}
+
+.status-dot-indigo {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ai-indigo);
+  box-shadow: 0 0 8px rgba(99,102,241,0.6);
+  animation: dot-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes dot-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ============================================
+   SHIMMER
    ============================================ */
 .shimmer-line {
   position: relative;
   overflow: hidden;
   height: 1px;
-  background: rgba(99,102,241,0.1);
+  background: rgba(99,102,241,0.15);
 }
-
 .shimmer-line::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
+  top: 0; left: -60%;
+  width: 60%; height: 100%;
   background: linear-gradient(90deg, transparent, var(--ai-indigo), transparent);
   animation: shimmer 3s ease-in-out infinite;
 }
-
 @keyframes shimmer {
   0% { left: -60%; }
   100% { left: 100%; }
 }
 
 /* ============================================
-   STATUS DOT
-   ============================================ */
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ai-emerald);
-  animation: dot-pulse 2s ease-in-out infinite;
-  box-shadow: 0 0 6px rgba(16,185,129,0.4);
-}
-
-.status-dot-active {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ai-indigo);
-  animation: dot-pulse 1.5s ease-in-out infinite;
-  box-shadow: 0 0 6px rgba(99,102,241,0.4);
-}
-
-@keyframes dot-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
-  50% { opacity: 0.4; box-shadow: 0 0 2px currentColor; }
-}
-
-/* ============================================
-   GLITCH COMPLETION EFFECT
+   GLITCH EFFECT
    ============================================ */
 @keyframes glitch-complete {
   0% { filter: hue-rotate(0deg); transform: skewX(0); }
   25% { filter: hue-rotate(20deg); transform: skewX(1deg); }
   50% { filter: hue-rotate(-10deg); transform: skewX(-0.5deg); }
-  75% { filter: hue-rotate(5deg); transform: skewX(0.2deg); }
   100% { filter: hue-rotate(0deg); transform: skewX(0); }
-}
-
-/* ============================================
-   LIQUID GLASS SURFACES
-   ============================================ */
-.glass-surface {
-  background: var(--glass-surface);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 0.5px solid var(--glass-border);
-}
-
-.glass-card {
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 0.5px solid rgba(255,255,255,0.5);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.glass-card:hover {
-  background: rgba(255,255,255,0.7);
-  box-shadow: 0 8px 32px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.04);
-  transform: translateY(-1px);
-}
-
-/* ============================================
-   MONOSPACE LABEL
-   ============================================ */
-.mono-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.mono-metric {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-/* ============================================
-   GRADIENT TEXT
-   ============================================ */
-.text-gradient-ai {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.text-gradient-gold {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ============================================
-   SCROLLBAR
-   ============================================ */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.15); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.3); }
-
-::selection {
-  background: rgba(99,102,241,0.2);
-  color: #0f172a;
-}
-
-*:focus-visible {
-  outline: 2px solid rgba(99,102,241,0.4);
-  outline-offset: 2px;
-}
-
-/* ============================================
-   AMBIENT ORBS
-   ============================================ */
-@keyframes float1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, 20px) scale(1.1); }
-}
-@keyframes float2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-20px, -30px) scale(1.05); }
-}
-@keyframes float3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(15px, -25px) scale(1.08); }
 }
 
 @keyframes blink {
@@ -221,12 +219,12 @@ body {
 }
 
 /* ============================================
-   CODE TERMINAL
+   SCROLLBAR
    ============================================ */
-.code-terminal {
-  background: rgba(15,23,42,0.95);
-  color: #e2e8f0;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  line-height: 1.6;
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.4); }
+
+::selection { background: rgba(99,102,241,0.3); color: #f1f5f9; }
+*:focus-visible { outline: 2px solid rgba(99,102,241,0.5); outline-offset: 2px; }

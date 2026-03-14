@@ -24,9 +24,9 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
   };
 
   return (
-    <div className="glass-surface" style={{
+    <div className="bar-cinematic" style={{
       padding: '20px',
-      borderTop: '0.5px solid rgba(255,255,255,0.4)',
+      borderTop: '1px solid var(--border-dim)',
       maxHeight: '50vh',
       overflowY: 'auto',
     }}>
@@ -37,11 +37,11 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
         marginBottom: '16px',
       }}>
         <div>
-          <span className="mono-label" style={{ fontSize: '9px', letterSpacing: '0.12em' }}>
+          <span className="mono-xs" style={{ fontSize: '9px', letterSpacing: '0.12em' }}>
             AI CODE MODIFICATION
           </span>
           <h3 style={{
-            color: 'var(--text-primary)',
+            color: 'var(--text-bright)',
             fontSize: '15px',
             fontWeight: 600,
             margin: '4px 0 0',
@@ -61,7 +61,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
             padding: '4px 8px',
           }}
         >
-          CLOSE ✕
+          CLOSE
         </button>
       </div>
 
@@ -75,7 +75,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
             key={preset.id}
             onClick={() => handleApply(preset)}
             disabled={applying !== null}
-            className="glass-card"
+            className="card-cinematic"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -84,31 +84,31 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
               padding: '14px',
               background: applying === preset.id
                 ? 'rgba(99,102,241,0.1)'
-                : 'rgba(255,255,255,0.5)',
-              border: applying === preset.id
-                ? '1px solid rgba(99,102,241,0.3)'
-                : '0.5px solid rgba(0,0,0,0.04)',
+                : 'var(--bg-surface)',
+              borderColor: applying === preset.id
+                ? 'var(--border-glow)'
+                : 'var(--border-dim)',
               cursor: applying ? 'wait' : 'pointer',
               textAlign: 'left',
             }}
           >
             <span style={{ fontSize: '20px' }}>{preset.icon}</span>
-            <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}>
+            <span style={{ color: 'var(--text-bright)', fontSize: '13px', fontWeight: 600 }}>
               {preset.label}
             </span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.3 }}>
+            <span style={{ color: 'var(--text-dim)', fontSize: '11px', lineHeight: 1.3 }}>
               {preset.description}
             </span>
           </button>
         ))}
       </div>
 
-      <p className="mono-label" style={{
+      <p className="mono-xs" style={{
         marginTop: '14px',
         textAlign: 'center',
-        fontSize: '9px',
+        fontSize: '8px',
       }}>
-        ▸ SELECT A PRESET TO MODIFY GAME CODE
+        SELECT A PRESET TO MODIFY GAME CODE
       </p>
     </div>
   );

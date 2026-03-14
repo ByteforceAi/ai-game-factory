@@ -170,43 +170,47 @@ export default function Home() {
       minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
+      background: 'var(--bg-deep)',
     }}>
-      {/* Top Bar — Minimal HUD */}
-      <div className="glass-surface" style={{
+      {/* Top Bar — Cinematic HUD */}
+      <div className="bar-cinematic" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '8px 16px',
-        borderBottom: '0.5px solid rgba(255,255,255,0.4)',
+        borderBottom: '1px solid var(--border-dim)',
         flexShrink: 0,
       }}>
         <button
           onClick={handleReset}
           style={{
-            background: 'rgba(0,0,0,0.03)',
-            border: '0.5px solid rgba(0,0,0,0.08)',
-            color: 'var(--text-secondary)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-dim)',
+            color: 'var(--text-dim)',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '11px',
             cursor: 'pointer',
             padding: '6px 12px',
             borderRadius: '8px',
+            transition: 'all 0.3s',
           }}
         >
-          ← EXIT
+          EXIT
         </button>
         <span style={{
-          color: 'var(--text-primary)',
+          color: 'var(--text-bright)',
           fontSize: '14px',
           fontWeight: 600,
+          fontFamily: "'JetBrains Mono', monospace",
+          letterSpacing: '0.05em',
         }}>
           {selectedGame?.title}
         </span>
         <button
           onClick={handleRestart}
           style={{
-            background: 'rgba(99,102,241,0.06)',
-            border: '0.5px solid rgba(99,102,241,0.15)',
+            background: 'rgba(99,102,241,0.1)',
+            border: '1px solid rgba(99,102,241,0.2)',
             color: 'var(--ai-indigo)',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '11px',
@@ -214,9 +218,10 @@ export default function Home() {
             padding: '6px 12px',
             borderRadius: '8px',
             fontWeight: 500,
+            transition: 'all 0.3s',
           }}
         >
-          ↻ RESTART
+          RESTART
         </button>
       </div>
 
@@ -241,9 +246,9 @@ export default function Home() {
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(255,255,255,0.6)',
-            backdropFilter: 'blur(30px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+            background: 'rgba(5,5,16,0.85)',
+            backdropFilter: 'blur(30px) saturate(150%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(150%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -254,7 +259,7 @@ export default function Home() {
             overflowY: 'auto',
             padding: '8vh 20px 20px',
           }}>
-            <span className="mono-label" style={{ fontSize: '10px', letterSpacing: '0.15em' }}>
+            <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)' }}>
               FINAL SCORE
             </span>
             <div style={{
@@ -262,8 +267,10 @@ export default function Home() {
               fontSize: '48px',
               fontWeight: 700,
               lineHeight: 1,
+              color: 'var(--text-bright)',
+              textShadow: '0 0 30px rgba(99,102,241,0.4), 0 0 60px rgba(99,102,241,0.15)',
             }}>
-              <span className="text-gradient-gold">{gameScore}</span>
+              {gameScore}
             </div>
 
             {/* Name input */}
@@ -284,32 +291,25 @@ export default function Home() {
                   maxLength={20}
                   style={{
                     flex: 1,
-                    background: 'rgba(255,255,255,0.7)',
-                    border: '0.5px solid rgba(0,0,0,0.1)',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-dim)',
                     borderRadius: '10px',
                     padding: '10px 14px',
-                    color: 'var(--text-primary)',
+                    color: 'var(--text-bright)',
                     fontSize: '14px',
                     outline: 'none',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    transition: 'border-color 0.3s',
                   }}
                 />
                 <button
                   onClick={handleSubmitScore}
                   disabled={!playerName.trim() || submittingScore}
+                  className="btn-glow"
                   style={{
-                    background: playerName.trim()
-                      ? 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))'
-                      : 'rgba(0,0,0,0.04)',
-                    border: 'none',
-                    color: playerName.trim() ? '#fff' : 'var(--text-muted)',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    padding: '10px 16px',
-                    borderRadius: '10px',
+                    opacity: playerName.trim() ? 1 : 0.4,
                     cursor: playerName.trim() ? 'pointer' : 'default',
                     whiteSpace: 'nowrap',
-                    boxShadow: playerName.trim() ? '0 4px 12px rgba(99,102,241,0.25)' : 'none',
                   }}
                 >
                   {submittingScore ? '...' : 'SUBMIT'}
@@ -318,24 +318,22 @@ export default function Home() {
             ) : myRank && (
               <div style={{
                 fontFamily: "'JetBrains Mono', monospace",
-                color: 'var(--ai-emerald)',
                 fontSize: '13px',
                 fontWeight: 600,
               }}>
-                RANKED #{myRank}
+                <span className="text-glow-emerald">RANKED #{myRank}</span>
               </div>
             )}
 
             {/* Leaderboard */}
             {leaderboard.length > 0 && (
-              <div className="glass-card" style={{
+              <div className="card-cinematic" style={{
                 width: '100%',
                 maxWidth: '300px',
                 marginTop: '8px',
                 padding: '14px',
-                borderRadius: '14px',
               }}>
-                <div className="mono-label" style={{ marginBottom: '10px', fontSize: '9px', letterSpacing: '0.12em' }}>
+                <div className="mono-xs" style={{ marginBottom: '10px', fontSize: '9px', letterSpacing: '0.12em' }}>
                   LEADERBOARD
                 </div>
                 {leaderboard.slice(0, 10).map((entry, i) => {
@@ -347,7 +345,7 @@ export default function Home() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '5px 0',
-                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid var(--border-dim)' : 'none',
                       borderLeft: i < 3 ? `2px solid ${rankColors[i]}` : '2px solid transparent',
                       paddingLeft: '8px',
                     }}>
@@ -393,10 +391,8 @@ export default function Home() {
                 onClick={() => setShowShare(true)}
                 style={{
                   flex: 1,
-                  background: 'rgba(255,255,255,0.6)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '0.5px solid rgba(99,102,241,0.2)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-glow)',
                   color: 'var(--ai-indigo)',
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '12px',
@@ -404,27 +400,21 @@ export default function Home() {
                   padding: '12px',
                   borderRadius: '12px',
                   cursor: 'pointer',
+                  transition: 'all 0.3s',
                 }}
               >
-                ↗ SHARE
+                SHARE
               </button>
               <button
                 onClick={handleRestart}
+                className="btn-glow"
                 style={{
                   flex: 1,
-                  background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
-                  border: 'none',
-                  color: '#fff',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '12px',
-                  fontWeight: 600,
                   padding: '12px',
                   borderRadius: '12px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 16px rgba(99,102,241,0.25)',
                 }}
               >
-                ↻ RETRY
+                RETRY
               </button>
             </div>
           </div>
@@ -432,11 +422,11 @@ export default function Home() {
       </div>
 
       {/* Bottom Dev Tools Bar */}
-      <div className="glass-surface" style={{
+      <div className="bar-cinematic" style={{
         display: 'flex',
         gap: '8px',
         padding: '8px 16px',
-        borderTop: '0.5px solid rgba(255,255,255,0.4)',
+        borderTop: '1px solid var(--border-dim)',
         flexShrink: 0,
         alignItems: 'center',
       }}>
@@ -444,15 +434,16 @@ export default function Home() {
           onClick={() => setShowCode(!showCode)}
           style={{
             flex: 1,
-            background: showCode ? 'rgba(99,102,241,0.1)' : 'rgba(0,0,0,0.03)',
-            border: showCode ? '0.5px solid rgba(99,102,241,0.25)' : '0.5px solid rgba(0,0,0,0.06)',
-            color: showCode ? 'var(--ai-indigo)' : 'var(--text-secondary)',
+            background: showCode ? 'rgba(99,102,241,0.1)' : 'var(--bg-surface)',
+            border: showCode ? '1px solid rgba(99,102,241,0.25)' : '1px solid var(--border-dim)',
+            color: showCode ? 'var(--ai-indigo)' : 'var(--text-dim)',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '11px',
             fontWeight: 500,
             padding: '10px',
             borderRadius: '10px',
             cursor: 'pointer',
+            transition: 'all 0.3s',
           }}
         >
           {'</>'} CODE
@@ -461,20 +452,21 @@ export default function Home() {
           onClick={() => setShowRemix(!showRemix)}
           style={{
             flex: 1,
-            background: showRemix ? 'rgba(16,185,129,0.1)' : 'rgba(0,0,0,0.03)',
-            border: showRemix ? '0.5px solid rgba(16,185,129,0.25)' : '0.5px solid rgba(0,0,0,0.06)',
-            color: showRemix ? 'var(--ai-emerald)' : 'var(--text-secondary)',
+            background: showRemix ? 'rgba(16,185,129,0.1)' : 'var(--bg-surface)',
+            border: showRemix ? '1px solid rgba(16,185,129,0.25)' : '1px solid var(--border-dim)',
+            color: showRemix ? 'var(--ai-emerald)' : 'var(--text-dim)',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '11px',
             fontWeight: 500,
             padding: '10px',
             borderRadius: '10px',
             cursor: 'pointer',
+            transition: 'all 0.3s',
           }}
         >
-          ◇ REMIX
+          VIBE CODING
         </button>
-        <span className="mono-metric" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>
+        <span className="mono-xs" style={{ fontSize: '10px', whiteSpace: 'nowrap' }}>
           {lineCount} LOC
         </span>
       </div>
@@ -492,17 +484,17 @@ export default function Home() {
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '8px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid var(--border-dim)',
               paddingBottom: '8px',
             }}>
-              <span className="mono-label" style={{ color: '#64748b' }}>
+              <span className="mono-xs" style={{ color: 'var(--text-dim)' }}>
                 {selectedGame?.title}.html — {lineCount} lines
               </span>
               <button
                 onClick={() => setShowCode(false)}
-                style={{ background: 'none', border: 'none', color: '#475569', fontSize: '12px', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace" }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace" }}
               >
-                ✕
+                CLOSE
               </button>
             </div>
             <pre style={{

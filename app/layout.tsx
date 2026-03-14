@@ -6,18 +6,18 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#e8eaff',
+  themeColor: '#050510',
 };
 
 export const metadata: Metadata = {
-  title: 'AI Game Factory — 게임 시뮬레이터',
-  description: '게임을 선택하면 AI가 코드를 생성합니다. 이모지 햄버거, 3D 러너, 테트리스를 직접 만들어보세요!',
-  keywords: ['AI', '게임 생성', 'HTML5 게임', '시뮬레이터', '게임 팩토리'],
+  title: 'VIBE CODING SIMULATOR — AI Game Factory',
+  description: 'AI가 실시간으로 게임을 만드는 바이브 코딩 시뮬레이터. 직접 체험해보세요!',
+  keywords: ['AI', '바이브 코딩', 'HTML5 게임', '시뮬레이터', '게임 팩토리'],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'AI게임',
+    title: 'VIBE SIM',
   },
 };
 
@@ -32,8 +32,8 @@ export default function RootLayout({
         margin: 0,
         padding: 0,
         minHeight: '100dvh',
-        background: 'linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 25%, #fce7f3 50%, #e0f2fe 75%, #ede9fe 100%)',
-        backgroundAttachment: 'fixed',
+        background: '#050510',
+        color: '#e2e8f0',
       }}>
         <PWARegister />
         {children}
