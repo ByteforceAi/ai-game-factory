@@ -31,7 +31,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
         const qr = await QRCode.toDataURL(url, {
           width: 200,
           margin: 2,
-          color: { dark: '#e6edf3', light: '#0d1117' },
+          color: { dark: '#1e1b4b', light: '#ffffff' },
         });
         setQrDataUrl(qr);
       } catch {
@@ -50,7 +50,6 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const input = document.createElement('input');
       input.value = shareUrl;
       document.body.appendChild(input);
@@ -71,7 +70,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
         url: shareUrl,
       });
     } catch {
-      // User cancelled or share failed — ignore
+      // User cancelled — ignore
     }
   };
 
@@ -83,7 +82,9 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.8)',
+        background: 'rgba(255,255,255,0.5)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -94,12 +95,15 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#161b22',
-          borderRadius: '20px',
+          background: 'rgba(255,255,255,0.75)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          borderRadius: '24px',
           padding: '28px 24px',
           maxWidth: '360px',
           width: '100%',
-          border: '1px solid #30363d',
+          border: '1px solid rgba(255,255,255,0.6)',
+          boxShadow: '0 16px 64px rgba(139,92,246,0.12), 0 4px 16px rgba(0,0,0,0.06)',
         }}
       >
         {/* Header */}
@@ -109,7 +113,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
           alignItems: 'center',
           marginBottom: '20px',
         }}>
-          <h3 style={{ color: '#e6edf3', fontSize: '17px', fontWeight: 600, margin: 0 }}>
+          <h3 style={{ color: '#1e1b4b', fontSize: '17px', fontWeight: 600, margin: 0 }}>
             게임 공유하기
           </h3>
           <button
@@ -117,7 +121,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
             style={{
               background: 'none',
               border: 'none',
-              color: '#8b949e',
+              color: '#9ca3af',
               fontSize: '16px',
               cursor: 'pointer',
               padding: '4px',
@@ -128,7 +132,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
         </div>
 
         {loading && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#8b949e' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#6b7280' }}>
             <div style={{ fontSize: '24px', marginBottom: '12px' }}>
               <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
             </div>
@@ -137,7 +141,7 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
         )}
 
         {error && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#f85149' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#dc2626' }}>
             {error}
           </div>
         )}
@@ -152,23 +156,24 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
                 style={{
                   width: '200px',
                   height: '200px',
-                  borderRadius: '12px',
-                  border: '1px solid #30363d',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
                 }}
               />
             </div>
 
             {/* URL */}
             <div style={{
-              background: '#0d1117',
-              borderRadius: '10px',
+              background: 'rgba(99,102,241,0.06)',
+              borderRadius: '12px',
               padding: '10px 14px',
               marginBottom: '16px',
-              border: '1px solid #21262d',
+              border: '1px solid rgba(99,102,241,0.12)',
               overflow: 'hidden',
             }}>
               <span style={{
-                color: '#58a6ff',
+                color: '#6366f1',
                 fontSize: '12px',
                 wordBreak: 'break-all',
                 fontFamily: "'Fira Code', monospace",
@@ -184,18 +189,17 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
                 style={{
                   flex: 1,
                   background: copied
-                    ? 'rgba(63,185,80,0.15)'
-                    : 'rgba(88,166,255,0.15)',
-                  border: copied
-                    ? '1px solid #3fb950'
-                    : '1px solid #58a6ff',
-                  color: copied ? '#3fb950' : '#58a6ff',
+                    ? 'linear-gradient(135deg, #22c55e, #16a34a)'
+                    : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  border: 'none',
+                  color: '#fff',
                   fontSize: '14px',
                   fontWeight: 600,
                   padding: '12px',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(99,102,241,0.2)',
                 }}
               >
                 {copied ? '✓ 복사됨!' : '📋 링크 복사'}
@@ -206,14 +210,15 @@ export default function ShareModal({ gameHtml, gameTitle, onClose }: ShareModalP
                   onClick={handleNativeShare}
                   style={{
                     flex: 1,
-                    background: 'rgba(136,108,228,0.15)',
-                    border: '1px solid #8b6ce4',
-                    color: '#8b6ce4',
+                    background: 'rgba(255,255,255,0.6)',
+                    border: '1px solid rgba(139,92,246,0.3)',
+                    color: '#7c3aed',
                     fontSize: '14px',
                     fontWeight: 600,
                     padding: '12px',
-                    borderRadius: '12px',
+                    borderRadius: '14px',
                     cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(139,92,246,0.08)',
                   }}
                 >
                   📤 공유

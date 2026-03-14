@@ -173,39 +173,48 @@ export default function Home() {
     );
   }
 
+  // --- Glass style constants ---
+  const glassBar = {
+    background: 'rgba(255,255,255,0.55)',
+    backdropFilter: 'blur(40px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+    borderColor: 'rgba(255,255,255,0.4)',
+  };
+
   return (
     <div style={{
       minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
-      background: '#0d1117',
     }}>
-      {/* Top Bar */}
+      {/* Top Bar — frosted glass */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 16px',
-        borderBottom: '1px solid #21262d',
-        background: '#161b22',
+        borderBottom: `1px solid ${glassBar.borderColor}`,
+        background: glassBar.background,
+        backdropFilter: glassBar.backdropFilter,
+        WebkitBackdropFilter: glassBar.WebkitBackdropFilter,
         flexShrink: 0,
       }}>
         <button
           onClick={handleReset}
           style={{
-            background: 'none',
-            border: 'none',
-            color: '#8b949e',
+            background: 'rgba(0,0,0,0.04)',
+            border: '1px solid rgba(0,0,0,0.08)',
+            color: '#6b7280',
             fontSize: '13px',
             cursor: 'pointer',
-            padding: '6px 10px',
-            borderRadius: '8px',
+            padding: '6px 12px',
+            borderRadius: '10px',
           }}
         >
           ← 나가기
         </button>
         <span style={{
-          color: '#e6edf3',
+          color: '#1e1b4b',
           fontSize: '15px',
           fontWeight: 600,
         }}>
@@ -214,13 +223,14 @@ export default function Home() {
         <button
           onClick={handleRestart}
           style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            color: '#e6edf3',
+            background: 'rgba(99,102,241,0.08)',
+            border: '1px solid rgba(99,102,241,0.15)',
+            color: '#6366f1',
             fontSize: '13px',
             cursor: 'pointer',
             padding: '6px 12px',
-            borderRadius: '8px',
+            borderRadius: '10px',
+            fontWeight: 500,
           }}
         >
           ↻ 다시
@@ -247,23 +257,34 @@ export default function Home() {
           }}
         />
 
+        {/* Game Over Overlay — frosted glass */}
         {showLeaderboard && (
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(0,0,0,0.9)',
+            background: 'rgba(255,255,255,0.6)',
+            backdropFilter: 'blur(30px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(180%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            paddingTop: '10vh',
+            paddingTop: '8vh',
             gap: '12px',
             zIndex: 10,
             overflowY: 'auto',
-            padding: '10vh 20px 20px',
+            padding: '8vh 20px 20px',
           }}>
             <div style={{ fontSize: '40px' }}>🏆</div>
-            <div style={{ color: '#FFD700', fontSize: '28px', fontWeight: 700 }}>
+            <div style={{
+              color: '#1e1b4b',
+              fontSize: '28px',
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
               {gameScore} 점
             </div>
 
@@ -285,13 +306,14 @@ export default function Home() {
                   maxLength={20}
                   style={{
                     flex: 1,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid #30363d',
-                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.7)',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    borderRadius: '12px',
                     padding: '10px 14px',
-                    color: '#e6edf3',
+                    color: '#1e1b4b',
                     fontSize: '14px',
                     outline: 'none',
+                    backdropFilter: 'blur(10px)',
                   }}
                 />
                 <button
@@ -299,14 +321,14 @@ export default function Home() {
                   disabled={!playerName.trim() || submittingScore}
                   style={{
                     background: playerName.trim()
-                      ? 'linear-gradient(135deg, #FFD700, #FFA500)'
-                      : 'rgba(255,255,255,0.06)',
+                      ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                      : 'rgba(0,0,0,0.06)',
                     border: 'none',
-                    color: playerName.trim() ? '#000' : '#484f58',
+                    color: playerName.trim() ? '#fff' : '#9ca3af',
                     fontSize: '13px',
                     fontWeight: 600,
                     padding: '10px 16px',
-                    borderRadius: '10px',
+                    borderRadius: '12px',
                     cursor: playerName.trim() ? 'pointer' : 'default',
                     whiteSpace: 'nowrap',
                   }}
@@ -315,7 +337,7 @@ export default function Home() {
                 </button>
               </div>
             ) : myRank && (
-              <div style={{ color: '#3fb950', fontSize: '14px', fontWeight: 500 }}>
+              <div style={{ color: '#16a34a', fontSize: '14px', fontWeight: 600 }}>
                 🎉 {myRank}위에 등록되었습니다!
               </div>
             )}
@@ -326,13 +348,16 @@ export default function Home() {
                 width: '100%',
                 maxWidth: '300px',
                 marginTop: '8px',
-                background: 'rgba(255,255,255,0.04)',
-                borderRadius: '12px',
-                padding: '12px',
-                border: '1px solid #21262d',
+                background: 'rgba(255,255,255,0.5)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderRadius: '16px',
+                padding: '14px',
+                border: '1px solid rgba(255,255,255,0.5)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
               }}>
                 <div style={{
-                  color: '#8b949e',
+                  color: '#6b7280',
                   fontSize: '11px',
                   fontWeight: 600,
                   textTransform: 'uppercase' as const,
@@ -350,10 +375,10 @@ export default function Home() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '6px 0',
-                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                     }}>
                       <span style={{
-                        color: isMe ? '#FFD700' : '#e6edf3',
+                        color: isMe ? '#d97706' : '#1e1b4b',
                         fontSize: '13px',
                         fontWeight: isMe ? 700 : 400,
                       }}>
@@ -363,7 +388,7 @@ export default function Home() {
                         {entry.name}
                       </span>
                       <span style={{
-                        color: isMe ? '#FFD700' : '#8b949e',
+                        color: isMe ? '#d97706' : '#6b7280',
                         fontSize: '13px',
                         fontWeight: isMe ? 700 : 400,
                       }}>
@@ -387,14 +412,17 @@ export default function Home() {
                 onClick={() => setShowShare(true)}
                 style={{
                   flex: 1,
-                  background: 'rgba(136,108,228,0.15)',
-                  border: '1px solid #8b6ce4',
-                  color: '#8b6ce4',
+                  background: 'rgba(255,255,255,0.6)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(139,92,246,0.3)',
+                  color: '#7c3aed',
                   fontSize: '14px',
                   fontWeight: 600,
                   padding: '12px',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(139,92,246,0.08)',
                 }}
               >
                 📤 공유
@@ -403,14 +431,15 @@ export default function Home() {
                 onClick={handleRestart}
                 style={{
                   flex: 1,
-                  background: 'linear-gradient(135deg, #58a6ff, #388bfd)',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   border: 'none',
                   color: '#fff',
                   fontSize: '14px',
                   fontWeight: 600,
                   padding: '12px',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(99,102,241,0.25)',
                 }}
               >
                 🔄 다시
@@ -420,26 +449,28 @@ export default function Home() {
         )}
       </div>
 
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Bar — frosted glass */}
       <div style={{
         display: 'flex',
         gap: '8px',
         padding: '10px 16px',
-        borderTop: '1px solid #21262d',
-        background: '#161b22',
+        borderTop: `1px solid ${glassBar.borderColor}`,
+        background: glassBar.background,
+        backdropFilter: glassBar.backdropFilter,
+        WebkitBackdropFilter: glassBar.WebkitBackdropFilter,
         flexShrink: 0,
       }}>
         <button
           onClick={() => setShowCode(!showCode)}
           style={{
             flex: 1,
-            background: showCode ? 'rgba(88,166,255,0.15)' : 'rgba(255,255,255,0.06)',
-            border: showCode ? '1px solid #58a6ff' : '1px solid #21262d',
-            color: showCode ? '#58a6ff' : '#8b949e',
+            background: showCode ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)',
+            border: showCode ? '1px solid rgba(99,102,241,0.3)' : '1px solid rgba(0,0,0,0.08)',
+            color: showCode ? '#6366f1' : '#6b7280',
             fontSize: '13px',
             fontWeight: 500,
             padding: '10px',
-            borderRadius: '10px',
+            borderRadius: '12px',
             cursor: 'pointer',
           }}
         >
@@ -449,13 +480,13 @@ export default function Home() {
           onClick={() => setShowRemix(!showRemix)}
           style={{
             flex: 1,
-            background: showRemix ? 'rgba(63,185,80,0.15)' : 'rgba(255,255,255,0.06)',
-            border: showRemix ? '1px solid #3fb950' : '1px solid #21262d',
-            color: showRemix ? '#3fb950' : '#8b949e',
+            background: showRemix ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.04)',
+            border: showRemix ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(0,0,0,0.08)',
+            color: showRemix ? '#059669' : '#6b7280',
             fontSize: '13px',
             fontWeight: 500,
             padding: '10px',
-            borderRadius: '10px',
+            borderRadius: '12px',
             cursor: 'pointer',
           }}
         >
@@ -463,12 +494,15 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Code Panel */}
       {showCode && (
         <div style={{
           maxHeight: '40vh',
           overflow: 'auto',
-          background: '#0d1117',
-          borderTop: '1px solid #21262d',
+          background: 'rgba(255,255,255,0.45)',
+          backdropFilter: 'blur(30px)',
+          WebkitBackdropFilter: 'blur(30px)',
+          borderTop: '1px solid rgba(255,255,255,0.4)',
           padding: '12px 16px',
           flexShrink: 0,
         }}>
@@ -478,18 +512,18 @@ export default function Home() {
             alignItems: 'center',
             marginBottom: '8px',
           }}>
-            <span style={{ color: '#8b949e', fontSize: '12px' }}>
+            <span style={{ color: '#6b7280', fontSize: '12px' }}>
               {selectedGame?.title}.html — {gameCode.split('\n').length} lines
             </span>
             <button
               onClick={() => setShowCode(false)}
-              style={{ background: 'none', border: 'none', color: '#484f58', fontSize: '13px', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '13px', cursor: 'pointer' }}
             >
               ✕
             </button>
           </div>
           <pre style={{
-            color: '#a5d6ff',
+            color: '#312e81',
             fontSize: '10px',
             lineHeight: 1.5,
             margin: 0,

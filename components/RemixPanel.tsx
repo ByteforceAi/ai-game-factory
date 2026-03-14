@@ -17,7 +17,6 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
   const handleApply = (preset: RemixPreset) => {
     setApplying(preset.id);
     const modified = preset.apply(gameHtml);
-    // Small delay for feel
     setTimeout(() => {
       onApplyRemix(modified, preset.label);
       setApplying(null);
@@ -27,8 +26,10 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
   return (
     <div style={{
       padding: '20px',
-      background: '#161b22',
-      borderTop: '1px solid #21262d',
+      background: 'rgba(255,255,255,0.55)',
+      backdropFilter: 'blur(40px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+      borderTop: '1px solid rgba(255,255,255,0.4)',
       maxHeight: '50vh',
       overflowY: 'auto',
     }}>
@@ -39,7 +40,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
         marginBottom: '16px',
       }}>
         <h3 style={{
-          color: '#e6edf3',
+          color: '#1e1b4b',
           fontSize: '16px',
           fontWeight: 600,
           margin: 0,
@@ -51,7 +52,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
           style={{
             background: 'none',
             border: 'none',
-            color: '#8b949e',
+            color: '#9ca3af',
             fontSize: '13px',
             cursor: 'pointer',
             padding: '4px 8px',
@@ -78,22 +79,25 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
               gap: '6px',
               padding: '14px',
               background: applying === preset.id
-                ? 'rgba(88,166,255,0.15)'
-                : 'rgba(255,255,255,0.04)',
+                ? 'rgba(99,102,241,0.12)'
+                : 'rgba(255,255,255,0.5)',
               border: applying === preset.id
-                ? '1px solid #58a6ff'
-                : '1px solid #21262d',
-              borderRadius: '12px',
+                ? '1px solid rgba(99,102,241,0.4)'
+                : '1px solid rgba(0,0,0,0.06)',
+              borderRadius: '14px',
               cursor: applying ? 'wait' : 'pointer',
               textAlign: 'left',
               transition: 'all 0.2s',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             }}
           >
             <span style={{ fontSize: '24px' }}>{preset.icon}</span>
-            <span style={{ color: '#e6edf3', fontSize: '13px', fontWeight: 600 }}>
+            <span style={{ color: '#1e1b4b', fontSize: '13px', fontWeight: 600 }}>
               {preset.label}
             </span>
-            <span style={{ color: '#8b949e', fontSize: '11px', lineHeight: 1.3 }}>
+            <span style={{ color: '#6b7280', fontSize: '11px', lineHeight: 1.3 }}>
               {preset.description}
             </span>
           </button>
@@ -101,7 +105,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
       </div>
 
       <p style={{
-        color: '#484f58',
+        color: '#9ca3af',
         fontSize: '11px',
         marginTop: '14px',
         textAlign: 'center',

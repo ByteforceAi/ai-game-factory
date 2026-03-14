@@ -55,17 +55,38 @@ export default function CodeStreamView({
       minHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
-      background: '#0d1117',
-      color: '#e6edf3',
-      fontFamily: "'Fira Code', 'Courier New', monospace",
+      position: 'relative',
+      overflow: 'hidden',
     }}>
-      {/* Top Bar */}
+      {/* Gradient orbs behind glass */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+      }}>
+        <div style={{
+          position: 'absolute', top: '-10%', left: '10%',
+          width: '50vw', height: '50vw', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%)',
+          filter: 'blur(60px)', animation: 'float1 8s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '0', right: '5%',
+          width: '45vw', height: '45vw', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 70%)',
+          filter: 'blur(60px)', animation: 'float2 10s ease-in-out infinite',
+        }} />
+      </div>
+
+      {/* Top Bar — frosted glass */}
       <div style={{
         padding: '16px 20px',
-        borderBottom: '1px solid #21262d',
+        borderBottom: '1px solid rgba(255,255,255,0.4)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
+        background: 'rgba(255,255,255,0.5)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        position: 'relative', zIndex: 1,
       }}>
         <div style={{
           display: 'flex',
@@ -75,15 +96,15 @@ export default function CodeStreamView({
           <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#febc2e' }} />
           <span style={{ width: 12, height: 12, borderRadius: '50%', background: '#28c840' }} />
         </div>
-        <span style={{ color: '#8b949e', fontSize: '13px', flex: 1 }}>
+        <span style={{ color: '#6b7280', fontSize: '13px', flex: 1 }}>
           {gameTitle}.html — AI Game Factory
         </span>
-        <span style={{ color: '#58a6ff', fontSize: '12px' }}>
+        <span style={{ color: '#6366f1', fontSize: '12px', fontWeight: 500 }}>
           {lineCount} lines
         </span>
       </div>
 
-      {/* Code Area */}
+      {/* Code Area — dark code on light frosted glass */}
       <pre
         ref={codeRef}
         style={{
@@ -93,9 +114,14 @@ export default function CodeStreamView({
           margin: 0,
           fontSize: '11px',
           lineHeight: 1.6,
-          color: '#a5d6ff',
+          color: '#312e81',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-all',
+          background: 'rgba(255,255,255,0.3)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          position: 'relative', zIndex: 1,
+          fontFamily: "'Fira Code', 'Courier New', monospace",
         }}
       >
         {code}
@@ -104,24 +130,28 @@ export default function CodeStreamView({
             display: 'inline-block',
             width: '8px',
             height: '16px',
-            background: '#58a6ff',
+            background: '#6366f1',
             animation: 'blink 1s infinite',
             marginLeft: '2px',
             verticalAlign: 'middle',
+            borderRadius: '2px',
           }} />
         )}
       </pre>
 
-      {/* Bottom Status Bar */}
+      {/* Bottom Status Bar — frosted glass */}
       <div style={{
         padding: '14px 20px',
-        borderTop: '1px solid #21262d',
-        background: '#161b22',
+        borderTop: '1px solid rgba(255,255,255,0.4)',
+        background: 'rgba(255,255,255,0.55)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        position: 'relative', zIndex: 1,
       }}>
         {/* Progress Bar */}
         <div style={{
           height: '4px',
-          background: '#21262d',
+          background: 'rgba(99,102,241,0.15)',
           borderRadius: '2px',
           overflow: 'hidden',
           marginBottom: '10px',
@@ -130,8 +160,8 @@ export default function CodeStreamView({
             height: '100%',
             width: `${progress}%`,
             background: done
-              ? 'linear-gradient(90deg, #28c840, #3fb950)'
-              : 'linear-gradient(90deg, #58a6ff, #79c0ff)',
+              ? 'linear-gradient(90deg, #22c55e, #4ade80)'
+              : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
             borderRadius: '2px',
             transition: 'width 0.3s ease',
           }} />
@@ -146,8 +176,9 @@ export default function CodeStreamView({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            color: done ? '#3fb950' : '#8b949e',
+            color: done ? '#16a34a' : '#6b7280',
             fontSize: '13px',
+            fontWeight: 500,
           }}>
             {done ? (
               <>
@@ -161,14 +192,14 @@ export default function CodeStreamView({
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#58a6ff',
+                  background: '#6366f1',
                   animation: 'pulse 1.5s infinite',
                 }} />
                 {status}
               </>
             )}
           </div>
-          <span style={{ color: '#484f58', fontSize: '12px' }}>
+          <span style={{ color: '#9ca3af', fontSize: '12px', fontWeight: 500 }}>
             {progress}%
           </span>
         </div>
@@ -182,6 +213,14 @@ export default function CodeStreamView({
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
+        }
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(30px, 20px) scale(1.1); }
+        }
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-20px, -30px) scale(1.05); }
         }
       `}</style>
     </div>

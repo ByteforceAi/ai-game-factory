@@ -19,7 +19,8 @@
 }
 
 body {
-  background: var(--glass-bg);
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 25%, #fce7f3 50%, #e0f2fe 75%, #ede9fe 100%);
+  background-attachment: fixed;
   color: var(--glass-text);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;

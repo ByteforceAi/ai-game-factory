@@ -6,7 +6,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0d1117',
+  themeColor: '#e8eaff',
 };
 
 export const metadata: Metadata = {
@@ -28,7 +28,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body style={{ margin: 0, padding: 0, background: '#0d1117', minHeight: '100dvh' }}>
+      <body style={{
+        margin: 0,
+        padding: 0,
+        minHeight: '100dvh',
+        background: 'linear-gradient(135deg, #e0e7ff 0%, #f0e6ff 25%, #fce7f3 50%, #e0f2fe 75%, #ede9fe 100%)',
+        backgroundAttachment: 'fixed',
+      }}>
         <PWARegister />
         {children}
       </body>
