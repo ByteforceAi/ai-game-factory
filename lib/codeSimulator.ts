@@ -1,7 +1,7 @@
 // Code Streaming Simulator
 // Simulates AI code generation by streaming pre-built HTML line by line
 
-const STATUS_MESSAGES = [
+export const GENERATE_STATUS_MESSAGES = [
   '게임 엔진 초기화 중...',
   'HTML5 캔버스 설정 중...',
   '렌더링 파이프라인 구성 중...',
@@ -14,6 +14,17 @@ const STATUS_MESSAGES = [
   '최종 빌드 컴파일 중...',
 ];
 
+export const VIBE_STATUS_MESSAGES = [
+  'AI가 코드를 분석 중...',
+  '수정할 부분을 찾는 중...',
+  '게임 로직 업그레이드 중...',
+  '새로운 파라미터 적용 중...',
+  '렌더링 최적화 중...',
+  '변경사항 컴파일 중...',
+  '테스트 실행 중...',
+  '최종 빌드 완료 중...',
+];
+
 export interface SimulationCallbacks {
   onCodeChunk: (code: string) => void;
   onStatusChange: (status: string) => void;
@@ -24,7 +35,8 @@ export interface SimulationCallbacks {
 export function simulateCodeGeneration(
   gameHtml: string,
   callbacks: SimulationCallbacks,
-  durationMs: number = 6000
+  durationMs: number = 6000,
+  statusMessages: string[] = GENERATE_STATUS_MESSAGES
 ): { cancel: () => void } {
   const lines = gameHtml.split('\n');
   const totalLines = lines.length;
@@ -36,11 +48,11 @@ export function simulateCodeGeneration(
 
   const statusInterval = setInterval(() => {
     if (cancelled) return;
-    statusIndex = (statusIndex + 1) % STATUS_MESSAGES.length;
-    callbacks.onStatusChange(STATUS_MESSAGES[statusIndex]);
+    statusIndex = (statusIndex + 1) % statusMessages.length;
+    callbacks.onStatusChange(statusMessages[statusIndex]);
   }, 800);
 
-  callbacks.onStatusChange(STATUS_MESSAGES[0]);
+  callbacks.onStatusChange(statusMessages[0]);
 
   function easeInOut(t: number): number {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;

@@ -1,15 +1,25 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { simulateCodeGeneration } from '@/lib/codeSimulator';
+import { simulateCodeGeneration, GENERATE_STATUS_MESSAGES } from '@/lib/codeSimulator';
 
 interface CodeStreamViewProps {
   gameHtml: string;
   gameTitle: string;
   onComplete: (html: string) => void;
+  duration?: number;
+  statusMessages?: string[];
+  completionText?: string;
 }
 
-export default function CodeStreamView({ gameHtml, gameTitle, onComplete }: CodeStreamViewProps) {
+export default function CodeStreamView({
+  gameHtml,
+  gameTitle,
+  onComplete,
+  duration = 6000,
+  statusMessages = GENERATE_STATUS_MESSAGES,
+  completionText = '게임 생성 완료!',
+}: CodeStreamViewProps) {
   const [code, setCode] = useState('');
   const [status, setStatus] = useState('게임 엔진 초기화 중...');
   const [progress, setProgress] = useState(0);
@@ -31,11 +41,12 @@ export default function CodeStreamView({ gameHtml, gameTitle, onComplete }: Code
         setDone(true);
         setTimeout(() => onComplete(fullCode), 800);
       },
-    }, 6000);
+    }, duration, statusMessages);
 
     cancelRef.current = cancel;
     return () => cancel();
-  }, [gameHtml, onComplete]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameHtml, onComplete, duration]);
 
   const lineCount = code.split('\n').length;
 
@@ -141,7 +152,7 @@ export default function CodeStreamView({ gameHtml, gameTitle, onComplete }: Code
             {done ? (
               <>
                 <span style={{ fontSize: '16px' }}>✅</span>
-                게임 생성 완료!
+                {completionText}
               </>
             ) : (
               <>

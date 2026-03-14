@@ -7,6 +7,7 @@ import GameSelector from '@/components/GameSelector';
 import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
 import ShareModal from '@/components/ShareModal';
+import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
 
 interface LeaderboardEntry {
   name: string;
@@ -31,6 +32,9 @@ export default function Home() {
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [myRank, setMyRank] = useState<number | null>(null);
+  const [vibeGenerating, setVibeGenerating] = useState(false);
+  const [pendingVibeHtml, setPendingVibeHtml] = useState<string | null>(null);
+  const [vibePresetLabel, setVibePresetLabel] = useState('');
 
   const writeGameToIframe = useCallback((html: string) => {
     if (!iframeRef.current) return;
@@ -139,11 +143,21 @@ export default function Home() {
     setLeaderboard([]);
   };
 
-  const handleApplyRemix = (newHtml: string) => {
-    setGameCode(newHtml);
+  const handleApplyRemix = (newHtml: string, presetLabel: string) => {
     setShowRemix(false);
-    writeGameToIframe(newHtml);
+    setShowCode(false);
+    setPendingVibeHtml(newHtml);
+    setVibePresetLabel(presetLabel);
+    setVibeGenerating(true);
   };
+
+  const handleVibeComplete = useCallback((html: string) => {
+    setGameCode(html);
+    setVibeGenerating(false);
+    setPendingVibeHtml(null);
+    setVibePresetLabel('');
+    setTimeout(() => writeGameToIframe(html), 100);
+  }, [writeGameToIframe]);
 
   if (view === 'select') {
     return <GameSelector onSelect={handleSelectGame} />;
@@ -503,6 +517,23 @@ export default function Home() {
           gameTitle={selectedGame.title}
           onClose={() => setShowShare(false)}
         />
+      )}
+
+      {vibeGenerating && pendingVibeHtml && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 50,
+        }}>
+          <CodeStreamView
+            gameHtml={pendingVibeHtml}
+            gameTitle={`${selectedGame?.title} — ${vibePresetLabel}`}
+            onComplete={handleVibeComplete}
+            duration={3500}
+            statusMessages={VIBE_STATUS_MESSAGES}
+            completionText="바이브 코딩 완료!"
+          />
+        </div>
       )}
     </div>
   );
