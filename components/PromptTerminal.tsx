@@ -56,44 +56,26 @@ interface PromptTerminalProps {
   onComplete: (game: DemoGame) => void;
 }
 
-type Phase = 'greeting' | 'prompts' | 'typing' | 'analyzing' | 'done';
+type Phase = 'prompts' | 'typing' | 'analyzing' | 'done';
 
 export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
-  const [phase, setPhase] = useState<Phase>('greeting');
+  const [phase, setPhase] = useState<Phase>('prompts');
   const [selectedOption, setSelectedOption] = useState<typeof PROMPT_OPTIONS[0] | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(-1);
-  const [greetingText, setGreetingText] = useState('');
-  const [greetingDone, setGreetingDone] = useState(false);
   const [promptsVisible, setPromptsVisible] = useState(false);
-  const [matchFlash, setMatchFlash] = useState(0); // count of flashes for visual feedback
+  const [matchFlash, setMatchFlash] = useState(0);
   const [analysisDone, setAnalysisDone] = useState(false);
   const [mounted, setMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevMatchLen = useRef(0);
 
-  useEffect(() => { setMounted(true); }, []);
-
-  /* ── Phase 1: Greeting typewriter ── */
   useEffect(() => {
-    if (phase !== 'greeting') return;
-    const fullText = '어떤 게임을 만들어볼까요?';
-    let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setGreetingText(fullText.slice(0, i));
-      if (i >= fullText.length) {
-        clearInterval(iv);
-        setGreetingDone(true);
-        setTimeout(() => {
-          setPhase('prompts');
-          setTimeout(() => setPromptsVisible(true), 100);
-        }, 400);
-      }
-    }, 60);
-    return () => clearInterval(iv);
-  }, [phase]);
+    setMounted(true);
+    // Prompt chips appear after brief delay — user initiates first
+    setTimeout(() => setPromptsVisible(true), 400);
+  }, []);
 
   /* ── Typing match calculation ── */
   const target = selectedOption?.prompt || '';
@@ -260,38 +242,31 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             fontSize: '13px',
           }}>
 
-            {/* AI Greeting */}
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                flexShrink: 0,
-                boxShadow: '0 0 16px rgba(99,102,241,0.3)',
-              }}>
-                AI
-              </div>
-              <div style={{ paddingTop: '4px' }}>
-                <span style={{ color: 'var(--text-bright)' }}>
-                  {greetingText}
-                </span>
-                {!greetingDone && (
-                  <span style={{
-                    display: 'inline-block',
-                    width: '2px',
-                    height: '14px',
-                    background: 'var(--ai-indigo)',
-                    marginLeft: '2px',
-                    verticalAlign: 'middle',
-                    animation: 'blink 1s infinite',
-                  }} />
-                )}
-              </div>
+            {/* User prompt — user initiates */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              color: 'rgba(255,255,255,0.3)',
+              fontSize: '12px',
+            }}>
+              <span style={{
+                color: 'var(--ai-cyan)',
+                fontWeight: 600,
+                fontSize: '13px',
+              }}>{'>'}</span>
+              <span>만들고 싶은 게임을 선택하세요</span>
+              {phase === 'prompts' && !selectedOption && (
+                <span style={{
+                  display: 'inline-block',
+                  width: '7px',
+                  height: '14px',
+                  background: 'var(--ai-indigo)',
+                  animation: 'blink 0.6s ease-in-out infinite',
+                  borderRadius: '1px',
+                  boxShadow: '0 0 8px rgba(99,102,241,0.5)',
+                }} />
+              )}
             </div>
 
             {/* ═══ Prompt Chips ═══ */}

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
 import { getGameExtensionsScript } from '@/lib/gameExtensions';
+import IntroScreen from '@/components/IntroScreen';
 import PromptTerminal from '@/components/PromptTerminal';
 import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
@@ -15,10 +16,10 @@ interface LeaderboardEntry {
   ts: number;
 }
 
-type AppView = 'select' | 'generating' | 'playing';
+type AppView = 'intro' | 'select' | 'generating' | 'playing';
 
 export default function Home() {
-  const [view, setView] = useState<AppView>('select');
+  const [view, setView] = useState<AppView>('intro');
   const [selectedGame, setSelectedGame] = useState<DemoGame | null>(null);
   const [gameCode, setGameCode] = useState('');
   const [showRemix, setShowRemix] = useState(false);
@@ -119,7 +120,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    setView('select');
+    setView('intro');
     setSelectedGame(null);
     setGameCode('');
     setShowRemix(false);
@@ -148,6 +149,10 @@ export default function Home() {
     setVibePresetLabel('');
     setTimeout(() => writeGameToIframe(html), 100);
   }, [writeGameToIframe]);
+
+  if (view === 'intro') {
+    return <IntroScreen onComplete={() => setView('select')} />;
+  }
 
   if (view === 'select') {
     return <PromptTerminal onComplete={handleSelectGame} />;
