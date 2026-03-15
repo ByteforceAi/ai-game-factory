@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
 import { matchPromptToGame, MatchResult } from '@/lib/promptMatcher';
-import { playSelect, playPing, playComplete, playWhoosh } from '@/lib/sounds';
+import { playSelect, playPing, playComplete, playWhoosh, playTick } from '@/lib/sounds';
 import ParticleBackground from './ParticleBackground';
 
 /* ──────────────────────────────────────────────
@@ -33,7 +33,9 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const [analysisDone, setAnalysisDone] = useState(false);
   const [accentColor, setAccentColor] = useState('#6366f1');
   const [userPrompt, setUserPrompt] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -55,10 +57,31 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   }, [phase]);
 
   const handleChipClick = useCallback((chip: typeof CHIPS[0]) => {
-    setInputValue(chip.prompt);
-    // Small delay so user sees the text fill before submit
-    setTimeout(() => handleSubmit(chip.prompt, chip.color), 300);
-  }, [handleSubmit]);
+    if (isTyping) return;
+    setIsTyping(true);
+    setInputValue('');
+
+    // Clear any previous typing timers
+    typingTimerRef.current.forEach(t => clearTimeout(t));
+    typingTimerRef.current = [];
+
+    // Typewriter animation — type each character with sound
+    const chars = chip.prompt.split('');
+    chars.forEach((_, i) => {
+      const timer = setTimeout(() => {
+        setInputValue(chip.prompt.slice(0, i + 1));
+        if (i % 2 === 0) playTick();
+      }, i * 35);
+      typingTimerRef.current.push(timer);
+    });
+
+    // Auto-submit after typing completes
+    const submitTimer = setTimeout(() => {
+      setIsTyping(false);
+      handleSubmit(chip.prompt, chip.color);
+    }, chars.length * 35 + 400);
+    typingTimerRef.current.push(submitTimer);
+  }, [handleSubmit, isTyping]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
@@ -135,13 +158,34 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       }}>
 
         {/* ═══════════════ Title ═══════════════ */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div className="mono-xs" style={{
-            marginBottom: '16px',
-            color: 'var(--ai-cyan)',
-            letterSpacing: '0.2em',
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: '14px',
           }}>
-            NEURAL ENGINE v4.0 — READY
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '7px',
+              fontWeight: 600,
+              letterSpacing: '0.15em',
+              padding: '2px 8px',
+              borderRadius: '100px',
+              background: 'rgba(99,102,241,0.12)',
+              border: '1px solid rgba(99,102,241,0.25)',
+              color: '#a5b4fc',
+            }}>
+              CLOSED BETA
+            </span>
+            <span className="mono-xs" style={{
+              fontSize: '8px',
+              color: 'var(--ai-cyan)',
+              letterSpacing: '0.15em',
+            }}>
+              NEURAL ENGINE v4.0
+            </span>
           </div>
           <h1 style={{
             fontFamily: "'JetBrains Mono', monospace",
@@ -157,7 +201,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
               SIMULATOR
             </span>
           </h1>
-          <div className="shimmer-line" style={{ width: '80px', margin: '16px auto 0' }} />
+          <div className="shimmer-line" style={{ width: '80px', margin: '14px auto 0' }} />
         </div>
 
         {/* ═══════════════ Terminal Card ═══════════════ */}
@@ -245,25 +289,40 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                       ref={inputRef}
                       type="text"
                       value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
+                      onChange={(e) => !isTyping && setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="만들고 싶은 게임을 설명하세요..."
                       autoComplete="off"
                       autoCorrect="off"
                       autoCapitalize="off"
                       spellCheck={false}
+                      readOnly={isTyping}
                       style={{
                         flex: 1,
                         background: 'transparent',
                         border: 'none',
                         outline: 'none',
-                        color: 'var(--text-bright)',
+                        color: isTyping ? 'var(--ai-cyan)' : 'var(--text-bright)',
                         fontFamily: "'JetBrains Mono', monospace",
                         fontSize: '13px',
                         lineHeight: '20px',
                         padding: 0,
+                        transition: 'color 0.2s',
+                        caretColor: isTyping ? 'transparent' : 'var(--ai-indigo)',
                       }}
                     />
+                    {isTyping && (
+                      <span style={{
+                        display: 'inline-block',
+                        width: '2px',
+                        height: '16px',
+                        background: 'var(--ai-cyan)',
+                        animation: 'blink 0.4s infinite',
+                        borderRadius: '1px',
+                        boxShadow: '0 0 6px rgba(6,182,212,0.6)',
+                        flexShrink: 0,
+                      }} />
+                    )}
                     {inputValue.trim() && (
                       <button
                         onClick={() => handleSubmit(inputValue)}
@@ -552,30 +611,45 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         {/* ═══════════════ Footer ═══════════════ */}
         <div style={{
           display: 'flex',
-          gap: '12px',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '10px',
           marginTop: '24px',
-          flexWrap: 'wrap',
         }}>
-          {[
-            { label: 'ONLINE', dot: 'status-dot-green', color: 'var(--ai-emerald)' },
-            { label: 'PHASER.JS', dot: '', color: 'var(--text-dim)' },
-            { label: 'THREE.JS', dot: '', color: 'var(--text-dim)' },
-            { label: 'WEBGL 2.0', dot: '', color: 'var(--text-dim)' },
-          ].map((item, i) => (
-            <div key={i} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-dim)',
-              borderRadius: '100px',
-            }}>
-              {item.dot && <span className={item.dot} />}
-              <span className="mono-xs" style={{ fontSize: '8px', color: item.color }}>{item.label}</span>
-            </div>
-          ))}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}>
+            {[
+              { label: 'ONLINE', dot: 'status-dot-green', color: 'var(--ai-emerald)' },
+              { label: 'PHASER.JS', dot: '', color: 'var(--text-dim)' },
+              { label: 'THREE.JS', dot: '', color: 'var(--text-dim)' },
+              { label: 'WEBGL 2.0', dot: '', color: 'var(--text-dim)' },
+            ].map((item, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '3px 9px',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-dim)',
+                borderRadius: '100px',
+              }}>
+                {item.dot && <span className={item.dot} />}
+                <span className="mono-xs" style={{ fontSize: '7px', color: item.color }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '7px',
+            color: 'rgba(255,255,255,0.1)',
+            letterSpacing: '0.1em',
+          }}>
+            AI GAME FACTORY — PROTOTYPE v0.4.0 — NOT FOR DISTRIBUTION
+          </span>
         </div>
       </div>
     </div>

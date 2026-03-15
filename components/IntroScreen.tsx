@@ -282,16 +282,36 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
         {/* ═══ Phase: idle — Logo + START ═══ */}
         {phase === 'idle' && (
           <>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '9px',
-              fontWeight: 500,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: 'rgba(99,102,241,0.5)',
+            {/* Closed Beta badge */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}>
-              AI-POWERED GAME DEVELOPMENT
-            </span>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                fontWeight: 600,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                padding: '3px 10px',
+                borderRadius: '100px',
+                background: 'rgba(99,102,241,0.15)',
+                border: '1px solid rgba(99,102,241,0.3)',
+                color: '#a5b4fc',
+              }}>
+                CLOSED BETA
+              </span>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                fontWeight: 500,
+                letterSpacing: '0.12em',
+                color: 'rgba(255,255,255,0.2)',
+              }}>
+                BUILD 2026.03
+              </span>
+            </div>
 
             <div style={{ textAlign: 'center' }}>
               <h1 style={{
@@ -359,7 +379,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               letterSpacing: '0.08em',
               marginTop: '-20px',
             }}>
-              press to initialize
+              tap to initialize neural engine
             </span>
           </>
         )}
@@ -649,7 +669,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
           letterSpacing: '0.1em',
           zIndex: 2,
         }}>
-          v4.0 — AI GAME FACTORY
+          AI GAME FACTORY — CLOSED BETA — v0.4.0
         </div>
       )}
     </div>
