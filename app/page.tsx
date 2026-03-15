@@ -468,7 +468,7 @@ export default function Home() {
           </div>
         )}
 
-      {/* Bottom Dev Tools Bar — Overlay */}
+      {/* Bottom Dev Tools Bar — Overlay (44px+ touch targets) */}
       <div className="anim-fade-in" style={{
         position: 'absolute',
         bottom: 0,
@@ -478,21 +478,22 @@ export default function Home() {
         display: 'flex',
         gap: '8px',
         padding: '10px 12px',
-        background: 'linear-gradient(to top, rgba(5,5,16,0.75) 0%, transparent 100%)',
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom, 0px))',
+        background: 'linear-gradient(to top, rgba(5,5,16,0.85) 0%, rgba(5,5,16,0.4) 60%, transparent 100%)',
         alignItems: 'center',
         pointerEvents: 'none',
       }}>
         <button
           onClick={() => { setShowCode(!showCode); if (!showCode) setShowRemix(false); }}
           className={`btn-hud ${showCode ? 'btn-hud--active' : ''}`}
-          style={{ flex: 1 }}
+          style={{ flex: 1, minHeight: '44px' }}
         >
           {'</>'} CODE
         </button>
         <button
           onClick={() => { setShowRemix(!showRemix); if (!showRemix) setShowCode(false); }}
           className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
-          style={{ flex: 1 }}
+          style={{ flex: 1, minHeight: '44px' }}
         >
           ✨ VIBE
         </button>

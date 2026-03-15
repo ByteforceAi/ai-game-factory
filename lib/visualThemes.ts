@@ -13,6 +13,8 @@ export interface VisualTheme {
   bodyFilter?: string;
   /** Preview gradient for the card */
   preview: string;
+  /** Optional pattern overlay for richer thumbnail preview */
+  previewPattern?: 'dots' | 'grid' | 'scanlines' | 'noise' | 'diagonal' | 'none';
 }
 
 export type ThemeCategory =
@@ -39,6 +41,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
     description: '네온 핑크 + 시안 글로우',
     category: 'color',
     preview: 'linear-gradient(135deg, #ff00ff, #00ffff)',
+    previewPattern: 'grid',
     css: `
       * { --neon-primary: #ff00ff; --neon-secondary: #00ffff; }
       body { background: #0a0010 !important; }
@@ -52,6 +55,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
     description: '90년대 레트로 + 핑크 선셋',
     category: 'color',
     preview: 'linear-gradient(135deg, #ff71ce, #b967ff, #01cdfe)',
+    previewPattern: 'scanlines',
     css: `
       body { background: #1a0a2e !important; }
       canvas { filter: saturate(1.6) hue-rotate(320deg) brightness(1.1); }
@@ -95,6 +99,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
   },
   {
     id: 'theme-matrix',
+    previewPattern: 'noise',
     label: '매트릭스',
     icon: '💚',
     description: '초록 모노크롬 해커 스타일',
@@ -167,6 +172,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
   },
   {
     id: 'theme-galaxy',
+    previewPattern: 'dots',
     label: '갤럭시',
     icon: '🌌',
     description: '우주 퍼플 + 스타더스트',

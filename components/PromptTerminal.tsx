@@ -330,18 +330,19 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                           background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
                           border: 'none',
                           borderRadius: '8px',
-                          padding: '6px 14px',
+                          padding: '8px 16px',
                           color: '#fff',
                           fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: '10px',
+                          fontSize: '11px',
                           fontWeight: 600,
                           cursor: 'pointer',
                           letterSpacing: '0.08em',
                           animation: 'fadeSlideIn 0.2s ease both',
                           whiteSpace: 'nowrap',
+                          minHeight: '36px',
                         }}
                       >
-                        ENTER
+                        ENTER ↵
                       </button>
                     )}
                   </div>
@@ -375,18 +376,22 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                     <button
                       key={chip.label}
                       onClick={() => handleChipClick(chip)}
+                      className="chip-touch"
                       style={{
                         background: 'var(--bg-surface)',
                         border: `1px solid var(--border-dim)`,
                         borderRadius: '100px',
-                        padding: '8px 16px',
+                        padding: '10px 18px',
                         color: 'var(--text-body)',
                         fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 500,
                         cursor: 'pointer',
                         transition: 'all 0.3s',
                         animation: `fadeSlideIn 0.4s ease ${i * 0.06}s both`,
+                        minHeight: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = chip.color + '50';

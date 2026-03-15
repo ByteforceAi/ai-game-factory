@@ -373,16 +373,56 @@ body {
 }
 
 /* ============================================
-   MOBILE HELPERS
+   MOBILE HELPERS — 44pt touch target minimum
    ============================================ */
 @media (max-width: 480px) {
   .btn-hud {
     padding: 10px 16px;
-    min-height: 42px;
+    min-height: 44px;
     font-size: 11px;
   }
   .btn-glow {
-    padding: 12px 24px;
+    padding: 14px 24px;
     font-size: 13px;
+    min-height: 44px;
+  }
+  /* Bigger touch targets for game over buttons */
+  .overlay-game-over button {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  /* Wider chips on mobile */
+  .chip-touch {
+    padding: 12px 20px !important;
+    font-size: 13px !important;
+    min-height: 44px;
+  }
+  /* Bottom bar larger on mobile */
+  .panel-slide-up {
+    bottom: 58px;
+  }
+}
+
+/* Active press feedback for touch */
+@media (hover: none) and (pointer: coarse) {
+  .btn-hud:active {
+    transform: scale(0.95);
+    transition-duration: 0.1s;
+  }
+  .btn-glow:active {
+    transform: scale(0.97);
+    filter: brightness(1.15);
+    transition-duration: 0.1s;
+  }
+  .card-cinematic:active {
+    transform: scale(0.98);
+    transition-duration: 0.1s;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .overlay-game-over {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
 }

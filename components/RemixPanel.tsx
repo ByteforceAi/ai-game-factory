@@ -10,6 +10,24 @@ import {
   applyVisualTheme,
 } from '@/lib/visualThemes';
 
+/** CSS background-image patterns for theme preview thumbnails */
+function getPatternCSS(pattern?: string): string | null {
+  switch (pattern) {
+    case 'grid':
+      return 'repeating-linear-gradient(0deg, rgba(255,255,255,0.15) 0px, transparent 1px, transparent 12px), repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0px, transparent 1px, transparent 12px)';
+    case 'dots':
+      return 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)';
+    case 'scanlines':
+      return 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)';
+    case 'noise':
+      return 'repeating-conic-gradient(rgba(255,255,255,0.06) 0% 25%, transparent 0% 50%)';
+    case 'diagonal':
+      return 'repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0px, transparent 1px, transparent 8px)';
+    default:
+      return null;
+  }
+}
+
 interface RemixPanelProps {
   gameId: string;
   gameHtml: string;
@@ -188,6 +206,7 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
                 cursor: applying ? 'wait' : 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.2s',
+                minHeight: '44px',
               }}
             >
               <span style={{ fontSize: '18px' }}>{preset.icon}</span>
@@ -253,11 +272,12 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
           {/* Theme Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
             gap: '8px',
           }}>
             {filteredThemes.map((theme) => {
               const isApplied = appliedThemes.has(theme.id);
+              const patternBg = getPatternCSS(theme.previewPattern);
               return (
                 <button
                   key={theme.id}
@@ -267,8 +287,8 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
-                    gap: '5px',
-                    padding: '12px',
+                    gap: '0',
+                    padding: '0',
                     background: isApplied
                       ? 'rgba(16,185,129,0.08)'
                       : 'rgba(255,255,255,0.02)',
@@ -284,50 +304,79 @@ export default function RemixPanel({ gameId, gameHtml, onApplyRemix, onBack }: R
                     transition: 'all 0.2s',
                     position: 'relative',
                     overflow: 'hidden',
+                    minHeight: '44px',
                   }}
                 >
-                  {/* Preview gradient strip */}
+                  {/* Preview thumbnail area */}
                   <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '3px',
+                    width: '100%',
+                    height: '48px',
                     background: theme.preview,
-                    opacity: isApplied ? 1 : 0.6,
-                  }} />
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
-                    <span style={{ fontSize: '16px' }}>{theme.icon}</span>
+                    position: 'relative',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    opacity: isApplied ? 1 : 0.75,
+                    transition: 'opacity 0.2s',
+                  }}>
+                    {/* Pattern overlay */}
+                    {patternBg && (
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: patternBg,
+                        opacity: 0.25,
+                      }} />
+                    )}
+                    {/* Icon centered */}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+                    }}>
+                      {theme.icon}
+                    </div>
+                    {/* Applied badge */}
                     {isApplied && (
                       <span style={{
-                        fontSize: '8px',
-                        padding: '1px 5px',
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        fontSize: '7px',
+                        padding: '1px 6px',
                         borderRadius: '6px',
-                        background: 'rgba(16,185,129,0.2)',
-                        color: '#6ee7b7',
+                        background: 'rgba(16,185,129,0.8)',
+                        color: '#fff',
                         fontFamily: "'JetBrains Mono', monospace",
-                        marginLeft: 'auto',
+                        fontWeight: 600,
                       }}>
                         ON
                       </span>
                     )}
                   </div>
-                  <span style={{
-                    color: isApplied ? '#6ee7b7' : 'var(--text-bright)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}>
-                    {theme.label}
-                  </span>
-                  <span style={{
-                    color: 'var(--text-dim)',
-                    fontSize: '9px',
-                    lineHeight: 1.3,
-                  }}>
-                    {theme.description}
-                  </span>
+
+                  {/* Text info */}
+                  <div style={{ padding: '8px 10px 10px' }}>
+                    <span style={{
+                      color: isApplied ? '#6ee7b7' : 'var(--text-bright)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      display: 'block',
+                      marginBottom: '2px',
+                    }}>
+                      {theme.label}
+                    </span>
+                    <span style={{
+                      color: 'var(--text-dim)',
+                      fontSize: '9px',
+                      lineHeight: 1.3,
+                    }}>
+                      {theme.description}
+                    </span>
+                  </div>
                 </button>
               );
             })}
