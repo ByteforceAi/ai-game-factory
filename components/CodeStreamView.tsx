@@ -112,6 +112,18 @@ function highlightCode(code: string): React.ReactNode[] {
   return result;
 }
 
+/** AI companion messages that pop up during code generation */
+const AI_COMPANION_MESSAGES = [
+  { at: 5, text: '열심히 코딩하고 있어요! 💻', emoji: '💻' },
+  { at: 15, text: '게임 엔진 뼈대가 잡혔어요! 이제 살을 붙여볼게요 🦴', emoji: '🦴' },
+  { at: 25, text: '오 이 부분 좀 까다로운데... 잠깐만요! 🤔', emoji: '🤔' },
+  { at: 40, text: '해결했어요! 이 게임 재밌을 것 같아요 🔥', emoji: '🔥' },
+  { at: 55, text: '절반 넘었어요! 거의 다 왔어요 💪', emoji: '💪' },
+  { at: 70, text: '터치 컨트롤 넣는 중... 모바일에서도 잘 돌아갈 거예요 📱', emoji: '📱' },
+  { at: 85, text: '마무리 최적화 중! 곧 플레이할 수 있어요 ✨', emoji: '✨' },
+  { at: 95, text: '거의 완성! 두근두근하지 않나요? 🎮', emoji: '🎮' },
+];
+
 export default function CodeStreamView({
   gameHtml,
   gameTitle,
@@ -125,6 +137,9 @@ export default function CodeStreamView({
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [companionMsg, setCompanionMsg] = useState('');
+  const [companionKey, setCompanionKey] = useState(0);
+  const shownMsgsRef = useRef(new Set<number>());
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(Date.now());
@@ -192,6 +207,19 @@ export default function CodeStreamView({
     return () => cancel();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameHtml, handleComplete, duration]);
+
+  // AI companion message trigger based on progress
+  useEffect(() => {
+    if (done) return;
+    for (const msg of AI_COMPANION_MESSAGES) {
+      if (progress >= msg.at && !shownMsgsRef.current.has(msg.at)) {
+        shownMsgsRef.current.add(msg.at);
+        setCompanionMsg(msg.text);
+        setCompanionKey(prev => prev + 1);
+        break;
+      }
+    }
+  }, [progress, done]);
 
   // Auto-scroll: use sentinel div at bottom
   useEffect(() => {
@@ -426,6 +454,52 @@ export default function CodeStreamView({
           marginTop: '-40px',
         }} />
       </div>
+
+      {/* AI Companion bubble */}
+      {companionMsg && !done && (
+        <div
+          key={companionKey}
+          style={{
+            position: 'absolute',
+            bottom: '90px',
+            left: '16px',
+            right: '16px',
+            zIndex: 10,
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'flex-start',
+            animation: 'companionSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '10px',
+            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '12px', fontWeight: 700, color: '#fff', flexShrink: 0,
+            boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
+          }}>
+            AI
+          </div>
+          <div style={{
+            background: 'rgba(99,102,241,0.12)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(99,102,241,0.2)',
+            borderRadius: '14px',
+            borderTopLeftRadius: '4px',
+            padding: '10px 16px',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '12px',
+            color: 'rgba(255,255,255,0.85)',
+            lineHeight: 1.5,
+            maxWidth: '80%',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+          }}>
+            {companionMsg}
+          </div>
+        </div>
+      )}
 
       {/* Skip hint — delayed reveal for visibility */}
       {!done && (

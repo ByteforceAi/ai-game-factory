@@ -21,7 +21,75 @@ interface PromptTerminalProps {
   onComplete: (game: DemoGame) => void;
 }
 
-type Phase = 'input' | 'analyzing' | 'done';
+type Phase = 'input' | 'modifiers' | 'analyzing' | 'done';
+
+/* ──────────────────────────────────────────────
+   Modifier slots — IKEA effect (feel like you customized it)
+   ────────────────────────────────────────────── */
+interface ModifierSlot {
+  id: string;
+  label: string;
+  icon: string;
+  options: { value: string; label: string; color: string }[];
+}
+
+const MODIFIER_SLOTS: ModifierSlot[] = [
+  {
+    id: 'difficulty',
+    label: '난이도',
+    icon: '⚡',
+    options: [
+      { value: 'easy', label: '이지', color: '#4ade80' },
+      { value: 'normal', label: '노멀', color: '#60a5fa' },
+      { value: 'hard', label: '하드', color: '#f97316' },
+      { value: 'nightmare', label: '나이트메어', color: '#ef4444' },
+    ],
+  },
+  {
+    id: 'style',
+    label: '비주얼',
+    icon: '🎨',
+    options: [
+      { value: 'neon', label: '네온', color: '#00FFFF' },
+      { value: 'retro', label: '레트로', color: '#FFD700' },
+      { value: 'minimal', label: '미니멀', color: '#94a3b8' },
+      { value: 'cyber', label: '사이버펑크', color: '#FF00FF' },
+    ],
+  },
+  {
+    id: 'effect',
+    label: '특수효과',
+    icon: '✨',
+    options: [
+      { value: 'particle', label: '파티클', color: '#a78bfa' },
+      { value: 'shake', label: '화면흔들림', color: '#fb923c' },
+      { value: 'combo', label: '콤보 시스템', color: '#f43f5e' },
+      { value: 'slowmo', label: '슬로우모션', color: '#22d3ee' },
+    ],
+  },
+];
+
+/** AI reaction messages for each modifier choice */
+const AI_REACTIONS: Record<string, Record<string, string>> = {
+  difficulty: {
+    easy: '편하게 즐기는 스타일이군요! 😊 가볍게 시작해봐요',
+    normal: '균형 잡힌 선택! 👍 적당한 도전감이 최고죠',
+    hard: '오 도전적이네요! 🔥 각오 단단히 하세요',
+    nightmare: '진짜요?! 😱 나이트메어... 존경합니다',
+  },
+  style: {
+    neon: '네온 감성 좋죠! ✨ 사이버 시티 느낌으로 갑니다',
+    retro: '레트로 감성! 🕹️ 90년대 오락실 느낌 나게 해볼게요',
+    minimal: '깔끔함의 미학! 🤍 군더더기 없이 갑니다',
+    cyber: '사이버펑크! 💜 미래 도시 분위기 제대로 넣을게요',
+  },
+  effect: {
+    particle: '파티클 뿌려줄게요! 💫 화면이 화려해질 거예요',
+    shake: '화면 흔들림! 💥 타격감이 확 올라갈 거예요',
+    combo: '콤보 시스템! 🎯 연속 히트 쾌감을 느껴보세요',
+    slowmo: '슬로우모션! ⏳ 매트릭스처럼 시간이 느려져요',
+  },
+};
 
 export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const [phase, setPhase] = useState<Phase>('input');
@@ -34,6 +102,9 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const [accentColor, setAccentColor] = useState('#6366f1');
   const [userPrompt, setUserPrompt] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [modifierSelections, setModifierSelections] = useState<Record<string, string>>({});
+  const [modifierMounted, setModifierMounted] = useState(false);
+  const [aiReaction, setAiReaction] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -43,7 +114,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     setTimeout(() => inputRef.current?.focus(), 600);
   }, []);
 
-  /* ── Submit prompt (chip click or Enter) ── */
+  /* ── Submit prompt → go to modifier selection ── */
   const handleSubmit = useCallback((prompt: string, color?: string) => {
     if (!prompt.trim() || phase !== 'input') return;
     playSelect();
@@ -51,10 +122,29 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     setMatchResult(result);
     setUserPrompt(prompt.trim());
     setAccentColor(color || '#6366f1');
+    setModifierSelections({});
+    setModifierMounted(false);
+    setPhase('modifiers');
+    setTimeout(() => setModifierMounted(true), 100);
+  }, [phase]);
+
+  /* ── Start generation after modifiers selected ── */
+  const handleStartGeneration = useCallback(() => {
+    if (phase !== 'modifiers') return;
+    playSelect();
+    if (navigator.vibrate) navigator.vibrate([30, 20, 50]);
     setPhase('analyzing');
     setAnalysisStep(-1);
     setAnalysisDone(false);
   }, [phase]);
+
+  const handleModifierSelect = useCallback((slotId: string, value: string) => {
+    playTick();
+    if (navigator.vibrate) navigator.vibrate(15);
+    setModifierSelections(prev => ({ ...prev, [slotId]: value }));
+    const reaction = AI_REACTIONS[slotId]?.[value];
+    if (reaction) setAiReaction(reaction);
+  }, []);
 
   const handleChipClick = useCallback((chip: typeof CHIPS[0]) => {
     if (isTyping) return;
@@ -402,6 +492,177 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                   <span style={{ color: 'var(--ai-emerald)', fontWeight: 700, fontSize: '14px' }}>✓</span>
                   <span style={{ color: 'var(--text-bright)', fontSize: '13px' }}>{userPrompt}</span>
                 </div>
+              </div>
+            )}
+
+            {/* ═══ Modifier Slots ═══ */}
+            {phase === 'modifiers' && (
+              <div style={{
+                animation: 'fadeSlideIn 0.5s ease both',
+                opacity: modifierMounted ? 1 : 0,
+                transform: modifierMounted ? 'translateY(0)' : 'translateY(16px)',
+                transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}>
+                {/* AI Customization header */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{
+                    width: '28px', height: '28px', borderRadius: '8px',
+                    background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '14px', flexShrink: 0,
+                    boxShadow: '0 0 16px rgba(99,102,241,0.3)',
+                  }}>
+                    AI
+                  </div>
+                  <span style={{ color: 'var(--text-bright)', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    게임을 커스터마이즈하세요
+                  </span>
+                </div>
+
+                {/* Slots */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}>
+                  {MODIFIER_SLOTS.map((slot, si) => {
+                    const selected = modifierSelections[slot.id];
+                    return (
+                      <div
+                        key={slot.id}
+                        style={{
+                          animation: `fadeSlideIn 0.4s ease ${si * 0.1}s both`,
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          marginBottom: '6px',
+                        }}>
+                          <span style={{ fontSize: '12px' }}>{slot.icon}</span>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: 'var(--text-muted)',
+                            letterSpacing: '0.1em',
+                          }}>
+                            {slot.label}
+                          </span>
+                          {selected && (
+                            <span style={{
+                              fontSize: '8px',
+                              color: 'var(--ai-emerald)',
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}>✓</span>
+                          )}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          gap: '6px',
+                          flexWrap: 'wrap',
+                        }}>
+                          {slot.options.map((opt) => {
+                            const isSelected = selected === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => handleModifierSelect(slot.id, opt.value)}
+                                style={{
+                                  padding: '8px 14px',
+                                  borderRadius: '10px',
+                                  border: `1px solid ${isSelected ? opt.color + '80' : 'var(--border-dim)'}`,
+                                  background: isSelected ? opt.color + '18' : 'rgba(255,255,255,0.02)',
+                                  color: isSelected ? opt.color : 'var(--text-muted)',
+                                  fontFamily: "'JetBrains Mono', monospace",
+                                  fontSize: '11px',
+                                  fontWeight: isSelected ? 600 : 400,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease-out',
+                                  transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                                  boxShadow: isSelected ? `0 0 12px ${opt.color}20` : 'none',
+                                  minHeight: '36px',
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* AI Reaction bubble */}
+                {aiReaction && (
+                  <div
+                    key={aiReaction}
+                    style={{
+                      display: 'flex',
+                      gap: '10px',
+                      alignItems: 'flex-start',
+                      marginTop: '8px',
+                      animation: 'fadeSlideIn 0.3s ease both',
+                    }}
+                  >
+                    <div style={{
+                      width: '24px', height: '24px', borderRadius: '6px',
+                      background: 'linear-gradient(135deg, var(--ai-indigo), var(--ai-violet))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '10px', flexShrink: 0, fontWeight: 700, color: '#fff',
+                    }}>
+                      AI
+                    </div>
+                    <div style={{
+                      background: 'rgba(99,102,241,0.08)',
+                      border: '1px solid rgba(99,102,241,0.15)',
+                      borderRadius: '12px',
+                      borderTopLeft: '4px',
+                      padding: '10px 14px',
+                      fontSize: '12px',
+                      color: 'var(--text-body)',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      lineHeight: 1.5,
+                    }}>
+                      {aiReaction}
+                    </div>
+                  </div>
+                )}
+
+                {/* Generate button */}
+                <button
+                  onClick={handleStartGeneration}
+                  disabled={Object.keys(modifierSelections).length < MODIFIER_SLOTS.length}
+                  style={{
+                    width: '100%',
+                    marginTop: '16px',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: Object.keys(modifierSelections).length >= MODIFIER_SLOTS.length
+                      ? `linear-gradient(135deg, var(--ai-indigo), ${accentColor})`
+                      : 'rgba(255,255,255,0.05)',
+                    color: Object.keys(modifierSelections).length >= MODIFIER_SLOTS.length
+                      ? '#fff'
+                      : 'var(--text-muted)',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    cursor: Object.keys(modifierSelections).length >= MODIFIER_SLOTS.length
+                      ? 'pointer' : 'default',
+                    transition: 'all 0.3s ease-out',
+                    opacity: Object.keys(modifierSelections).length >= MODIFIER_SLOTS.length ? 1 : 0.4,
+                    boxShadow: Object.keys(modifierSelections).length >= MODIFIER_SLOTS.length
+                      ? '0 4px 24px rgba(99,102,241,0.3)' : 'none',
+                  }}
+                >
+                  {Object.keys(modifierSelections).length < MODIFIER_SLOTS.length
+                    ? `${MODIFIER_SLOTS.length - Object.keys(modifierSelections).length}개 더 선택하세요`
+                    : '✨ 바이브 코딩 시작'}
+                </button>
               </div>
             )}
 

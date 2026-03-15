@@ -424,7 +424,7 @@ export default function Home() {
                   transition: 'all 0.3s',
                 }}
               >
-                ✨ VIBE
+                ✨ 바이브 코딩하기
               </button>
               <button
                 onClick={handleRestart}
@@ -495,7 +495,7 @@ export default function Home() {
           className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
           style={{ flex: 1, minHeight: '44px' }}
         >
-          ✨ VIBE
+          ✨ 바이브 코딩
         </button>
         <span className="mono-xs" style={{
           fontSize: '9px',
