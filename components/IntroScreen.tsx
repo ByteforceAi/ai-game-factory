@@ -381,6 +381,29 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
             }}>
               tap to initialize neural engine
             </span>
+
+            {/* Vibe coding explainer */}
+            <div style={{
+              marginTop: '32px',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              background: 'rgba(99,102,241,0.05)',
+              border: '1px solid rgba(99,102,241,0.1)',
+              maxWidth: '360px',
+              textAlign: 'center',
+            }}>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '10px',
+                color: 'rgba(255,255,255,0.3)',
+                lineHeight: 1.6,
+                letterSpacing: '0.02em',
+              }}>
+                <span style={{ color: 'rgba(99,102,241,0.6)', fontWeight: 600 }}>VIBE CODING</span>
+                {' — '}말로 설명하면 AI가 코드를 작성하고,
+                <br />코드가 현실이 됩니다.
+              </span>
+            </div>
           </>
         )}
 

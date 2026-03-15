@@ -9,6 +9,7 @@ import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
 import ShareModal from '@/components/ShareModal';
 import VibeOverlay from '@/components/VibeOverlay';
+import LaunchSequence from '@/components/LaunchSequence';
 import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
 
 interface LeaderboardEntry {
@@ -17,7 +18,7 @@ interface LeaderboardEntry {
   ts: number;
 }
 
-type AppView = 'intro' | 'select' | 'generating' | 'playing';
+type AppView = 'intro' | 'select' | 'generating' | 'launching' | 'playing';
 
 export default function Home() {
   const [view, setView] = useState<AppView>('intro');
@@ -110,9 +111,13 @@ export default function Home() {
 
   const handleGenerationComplete = useCallback((html: string) => {
     setGameCode(html);
+    setView('launching');
+  }, []);
+
+  const handleLaunchComplete = useCallback(() => {
     setView('playing');
-    setTimeout(() => writeGameToIframe(html), 100);
-  }, [writeGameToIframe]);
+    setTimeout(() => writeGameToIframe(gameCode), 100);
+  }, [gameCode, writeGameToIframe]);
 
   const handleRestart = () => {
     setShowLeaderboard(false);
@@ -178,6 +183,15 @@ export default function Home() {
         gameHtml={selectedGame.html}
         gameTitle={selectedGame.title}
         onComplete={handleGenerationComplete}
+      />
+    );
+  }
+
+  if (view === 'launching' && selectedGame) {
+    return (
+      <LaunchSequence
+        gameTitle={selectedGame.title}
+        onComplete={handleLaunchComplete}
       />
     );
   }
@@ -416,13 +430,39 @@ export default function Home() {
                 onClick={handleRestart}
                 className="btn-glow"
                 style={{
-                  flex: 2,
-                  minWidth: '120px',
+                  flex: 1,
+                  minWidth: '80px',
                   padding: '11px 8px',
                   borderRadius: '12px',
                 }}
               >
                 ↻ RETRY
+              </button>
+              <button
+                onClick={() => {
+                  setShowLeaderboard(false);
+                  setView('select');
+                  setSelectedGame(null);
+                  setGameCode('');
+                  setShowRemix(false);
+                  setShowCode(false);
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '80px',
+                  background: 'rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(99,102,241,0.3)',
+                  color: '#a5b4fc',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '11px 8px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                }}
+              >
+                + NEW GAME
               </button>
             </div>
           </div>
