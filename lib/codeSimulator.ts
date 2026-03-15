@@ -2,16 +2,36 @@
 // Simulates LLM-style token-by-token code generation
 
 export const GENERATE_STATUS_MESSAGES = [
-  '게임 엔진 초기화 중...',
+  'Neural Engine 초기화 중...',
+  'WebGL 렌더링 컨텍스트 생성 중...',
   'HTML5 캔버스 설정 중...',
+  '게임 엔진 아키텍처 설계 중...',
+  '물리 엔진 파라미터 계산 중...',
   '렌더링 파이프라인 구성 중...',
-  '게임 로직 생성 중...',
-  '충돌 감지 시스템 구축 중...',
+  'Sprite 시스템 빌드 중...',
+  '충돌 감지 알고리즘 생성 중...',
+  'AABB hitbox 최적화 중...',
+  '게임 로직 트리 생성 중...',
+  'State machine 패턴 적용 중...',
   '입력 핸들러 연결 중...',
-  '사운드 시스템 초기화 중...',
+  '터치 이벤트 리스너 바인딩 중...',
+  '키보드 입력 매핑 중...',
+  'Web Audio API 초기화 중...',
+  '사운드 이펙트 합성 중...',
+  '파티클 시스템 생성 중...',
   '점수 시스템 설계 중...',
-  '터치 컨트롤 최적화 중...',
+  'UI 오버레이 렌더링 중...',
+  'HUD 컴포넌트 배치 중...',
+  '게임 밸런싱 파라미터 튜닝 중...',
+  '난이도 커브 계산 중...',
+  '메모리 최적화 패스 실행 중...',
+  'requestAnimationFrame 루프 구성 중...',
+  'Garbage collection 최적화 중...',
+  '터치 컨트롤 반응성 테스트 중...',
   '최종 빌드 컴파일 중...',
+  '코드 minification 실행 중...',
+  'Tree-shaking 최적화 중...',
+  '빌드 무결성 검증 중...',
 ];
 
 export const VIBE_STATUS_MESSAGES = [
@@ -148,7 +168,7 @@ function tokenize(source: string): string[] {
 export function simulateCodeGeneration(
   gameHtml: string,
   callbacks: SimulationCallbacks,
-  durationMs: number = 6000,
+  durationMs: number = 45000,
   statusMessages: string[] = GENERATE_STATUS_MESSAGES
 ): { cancel: () => void } {
   const tokens = tokenize(gameHtml);
@@ -165,7 +185,7 @@ export function simulateCodeGeneration(
     if (cancelled) return;
     statusIndex = (statusIndex + 1) % statusMessages.length;
     callbacks.onStatusChange(statusMessages[statusIndex]);
-  }, 800);
+  }, 1500);
 
   callbacks.onStatusChange(statusMessages[0]);
 
@@ -174,13 +194,29 @@ export function simulateCodeGeneration(
     return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
   }
 
+  // Add micro-pauses at ~20%, ~50%, ~75% to simulate "thinking"
+  function addThinkingPauses(t: number): number {
+    const pauses = [0.18, 0.35, 0.52, 0.72];
+    const pauseWidth = 0.03;  // 3% of total time each pause
+    const pauseSlowdown = 0.15; // How much to slow down during pause
+    let adjusted = t;
+    for (const p of pauses) {
+      if (t > p && t < p + pauseWidth) {
+        const inPause = (t - p) / pauseWidth;
+        adjusted -= (1 - pauseSlowdown) * pauseWidth * Math.sin(inPause * Math.PI) * 0.5;
+      }
+    }
+    return Math.max(0, Math.min(1, adjusted));
+  }
+
   function tick(timestamp: number) {
     if (cancelled) return;
     if (!startTime) startTime = timestamp;
 
     const elapsed = timestamp - startTime;
     const rawProgress = Math.min(elapsed / durationMs, 1);
-    const easedProgress = easeInOutQuart(rawProgress);
+    const pausedProgress = addThinkingPauses(rawProgress);
+    const easedProgress = easeInOutQuart(pausedProgress);
 
     // Target token based on eased progress
     const targetToken = Math.floor(easedProgress * totalTokens);
@@ -208,11 +244,12 @@ export function simulateCodeGeneration(
         if (tokens[currentToken] === '\n') lineCount++;
         currentToken++;
       }
-      accumulated = gameHtml; // Ensure exact match
+      // Ensure exact final output
+      accumulated = gameHtml;
       callbacks.onCodeChunk(accumulated);
       callbacks.onProgress(100);
       clearInterval(statusInterval);
-      callbacks.onComplete(gameHtml);
+      callbacks.onComplete(accumulated);
     }
   }
 
