@@ -151,17 +151,34 @@ export default function CodeStreamView({
 
   const tickCountRef = useRef(0);
 
-  const handleComplete = useCallback((fullCode: string) => {
+  const handleComplete = useCallback((_fullCode: string) => {
     setDone(true);
     playComplete();
     setTimeout(() => {
       playWhoosh();
-      onComplete(fullCode);
+      // Pass original gameHtml (without comment header) to iframe
+      onComplete(gameHtml);
     }, 800);
-  }, [onComplete]);
+  }, [onComplete, gameHtml]);
+
+  // Prepend AI header comment to strengthen prompt→code narrative
+  const codeHeader = useMemo(() => {
+    const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+    return [
+      `// ═══════════════════════════════════════════`,
+      `// AI GAME FACTORY — ${gameTitle}`,
+      `// Generated: ${now} | Engine: WebGL + Canvas`,
+      `// Neural Engine v4.0 — CLOSED BETA`,
+      `// ═══════════════════════════════════════════`,
+      ``,
+      ``
+    ].join('\n');
+  }, [gameTitle]);
+
+  const fullSourceCode = useMemo(() => codeHeader + gameHtml, [codeHeader, gameHtml]);
 
   useEffect(() => {
-    const { cancel } = simulateCodeGeneration(gameHtml, {
+    const { cancel } = simulateCodeGeneration(fullSourceCode, {
       onCodeChunk: (c) => {
         setCode(c);
         tickCountRef.current++;
@@ -410,22 +427,23 @@ export default function CodeStreamView({
         }} />
       </div>
 
-      {/* Skip hint */}
+      {/* Skip hint — delayed reveal for visibility */}
       {!done && (
         <div style={{
           textAlign: 'center',
-          padding: '4px 0',
+          padding: '6px 0',
           position: 'relative',
           zIndex: 2,
+          animation: 'fadeIn 0.5s ease 2s both',
         }}>
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '8px',
-            color: 'rgba(255,255,255,0.12)',
-            letterSpacing: '0.1em',
+            fontSize: '9px',
+            color: 'rgba(255,255,255,0.35)',
+            letterSpacing: '0.12em',
             animation: 'pulse-subtle 2s ease-in-out infinite',
           }}>
-            TAP TO SKIP
+            TAP TO SKIP ▸
           </span>
         </div>
       )}

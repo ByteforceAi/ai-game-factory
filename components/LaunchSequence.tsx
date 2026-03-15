@@ -52,7 +52,7 @@ export default function LaunchSequence({ gameTitle, onComplete }: LaunchSequence
       alignItems: 'center',
       justifyContent: 'center',
       background: 'radial-gradient(ellipse at center, rgba(15,15,35,0.98) 0%, rgba(2,2,8,1) 100%)',
-      transition: 'opacity 0.5s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+      transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
       opacity: phase === 'zoom' ? 0 : 1,
       transform: phase === 'zoom' ? 'scale(1.3)' : 'scale(1)',
     }}>

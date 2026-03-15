@@ -376,34 +376,10 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                     <button
                       key={chip.label}
                       onClick={() => handleChipClick(chip)}
-                      className="chip-touch"
+                      className="chip-select chip-touch"
                       style={{
-                        background: 'var(--bg-surface)',
-                        border: `1px solid var(--border-dim)`,
-                        borderRadius: '100px',
-                        padding: '10px 18px',
-                        color: 'var(--text-body)',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        transition: 'all 0.3s',
                         animation: `fadeSlideIn 0.4s ease ${i * 0.06}s both`,
-                        minHeight: '44px',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = chip.color + '50';
-                        e.currentTarget.style.color = chip.color;
-                        e.currentTarget.style.background = chip.color + '10';
-                        e.currentTarget.style.boxShadow = `0 0 16px ${chip.color}15`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = '';
-                        e.currentTarget.style.color = '';
-                        e.currentTarget.style.background = '';
-                        e.currentTarget.style.boxShadow = '';
+                        ['--chip-color' as string]: chip.color,
                       }}
                     >
                       {chip.label}

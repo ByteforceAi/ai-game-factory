@@ -340,35 +340,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
 
             <div className="shimmer-line" style={{ width: '120px' }} />
 
-            <button
-              onClick={handleStart}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(99,102,241,0.3)',
-                color: 'rgba(255,255,255,0.7)',
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '12px',
-                fontWeight: 500,
-                letterSpacing: '0.2em',
-                padding: '14px 48px',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                marginTop: '20px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(99,102,241,0.6)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.95)';
-                e.currentTarget.style.boxShadow = '0 0 30px rgba(99,102,241,0.15), 0 0 60px rgba(99,102,241,0.05)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
+            <button onClick={handleStart} className="btn-start">
               START
             </button>
 
