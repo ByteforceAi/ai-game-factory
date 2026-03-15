@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { simulateCodeGeneration, GENERATE_STATUS_MESSAGES } from '@/lib/codeSimulator';
+import { playTick, playComplete, playWhoosh } from '@/lib/sounds';
 import ParticleBackground from './ParticleBackground';
 
 interface CodeStreamViewProps {
@@ -127,6 +128,17 @@ export default function CodeStreamView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(Date.now());
+  const cancelRef = useRef<(() => void) | null>(null);
+
+  const handleSkip = useCallback(() => {
+    if (done) return;
+    cancelRef.current?.();
+    setCode(gameHtml);
+    setProgress(100);
+    setStatus(completionText);
+    setDone(true);
+    setTimeout(() => onComplete(gameHtml), 400);
+  }, [done, gameHtml, onComplete, completionText]);
 
   // Elapsed timer
   useEffect(() => {
@@ -137,18 +149,29 @@ export default function CodeStreamView({
     return () => clearInterval(iv);
   }, []);
 
+  const tickCountRef = useRef(0);
+
   const handleComplete = useCallback((fullCode: string) => {
     setDone(true);
-    setTimeout(() => onComplete(fullCode), 800);
+    playComplete();
+    setTimeout(() => {
+      playWhoosh();
+      onComplete(fullCode);
+    }, 800);
   }, [onComplete]);
 
   useEffect(() => {
     const { cancel } = simulateCodeGeneration(gameHtml, {
-      onCodeChunk: setCode,
+      onCodeChunk: (c) => {
+        setCode(c);
+        tickCountRef.current++;
+        if (tickCountRef.current % 8 === 0) playTick();
+      },
       onStatusChange: setStatus,
       onProgress: setProgress,
       onComplete: handleComplete,
     }, duration, statusMessages);
+    cancelRef.current = cancel;
     return () => cancel();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameHtml, handleComplete, duration]);
@@ -160,6 +183,11 @@ export default function CodeStreamView({
 
   const lineCount = code.split('\n').length;
   const tokPerSec = elapsed > 0 ? Math.round(lineCount * 8.5 / elapsed) : 0;
+
+  // Fake system metrics
+  const gpu = Math.min(95, 40 + progress * 0.55 + Math.sin(elapsed * 1.3) * 8);
+  const mem = (1.2 + progress * 0.028 + Math.sin(elapsed * 0.7) * 0.2).toFixed(1);
+  const neural = done ? 0 : Math.round(tokPerSec * (1.2 + Math.sin(elapsed * 2) * 0.3));
 
   // Only highlight last ~50 lines for performance
   const highlighted = useMemo(() => {
@@ -250,24 +278,40 @@ export default function CodeStreamView({
         {/* Metrics */}
         <div style={{
           display: 'flex',
-          gap: '20px',
+          gap: '16px',
           alignItems: 'center',
         }}>
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            color: 'rgba(255,255,255,0.25)',
-            letterSpacing: '0.05em',
+            fontSize: '9px',
+            color: 'rgba(255,255,255,0.2)',
+            letterSpacing: '0.04em',
           }}>
             {lineCount} <span style={{ opacity: 0.5 }}>LOC</span>
           </span>
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            color: 'rgba(6,182,212,0.6)',
-            letterSpacing: '0.05em',
+            fontSize: '9px',
+            color: 'rgba(6,182,212,0.5)',
+            letterSpacing: '0.04em',
           }}>
             ~{tokPerSec} <span style={{ opacity: 0.5 }}>tok/s</span>
+          </span>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '9px',
+            color: gpu > 80 ? 'rgba(251,146,60,0.6)' : 'rgba(255,255,255,0.2)',
+            letterSpacing: '0.04em',
+          }}>
+            GPU {Math.round(gpu)}<span style={{ opacity: 0.5 }}>%</span>
+          </span>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '9px',
+            color: 'rgba(255,255,255,0.2)',
+            letterSpacing: '0.04em',
+          }}>
+            {mem}<span style={{ opacity: 0.5 }}>GB</span>
           </span>
         </div>
       </div>
@@ -275,11 +319,13 @@ export default function CodeStreamView({
       {/* ═══ Code Area ═══ */}
       <div
         ref={scrollRef}
+        onClick={!done ? handleSkip : undefined}
         style={{
           flex: 1,
           overflow: 'auto',
           position: 'relative',
           zIndex: 1,
+          cursor: !done ? 'pointer' : 'default',
         }}
       >
         {/* Top gradient fade — code emerges from darkness */}
@@ -363,6 +409,26 @@ export default function CodeStreamView({
           marginTop: '-40px',
         }} />
       </div>
+
+      {/* Skip hint */}
+      {!done && (
+        <div style={{
+          textAlign: 'center',
+          padding: '4px 0',
+          position: 'relative',
+          zIndex: 2,
+        }}>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '8px',
+            color: 'rgba(255,255,255,0.12)',
+            letterSpacing: '0.1em',
+            animation: 'pulse-subtle 2s ease-in-out infinite',
+          }}>
+            TAP TO SKIP
+          </span>
+        </div>
+      )}
 
       {/* ═══ Bottom Bar ═══ */}
       <div style={{

@@ -8,6 +8,7 @@ import PromptTerminal from '@/components/PromptTerminal';
 import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
 import ShareModal from '@/components/ShareModal';
+import VibeOverlay from '@/components/VibeOverlay';
 import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
 
 interface LeaderboardEntry {
@@ -36,6 +37,8 @@ export default function Home() {
   const [vibeGenerating, setVibeGenerating] = useState(false);
   const [pendingVibeHtml, setPendingVibeHtml] = useState<string | null>(null);
   const [vibePresetLabel, setVibePresetLabel] = useState('');
+  const [vibeMode, setVibeMode] = useState<'full' | 'overlay'>('full');
+  const [vibeCodeSnippet, setVibeCodeSnippet] = useState('');
 
   const writeGameToIframe = useCallback((html: string) => {
     if (!iframeRef.current) return;
@@ -73,6 +76,8 @@ export default function Home() {
         setShowLeaderboard(true);
         setScoreSubmitted(false);
         setMyRank(null);
+        setShowRemix(false);  // close remix panel on game over
+        setShowCode(false);   // close code panel on game over
         if (selectedGame) fetchLeaderboard(selectedGame.id);
       }
     };
@@ -134,11 +139,20 @@ export default function Home() {
     setLeaderboard([]);
   };
 
-  const handleApplyRemix = (newHtml: string, presetLabel: string) => {
+  const handleApplyRemix = (newHtml: string, presetLabel: string, codeSnippet?: string) => {
     setShowRemix(false);
     setShowCode(false);
     setPendingVibeHtml(newHtml);
     setVibePresetLabel(presetLabel);
+    if (codeSnippet) {
+      // Visual theme → lightweight overlay (game stays visible)
+      setVibeMode('overlay');
+      setVibeCodeSnippet(codeSnippet);
+    } else {
+      // Gameplay mod → full-screen code stream
+      setVibeMode('full');
+      setVibeCodeSnippet('');
+    }
     setVibeGenerating(true);
   };
 
@@ -194,7 +208,7 @@ export default function Home() {
       />
 
       {/* Top HUD — Overlay */}
-      <div style={{
+      <div className="anim-slide-down" style={{
         position: 'absolute',
         top: 0,
         left: 0,
@@ -203,31 +217,16 @@ export default function Home() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '8px 12px',
-        background: 'linear-gradient(to bottom, rgba(5,5,16,0.7) 0%, transparent 100%)',
+        padding: '10px 12px',
+        background: 'linear-gradient(to bottom, rgba(5,5,16,0.75) 0%, transparent 100%)',
         pointerEvents: 'none',
       }}>
-        <button
-          onClick={handleReset}
-          style={{
-            background: 'rgba(0,0,0,0.5)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.7)',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            cursor: 'pointer',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            pointerEvents: 'auto',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
-        >
-          EXIT
+        <button onClick={handleReset} className="btn-hud">
+          ← EXIT
         </button>
         <span style={{
           color: 'rgba(255,255,255,0.9)',
-          fontSize: '13px',
+          fontSize: 'clamp(11px, 3vw, 14px)',
           fontWeight: 600,
           fontFamily: "'JetBrains Mono', monospace",
           letterSpacing: '0.08em',
@@ -235,45 +234,14 @@ export default function Home() {
         }}>
           {selectedGame?.title}
         </span>
-        <button
-          onClick={handleRestart}
-          style={{
-            background: 'rgba(99,102,241,0.3)',
-            border: '1px solid rgba(99,102,241,0.4)',
-            color: '#a5b4fc',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            cursor: 'pointer',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontWeight: 500,
-            pointerEvents: 'auto',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
-        >
-          RESTART
+        <button onClick={handleRestart} className="btn-hud btn-hud--active">
+          ↻ RESTART
         </button>
       </div>
 
       {/* Game Over Overlay */}
       {showLeaderboard && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(5,5,16,0.85)',
-          backdropFilter: 'blur(30px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(30px) saturate(150%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingTop: '8vh',
-          gap: '12px',
-          zIndex: 30,
-          overflowY: 'auto',
-          padding: '8vh 20px 20px',
-        }}>
+        <div className="overlay-game-over">
             <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)' }}>
               FINAL SCORE
             </span>
@@ -395,48 +363,73 @@ export default function Home() {
             )}
 
             {/* Action buttons */}
-            <div style={{
+            <div className="anim-fade-in-up" style={{
               display: 'flex',
-              gap: '10px',
+              gap: '8px',
               width: '100%',
               maxWidth: '300px',
               marginTop: '8px',
+              flexWrap: 'wrap',
             }}>
               <button
                 onClick={() => setShowShare(true)}
                 style={{
                   flex: 1,
+                  minWidth: '80px',
                   background: 'var(--bg-surface)',
                   border: '1px solid var(--border-glow)',
                   color: 'var(--ai-indigo)',
                   fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 600,
-                  padding: '12px',
+                  padding: '11px 8px',
                   borderRadius: '12px',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                 }}
               >
-                SHARE
+                📤 SHARE
+              </button>
+              <button
+                onClick={() => {
+                  setShowLeaderboard(false);
+                  setShowRemix(true);
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '80px',
+                  background: 'rgba(16,185,129,0.1)',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  color: '#6ee7b7',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '11px 8px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                }}
+              >
+                ✨ VIBE
               </button>
               <button
                 onClick={handleRestart}
                 className="btn-glow"
                 style={{
-                  flex: 1,
-                  padding: '12px',
+                  flex: 2,
+                  minWidth: '120px',
+                  padding: '11px 8px',
                   borderRadius: '12px',
                 }}
               >
-                RETRY
+                ↻ RETRY
               </button>
             </div>
           </div>
         )}
 
       {/* Bottom Dev Tools Bar — Overlay */}
-      <div style={{
+      <div className="anim-fade-in" style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
@@ -444,66 +437,40 @@ export default function Home() {
         zIndex: 20,
         display: 'flex',
         gap: '8px',
-        padding: '8px 12px',
-        background: 'linear-gradient(to top, rgba(5,5,16,0.7) 0%, transparent 100%)',
+        padding: '10px 12px',
+        background: 'linear-gradient(to top, rgba(5,5,16,0.75) 0%, transparent 100%)',
         alignItems: 'center',
         pointerEvents: 'none',
       }}>
         <button
-          onClick={() => setShowCode(!showCode)}
-          style={{
-            flex: 1,
-            background: showCode ? 'rgba(99,102,241,0.3)' : 'rgba(0,0,0,0.5)',
-            border: showCode ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.15)',
-            color: showCode ? '#a5b4fc' : 'rgba(255,255,255,0.7)',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            fontWeight: 500,
-            padding: '8px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
+          onClick={() => { setShowCode(!showCode); if (!showCode) setShowRemix(false); }}
+          className={`btn-hud ${showCode ? 'btn-hud--active' : ''}`}
+          style={{ flex: 1 }}
         >
           {'</>'} CODE
         </button>
         <button
-          onClick={() => setShowRemix(!showRemix)}
-          style={{
-            flex: 1,
-            background: showRemix ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.5)',
-            border: showRemix ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.15)',
-            color: showRemix ? '#6ee7b7' : 'rgba(255,255,255,0.7)',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            fontWeight: 500,
-            padding: '8px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
+          onClick={() => { setShowRemix(!showRemix); if (!showRemix) setShowCode(false); }}
+          className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
+          style={{ flex: 1 }}
         >
-          VIBE CODING
+          ✨ VIBE
         </button>
-        <span className="mono-xs" style={{ fontSize: '9px', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.4)' }}>
+        <span className="mono-xs" style={{
+          fontSize: '9px',
+          whiteSpace: 'nowrap',
+          color: 'rgba(255,255,255,0.4)',
+          pointerEvents: 'auto',
+        }}>
           {lineCount} LOC
         </span>
       </div>
 
       {/* Code Panel — Overlay */}
       {showCode && (
-        <div style={{
-          position: 'absolute',
-          bottom: '50px',
-          left: 0,
-          right: 0,
+        <div className="panel-slide-up" style={{
           maxHeight: '40vh',
           overflow: 'auto',
-          zIndex: 25,
         }}>
           <div className="code-terminal" style={{ padding: '12px 16px', minHeight: '100px', background: 'rgba(5,5,16,0.95)' }}>
             <div style={{
@@ -537,7 +504,7 @@ export default function Home() {
 
       {/* Remix Panel — Overlay */}
       {showRemix && selectedGame && (
-        <div style={{ position: 'absolute', bottom: '50px', left: 0, right: 0, zIndex: 25 }}>
+        <div className="panel-slide-up">
           <RemixPanel
             gameId={selectedGame.id}
             gameHtml={gameCode}
@@ -555,7 +522,7 @@ export default function Home() {
         />
       )}
 
-      {vibeGenerating && pendingVibeHtml && (
+      {vibeGenerating && pendingVibeHtml && vibeMode === 'full' && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
           <CodeStreamView
             gameHtml={pendingVibeHtml}
@@ -566,6 +533,15 @@ export default function Home() {
             completionText="VIBE CODING COMPLETE"
           />
         </div>
+      )}
+
+      {vibeGenerating && pendingVibeHtml && vibeMode === 'overlay' && (
+        <VibeOverlay
+          codeSnippet={vibeCodeSnippet}
+          label={vibePresetLabel}
+          duration={2200}
+          onComplete={() => handleVibeComplete(pendingVibeHtml)}
+        />
       )}
     </div>
   );

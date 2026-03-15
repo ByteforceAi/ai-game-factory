@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ParticleBackground from './ParticleBackground';
+import { initAudio, playWhoosh, playTick } from '@/lib/sounds';
 
 interface IntroScreenProps {
   onComplete: () => void;
@@ -183,14 +184,36 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
   const [codeText, setCodeText] = useState('');
   const [visibleUI, setVisibleUI] = useState<Set<string>>(new Set());
   const [fadeOut, setFadeOut] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const skipToEnd = useCallback(() => {
+    // Clear all pending timers
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    // Jump to final state
+    const fullCode = MATERIAL_STEPS.map(s => s.code).join('');
+    setCodeText(fullCode);
+    setVisibleUI(new Set(MATERIAL_STEPS.map(s => s.uiKey).filter(k => k !== 'none')));
+    setPhase('transitioning');
+    setFadeOut(true);
+    setTimeout(() => onComplete(), 600);
+  }, [onComplete]);
 
   const handleStart = useCallback(() => {
     if (phase !== 'idle') return;
+    initAudio();
     setPhase('materializing');
 
-    // For each step: type the code char by char, then reveal the UI element
+    const timers: ReturnType<typeof setTimeout>[] = [];
     let accumulated = '';
 
     MATERIAL_STEPS.forEach((step) => {
@@ -199,26 +222,30 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
 
       // Type each character
       chars.forEach((char, ci) => {
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           accumulated += char;
           setCodeText(accumulated);
-        }, step.delay + ci * charDelay);
+          if (ci % 3 === 0 && char.trim()) playTick();
+        }, step.delay + ci * charDelay));
       });
 
       // Reveal UI element when typing finishes
       if (step.uiKey !== 'none') {
-        setTimeout(() => {
+        timers.push(setTimeout(() => {
           setVisibleUI(prev => new Set(prev).add(step.uiKey));
-        }, step.delay + step.typeDuration * 0.6); // reveal at 60% of typing
+        }, step.delay + step.typeDuration * 0.6));
       }
     });
 
     // Transition out
-    setTimeout(() => {
+    timers.push(setTimeout(() => {
+      playWhoosh();
       setPhase('transitioning');
       setFadeOut(true);
-      setTimeout(() => onComplete(), 1000);
-    }, TOTAL_DURATION);
+      timers.push(setTimeout(() => onComplete(), 1000));
+    }, TOTAL_DURATION));
+
+    timersRef.current = timers;
   }, [phase, onComplete]);
 
   const highlighted = useMemo(() => highlightMaterialCode(codeText), [codeText]);
@@ -339,16 +366,21 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
 
         {/* ═══ Phase: materializing — Code + UI in parallel ═══ */}
         {(phase === 'materializing' || phase === 'transitioning') && (
-          <div style={{
-            display: 'flex',
-            gap: '24px',
-            width: '100%',
-            alignItems: 'flex-start',
-          }}>
+          <div
+            onClick={phase === 'materializing' ? skipToEnd : undefined}
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '16px' : '24px',
+              width: '100%',
+              alignItems: 'flex-start',
+              cursor: phase === 'materializing' ? 'pointer' : 'default',
+            }}>
             {/* LEFT: Code stream */}
             <div style={{
-              flex: '0 0 48%',
-              maxHeight: '420px',
+              flex: isMobile ? 'none' : '0 0 48%',
+              width: isMobile ? '100%' : undefined,
+              maxHeight: isMobile ? '160px' : '420px',
               overflow: 'hidden',
               position: 'relative',
             }}>
@@ -582,6 +614,24 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 </div>
               )}
             </div>
+
+            {/* Skip hint */}
+            {phase === 'materializing' && (
+              <div style={{
+                position: 'absolute',
+                bottom: isMobile ? '-28px' : '-32px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                color: 'rgba(255,255,255,0.15)',
+                letterSpacing: '0.1em',
+                animation: 'pulse-subtle 2s ease-in-out infinite',
+                whiteSpace: 'nowrap',
+              }}>
+                TAP TO SKIP
+              </div>
+            )}
           </div>
         )}
       </div>

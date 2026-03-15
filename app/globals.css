@@ -243,3 +243,146 @@ body {
 
 ::selection { background: rgba(99,102,241,0.3); color: #f1f5f9; }
 *:focus-visible { outline: 2px solid rgba(99,102,241,0.5); outline-offset: 2px; }
+
+/* ============================================
+   VIEW TRANSITIONS
+   ============================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.anim-fade-in { animation: fadeIn 0.4s ease-out both; }
+.anim-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.anim-slide-down { animation: slideDown 0.3s ease-out both; }
+.anim-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Staggered children animation */
+.stagger-children > * { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ============================================
+   HUD BUTTONS
+   ============================================ */
+.btn-hud {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-hud:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.95);
+  transform: translateY(-1px);
+}
+
+.btn-hud:active {
+  transform: scale(0.97);
+}
+
+.btn-hud--active {
+  background: rgba(99,102,241,0.25);
+  border-color: rgba(99,102,241,0.4);
+  color: #a5b4fc;
+}
+
+.btn-hud--accent {
+  background: rgba(16,185,129,0.2);
+  border-color: rgba(16,185,129,0.35);
+  color: #6ee7b7;
+}
+
+.btn-hud--accent:hover {
+  background: rgba(16,185,129,0.3);
+  border-color: rgba(16,185,129,0.5);
+  color: #a7f3d0;
+}
+
+/* ============================================
+   GAME OVER OVERLAY
+   ============================================ */
+.overlay-game-over {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,5,16,0.88);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: max(6vh, 40px) 20px 20px;
+  gap: 12px;
+  z-index: 30;
+  overflow-y: auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* ============================================
+   PANEL SLIDE-UP
+   ============================================ */
+.panel-slide-up {
+  position: absolute;
+  bottom: 52px;
+  left: 0;
+  right: 0;
+  z-index: 25;
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================
+   MOBILE HELPERS
+   ============================================ */
+@media (max-width: 480px) {
+  .btn-hud {
+    padding: 10px 16px;
+    min-height: 42px;
+    font-size: 11px;
+  }
+  .btn-glow {
+    padding: 12px 24px;
+    font-size: 13px;
+  }
+}
