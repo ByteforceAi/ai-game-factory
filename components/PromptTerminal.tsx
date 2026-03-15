@@ -619,7 +619,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                       background: 'rgba(99,102,241,0.08)',
                       border: '1px solid rgba(99,102,241,0.15)',
                       borderRadius: '12px',
-                      borderTopLeft: '4px',
+                      borderTopLeftRadius: '4px',
                       padding: '10px 14px',
                       fontSize: '12px',
                       color: 'var(--text-body)',
