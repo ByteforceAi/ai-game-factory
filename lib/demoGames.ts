@@ -1418,9 +1418,11 @@ canvas {
 </body>
 </html>`;
 
-// Import Phaser.js powered games
+// Import game modules
 import { NEON_SHOOTER_HTML } from './games/neonShooter';
 import { NEON_PLATFORMER_HTML } from './games/neonPlatformer';
+import { TEMPLE_RUNNER_HTML as TEMPLE_RUNNER_V2 } from './games/templeRunner';
+import { TETRIS_HTML as TETRIS_V2 } from './games/tetris';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1448,7 +1450,7 @@ export const DEMO_GAMES: DemoGame[] = [
     prompt: 'Three.js WebGL 3D 1인칭 끝없는 러너',
     icon: '▸▸',
     accentColor: '#00CCFF',
-    html: TEMPLE_RUNNER_HTML,
+    html: TEMPLE_RUNNER_V2,
   },
   {
     id: 'tetris',
@@ -1457,6 +1459,6 @@ export const DEMO_GAMES: DemoGame[] = [
     prompt: '클래식 10x20 테트리스',
     icon: '⊞',
     accentColor: '#B400FF',
-    html: TETRIS_HTML,
+    html: TETRIS_V2,
   },
 ];

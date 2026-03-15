@@ -20,6 +20,152 @@ canvas{display:block}
 'use strict';
 (function(){
 
+/* ═══════════════════════════════════════════════
+   PROCEDURAL AUDIO ENGINE (Web Audio API)
+   ═══════════════════════════════════════════════ */
+var AudioCtx = window.AudioContext || window.webkitAudioContext;
+var actx = null;
+function ensureAudio(){
+  if(!actx){ try{ actx = new AudioCtx(); }catch(e){ actx = null; } }
+  if(actx && actx.state === 'suspended') actx.resume().catch(function(){});
+}
+
+function sfxJump(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var osc = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(280, t);
+    osc.frequency.exponentialRampToValueAtTime(560, t+0.1);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.13);
+  }catch(e){}
+}
+
+function sfxDoubleJump(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var osc = actx.createOscillator();
+    var osc2 = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'sine'; osc2.type = 'triangle';
+    osc.frequency.setValueAtTime(400, t);
+    osc.frequency.exponentialRampToValueAtTime(900, t+0.12);
+    osc2.frequency.setValueAtTime(600, t);
+    osc2.frequency.exponentialRampToValueAtTime(1200, t+0.12);
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.14);
+    osc.connect(gain); osc2.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.15);
+    osc2.start(t); osc2.stop(t+0.15);
+  }catch(e){}
+}
+
+function sfxWallJump(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var osc = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(500, t+0.08);
+    osc.frequency.exponentialRampToValueAtTime(300, t+0.12);
+    gain.gain.setValueAtTime(0.07, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.14);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.15);
+  }catch(e){}
+}
+
+function sfxOrb(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var osc = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, t);
+    osc.frequency.exponentialRampToValueAtTime(1400, t+0.15);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.21);
+    // second harmonic
+    var osc2 = actx.createOscillator();
+    var gain2 = actx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(900, t+0.05);
+    osc2.frequency.exponentialRampToValueAtTime(1800, t+0.2);
+    gain2.gain.setValueAtTime(0.06, t+0.05);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t+0.25);
+    osc2.connect(gain2); gain2.connect(actx.destination);
+    osc2.start(t+0.05); osc2.stop(t+0.26);
+  }catch(e){}
+}
+
+function sfxLand(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var bufSize = Math.floor(actx.sampleRate * 0.08);
+    var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<bufSize;i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1-i/bufSize, 4);
+    }
+    var src = actx.createBufferSource();
+    src.buffer = buf;
+    var filter = actx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, t);
+    var gain = actx.createGain();
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.08);
+    src.connect(filter); filter.connect(gain); gain.connect(actx.destination);
+    src.start(t);
+  }catch(e){}
+}
+
+function sfxDeath(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    // descending tone
+    var osc = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t+0.6);
+    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.6);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.61);
+    // noise burst
+    var bufSize = Math.floor(actx.sampleRate * 0.3);
+    var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<bufSize;i++) data[i] = (Math.random()*2-1)*Math.pow(1-i/bufSize,2);
+    var src = actx.createBufferSource();
+    src.buffer = buf;
+    var filter = actx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, t);
+    filter.frequency.exponentialRampToValueAtTime(80, t+0.3);
+    var gain2 = actx.createGain();
+    gain2.gain.setValueAtTime(0.08, t);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+    src.connect(filter); filter.connect(gain2); gain2.connect(actx.destination);
+    src.start(t);
+  }catch(e){}
+}
+
+/* ───────── constants ───────── */
 const W = window.innerWidth;
 const H = window.innerHeight;
 const GRAVITY = 720;
@@ -31,10 +177,9 @@ const WALL_JUMP_VEL_X = 320;
 const WALL_JUMP_VEL_Y = -400;
 const COYOTE_TIME = 100;
 const JUMP_BUFFER = 120;
-const PLATFORM_SCROLL_SPEED = 160;
+const PLATFORM_SCROLL_SPEED = 150;
 const ORB_SCORE = 10;
 
-// Color palette
 const C = {
   bg: 0x0a0a1a,
   player: 0x00ffff,
@@ -52,77 +197,150 @@ const C = {
   speedLine: 0x00ffff,
 };
 
+function hexColor(c){ return '#'+c.toString(16).padStart(6,'0'); }
+
+/* ───────── BOOT scene (enhanced textures) ───────── */
 class BootScene extends Phaser.Scene {
   constructor(){ super('Boot'); }
 
   preload(){
-    // Generate all textures procedurally
-    const g = this.make.graphics({add:false});
+    // Player with gradient glow
+    var pcan = document.createElement('canvas');
+    pcan.width = 48; pcan.height = 64;
+    var pctx = pcan.getContext('2d');
+    // glow
+    var pg = pctx.createRadialGradient(24,32,0,24,32,32);
+    pg.addColorStop(0, '#00ffff44');
+    pg.addColorStop(1, '#00ffff00');
+    pctx.fillStyle = pg;
+    pctx.fillRect(0,0,48,64);
+    // body
+    var bg = pctx.createLinearGradient(12,4,36,60);
+    bg.addColorStop(0, '#ffffff');
+    bg.addColorStop(0.3, '#00ffff');
+    bg.addColorStop(1, '#006688');
+    pctx.fillStyle = bg;
+    pctx.fillRect(12,4,24,56);
+    // eyes
+    pctx.fillStyle = '#ffffff99';
+    pctx.fillRect(16,12,6,6);
+    pctx.fillRect(26,12,6,6);
+    // visor line
+    pctx.fillStyle = '#00dddd66';
+    pctx.fillRect(14,30,20,3);
+    this.textures.addCanvas('player', pcan);
 
-    // Player 24x32
-    g.clear();
-    g.fillStyle(C.player, 1);
-    g.fillRect(0, 0, 24, 32);
-    g.fillStyle(0xffffff, 0.6);
-    g.fillRect(4, 4, 6, 6);
-    g.fillRect(14, 4, 6, 6);
-    g.fillStyle(0x00dddd, 0.4);
-    g.fillRect(2, 16, 20, 2);
-    g.generateTexture('player', 24, 32);
+    // Trail
+    var tcan = document.createElement('canvas');
+    tcan.width = 48; tcan.height = 64;
+    var tctx = tcan.getContext('2d');
+    var tg = tctx.createRadialGradient(24,32,0,24,32,28);
+    tg.addColorStop(0, '#0088aa88');
+    tg.addColorStop(1, '#0088aa00');
+    tctx.fillStyle = tg;
+    tctx.fillRect(0,0,48,64);
+    this.textures.addCanvas('trail', tcan);
 
-    // Trail segment
-    g.clear();
-    g.fillStyle(C.playerTrail, 0.5);
-    g.fillRect(0, 0, 24, 32);
-    g.generateTexture('trail', 24, 32);
+    // Platform tile
+    var plcan = document.createElement('canvas');
+    plcan.width = 64; plcan.height = 16;
+    var plctx = plcan.getContext('2d');
+    var plg = plctx.createLinearGradient(0,0,64,0);
+    plg.addColorStop(0, '#aa00ff');
+    plg.addColorStop(1, '#ff0066');
+    plctx.fillStyle = plg;
+    plctx.fillRect(0,0,64,16);
+    plctx.fillStyle = '#ffffff33';
+    plctx.fillRect(0,0,64,3);
+    plctx.fillStyle = '#00000044';
+    plctx.fillRect(0,13,64,3);
+    // edge glow
+    plctx.shadowColor = '#aa00ff';
+    plctx.shadowBlur = 6;
+    plctx.strokeStyle = '#aa00ff88';
+    plctx.lineWidth = 1;
+    plctx.strokeRect(0,0,64,16);
+    this.textures.addCanvas('platform', plcan);
 
-    // Platform tile 64x16
-    g.clear();
-    g.fillStyle(C.platformStart, 1);
-    g.fillRect(0, 0, 64, 16);
-    g.fillStyle(0xffffff, 0.15);
-    g.fillRect(0, 0, 64, 2);
-    g.fillStyle(0x000000, 0.3);
-    g.fillRect(0, 14, 64, 2);
-    g.generateTexture('platform', 64, 16);
+    // Moving platform
+    var mpcan = document.createElement('canvas');
+    mpcan.width = 64; mpcan.height = 16;
+    var mpctx = mpcan.getContext('2d');
+    var mpg = mpctx.createLinearGradient(0,0,64,0);
+    mpg.addColorStop(0, '#ff00ff');
+    mpg.addColorStop(1, '#ff44cc');
+    mpctx.fillStyle = mpg;
+    mpctx.fillRect(0,0,64,16);
+    mpctx.fillStyle = '#ffffff44';
+    mpctx.fillRect(0,0,64,4);
+    mpctx.fillStyle = '#00000044';
+    mpctx.fillRect(0,12,64,4);
+    this.textures.addCanvas('movingPlatform', mpcan);
 
-    // Moving platform (brighter)
-    g.clear();
-    g.fillStyle(0xff00ff, 1);
-    g.fillRect(0, 0, 64, 16);
-    g.fillStyle(0xffffff, 0.25);
-    g.fillRect(0, 0, 64, 3);
-    g.fillStyle(0x000000, 0.3);
-    g.fillRect(0, 13, 64, 3);
-    g.generateTexture('movingPlatform', 64, 16);
+    // Orb with glow
+    var ocan = document.createElement('canvas');
+    ocan.width = 32; ocan.height = 32;
+    var octx = ocan.getContext('2d');
+    var og = octx.createRadialGradient(16,16,0,16,16,16);
+    og.addColorStop(0, '#ffffff');
+    og.addColorStop(0.3, '#ffff00');
+    og.addColorStop(0.7, '#ffcc0066');
+    og.addColorStop(1, '#ffcc0000');
+    octx.fillStyle = og;
+    octx.beginPath();
+    octx.arc(16,16,16,0,Math.PI*2);
+    octx.fill();
+    this.textures.addCanvas('orb', ocan);
 
-    // Orb 16x16
-    g.clear();
-    g.fillStyle(C.orb, 1);
-    g.fillCircle(8, 8, 7);
-    g.fillStyle(0xffffff, 0.5);
-    g.fillCircle(6, 6, 3);
-    g.generateTexture('orb', 16, 16);
+    // Spike with gradient
+    var scan = document.createElement('canvas');
+    scan.width = 32; scan.height = 32;
+    var sctx = scan.getContext('2d');
+    var sg = sctx.createLinearGradient(16,0,16,32);
+    sg.addColorStop(0, '#ffffff');
+    sg.addColorStop(0.3, '#ff2244');
+    sg.addColorStop(1, '#ff224466');
+    sctx.fillStyle = sg;
+    sctx.beginPath();
+    sctx.moveTo(16,2);
+    sctx.lineTo(28,30);
+    sctx.lineTo(4,30);
+    sctx.closePath();
+    sctx.fill();
+    // glow
+    sctx.shadowColor = '#ff2244';
+    sctx.shadowBlur = 8;
+    sctx.strokeStyle = '#ff224488';
+    sctx.lineWidth = 1;
+    sctx.stroke();
+    this.textures.addCanvas('spike', scan);
 
-    // Spike 16x16
-    g.clear();
-    g.fillStyle(C.spike, 1);
-    g.fillTriangle(8, 0, 0, 16, 16, 16);
-    g.generateTexture('spike', 16, 16);
+    // Particle glow dot
+    var parcan = document.createElement('canvas');
+    parcan.width = 12; parcan.height = 12;
+    var parctx = parcan.getContext('2d');
+    var parg = parctx.createRadialGradient(6,6,0,6,6,6);
+    parg.addColorStop(0, '#ffffff');
+    parg.addColorStop(0.5, '#ffffff88');
+    parg.addColorStop(1, '#ffffff00');
+    parctx.fillStyle = parg;
+    parctx.beginPath();
+    parctx.arc(6,6,6,0,Math.PI*2);
+    parctx.fill();
+    this.textures.addCanvas('particle', parcan);
 
-    // Particle 6x6
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(0, 0, 6, 6);
-    g.generateTexture('particle', 6, 6);
-
-    // Small particle 3x3
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(0, 0, 3, 3);
-    g.generateTexture('smallParticle', 3, 3);
-
-    g.destroy();
+    // Small particle
+    var spcan = document.createElement('canvas');
+    spcan.width = 8; spcan.height = 8;
+    var spctx = spcan.getContext('2d');
+    var spg = spctx.createRadialGradient(4,4,0,4,4,4);
+    spg.addColorStop(0, '#ffffff');
+    spg.addColorStop(1, '#ffffff00');
+    spctx.fillStyle = spg;
+    spctx.beginPath();
+    spctx.arc(4,4,4,0,Math.PI*2);
+    spctx.fill();
+    this.textures.addCanvas('smallParticle', spcan);
   }
 
   create(){
@@ -131,11 +349,23 @@ class BootScene extends Phaser.Scene {
   }
 }
 
+/* ═══════════════════════════════════════════════
+   GAME SCENE
+   ═══════════════════════════════════════════════ */
 class GameScene extends Phaser.Scene {
   constructor(){ super('Game'); }
 
   create(){
     this.cameras.main.setBackgroundColor(C.bg);
+
+    // Audio init on first interaction
+    this.audioReady = false;
+    var self = this;
+    var initAudio = function(){
+      if(!self.audioReady){ ensureAudio(); self.audioReady = true; }
+    };
+    this.input.on('pointerdown', initAudio);
+    this.input.keyboard.on('keydown', initAudio);
 
     // State
     this.score = 0;
@@ -151,28 +381,31 @@ class GameScene extends Phaser.Scene {
     this.jumpBufferTimer = 0;
     this.isDoubleJumpAvailable = true;
     this.isOnWall = false;
-    this.wallSide = 0; // -1 left, 1 right
+    this.wallSide = 0;
     this.jumpHeld = false;
     this.jumpCount = 0;
     this.touchLeft = false;
     this.touchRight = false;
     this.touchJump = false;
     this.trailPositions = [];
-    this.speedLinePool = [];
     this.deathTriggered = false;
 
-    // Grid background (scrolling)
+    // Flash overlay
+    this.flashOverlay = this.add.rectangle(W/2, H/2, W, H, 0xffffff, 0)
+      .setScrollFactor(0).setDepth(150).setBlendMode(Phaser.BlendModes.ADD);
+
+    // Grid background
     this.gridGraphics = this.add.graphics();
     this.gridOffset = 0;
 
-    // Groups with object pooling
+    // Groups
     this.platforms = this.physics.add.staticGroup();
     this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
     this.orbs = this.physics.add.group({ allowGravity: false });
     this.spikes = this.physics.add.group({ allowGravity: false });
 
-    // Trail container
-    this.trailContainer = this.add.container(0, 0);
+    // Trail (using Graphics instead of creating/destroying images)
+    this.trailGfx = this.add.graphics().setDepth(8);
 
     // Player
     this.player = this.physics.add.sprite(W * 0.25, H * 0.5, 'player');
@@ -180,18 +413,20 @@ class GameScene extends Phaser.Scene {
     this.player.body.setGravityY(GRAVITY);
     this.player.body.setMaxVelocityY(600);
     this.player.body.setSize(20, 30);
-    this.player.body.setOffset(2, 2);
+    this.player.body.setOffset(14, 16);
     this.player.setDepth(10);
+    this.player.setBlendMode(Phaser.BlendModes.ADD);
 
-    // Particle emitter for jump
+    // Jump particles
     this.jumpEmitter = this.add.particles(0, 0, 'particle', {
       speed: { min: 80, max: 200 },
       angle: { min: 60, max: 120 },
       scale: { start: 1, end: 0 },
       lifespan: 400,
       tint: [C.particle1, C.particle2],
+      blendMode: 'ADD',
       emitting: false,
-      quantity: 8,
+      quantity: 10,
     });
     this.jumpEmitter.setDepth(9);
 
@@ -202,10 +437,24 @@ class GameScene extends Phaser.Scene {
       scale: { start: 1, end: 0 },
       lifespan: 300,
       tint: [C.particle1, 0xffffff],
+      blendMode: 'ADD',
       emitting: false,
-      quantity: 6,
+      quantity: 8,
     });
     this.landEmitter.setDepth(9);
+
+    // Orb collect particles
+    this.orbEmitter = this.add.particles(0, 0, 'particle', {
+      speed: { min: 50, max: 150 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1.2, end: 0 },
+      lifespan: 400,
+      tint: [C.orb, C.orbGlow, 0xffffff],
+      blendMode: 'ADD',
+      emitting: false,
+      quantity: 12,
+    });
+    this.orbEmitter.setDepth(15);
 
     // Death particles
     this.deathEmitter = this.add.particles(0, 0, 'particle', {
@@ -214,16 +463,16 @@ class GameScene extends Phaser.Scene {
       scale: { start: 1.5, end: 0 },
       lifespan: 800,
       tint: [C.deathParticle, C.particle2, C.player, 0xffffff],
+      blendMode: 'ADD',
       emitting: false,
-      quantity: 30,
+      quantity: 35,
     });
     this.deathEmitter.setDepth(20);
 
-    // Speed lines container
-    this.speedLinesGfx = this.add.graphics();
-    this.speedLinesGfx.setDepth(5);
+    // Speed lines
+    this.speedLinesGfx = this.add.graphics().setDepth(5);
 
-    // Create initial platforms
+    // Initial platforms
     this.createStartPlatforms();
 
     // Colliders
@@ -232,20 +481,32 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.orbs, this.collectOrb, null, this);
     this.physics.add.overlap(this.player, this.spikes, this.hitSpike, null, this);
 
-    // UI
+    // HUD
+    var fontSize = Math.max(16, Math.min(22, W * 0.04));
     this.scoreText = this.add.text(16, 16, 'SCORE: 0', {
       fontFamily: '"Courier New", monospace',
-      fontSize: '20px',
+      fontSize: fontSize+'px',
       color: '#00ffff',
       stroke: '#003344',
       strokeThickness: 3,
+      shadow: { offsetX:0, offsetY:0, color:'#00ffff', blur:6, fill:true }
     }).setScrollFactor(0).setDepth(100);
 
-    this.distText = this.add.text(16, 42, '0m', {
+    this.distText = this.add.text(16, 16+fontSize+4, '0m', {
       fontFamily: '"Courier New", monospace',
-      fontSize: '14px',
+      fontSize: (fontSize*0.65)+'px',
       color: '#8888aa',
     }).setScrollFactor(0).setDepth(100);
+
+    // Combo/streak display
+    this.streakCount = 0;
+    this.streakTimer = 0;
+    this.streakText = this.add.text(W-16, 16, '', {
+      fontFamily: '"Courier New", monospace',
+      fontSize: (fontSize*0.7)+'px',
+      color: '#ff00ff',
+      shadow: { offsetX:0, offsetY:0, color:'#ff00ff', blur:6, fill:true }
+    }).setScrollFactor(0).setDepth(100).setOrigin(1, 0);
 
     // Start prompt
     this.startText = this.add.text(W/2, H * 0.35, 'TAP TO START', {
@@ -254,17 +515,15 @@ class GameScene extends Phaser.Scene {
       color: '#00ffff',
       stroke: '#001122',
       strokeThickness: 4,
+      shadow: { offsetX:0, offsetY:0, color:'#00ffff', blur:12, fill:true }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
 
     this.tweens.add({
       targets: this.startText,
       alpha: { from: 1, to: 0.3 },
-      duration: 800,
-      yoyo: true,
-      repeat: -1,
+      duration: 800, yoyo: true, repeat: -1,
     });
 
-    // Controls prompt
     this.controlsText = this.add.text(W/2, H * 0.45, 'ARROWS/WASD or TOUCH\\nDOUBLE JUMP + WALL JUMP', {
       fontFamily: '"Courier New", monospace',
       fontSize: '12px',
@@ -282,22 +541,17 @@ class GameScene extends Phaser.Scene {
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
     });
 
-    // Touch input
+    // Touch
     this.input.on('pointerdown', (pointer) => {
-      if (!this.gameStarted) {
-        this.startGame();
-        return;
-      }
+      if (!this.gameStarted){ this.startGame(); return; }
       if (!this.alive) return;
-      const x = pointer.x;
-      if (x < W * 0.5) this.touchLeft = true;
+      if (pointer.x < W * 0.5) this.touchLeft = true;
       else this.touchRight = true;
       this.touchJump = true;
       this.jumpBufferTimer = JUMP_BUFFER;
     });
 
     this.input.on('pointerup', (pointer) => {
-      // Check remaining pointers
       const pointers = this.input.manager.pointers;
       let anyLeft = false, anyRight = false;
       for (let i = 0; i < pointers.length; i++) {
@@ -318,12 +572,10 @@ class GameScene extends Phaser.Scene {
       else { this.touchRight = true; this.touchLeft = false; }
     });
 
-    // Keyboard jump release tracking
     this.input.keyboard.on('keyup-UP', () => { this.jumpHeld = false; });
     this.input.keyboard.on('keyup-W', () => { this.jumpHeld = false; });
     this.input.keyboard.on('keyup-SPACE', () => { this.jumpHeld = false; });
 
-    // Was on ground last frame
     this.wasOnGround = false;
 
     // Camera
@@ -337,16 +589,21 @@ class GameScene extends Phaser.Scene {
     if (this.controlsText) this.controlsText.destroy();
   }
 
+  flashScreen(color, intensity, duration){
+    this.flashOverlay.setFillStyle(color, intensity);
+    this.tweens.add({
+      targets: this.flashOverlay, alpha: {from:intensity, to:0},
+      duration: duration || 200
+    });
+  }
+
   createStartPlatforms(){
-    // Ground platform
     const groundY = H * 0.75;
     for (let x = -64; x < W + 128; x += 64) {
       this.spawnPlatform(x, groundY, false);
     }
     this.lastPlatformX = W + 64;
     this.lastPlatformY = groundY;
-
-    // A few more ahead
     for (let i = 0; i < 5; i++) {
       this.generateNextPlatform();
     }
@@ -394,7 +651,7 @@ class GameScene extends Phaser.Scene {
       this.spawnPlatform(newX + i * 64, newY, isMoving);
     }
 
-    // Orbs above platform
+    // Orbs
     if (Math.random() < 0.5) {
       const orbCount = Phaser.Math.Between(1, 3);
       for (let i = 0; i < orbCount; i++) {
@@ -406,10 +663,11 @@ class GameScene extends Phaser.Scene {
         orb.body.setSize(12, 12);
         orb.baseY = oy;
         orb.bobPhase = Math.random() * Math.PI * 2;
+        orb.setBlendMode(Phaser.BlendModes.ADD);
       }
     }
 
-    // Spikes on platform
+    // Spikes
     if (Math.random() < Math.min(0.35, 0.05 + this.difficultyMult * 0.04) && tiles >= 2) {
       const spikeCount = Phaser.Math.Between(1, Math.min(3, tiles - 1));
       const usedPositions = new Set();
@@ -431,13 +689,48 @@ class GameScene extends Phaser.Scene {
   }
 
   collectOrb(player, orb){
-    orb.destroy();
+    if (!orb.active) return;
+    var ox = orb.x, oy = orb.y;
+    orb.body.enable = false;
+
+    sfxOrb();
+
+    // Orb collect animation: scale up + fade
+    this.tweens.add({
+      targets: orb,
+      scaleX: 2, scaleY: 2, alpha: 0,
+      duration: 250, ease: 'Power2',
+      onComplete: function(){ orb.destroy(); }
+    });
+
+    // Particles
+    this.orbEmitter.emitParticleAt(ox, oy, 12);
+
+    // Score popup
+    var ft = this.add.text(ox, oy, '+' + ORB_SCORE, {
+      fontFamily:'"Courier New", monospace', fontSize:'18px', color:'#ffff00',
+      stroke:'#000', strokeThickness:2,
+      shadow: { offsetX:0, offsetY:0, color:'#ffff00', blur:8, fill:true }
+    }).setOrigin(0.5).setDepth(50).setScale(0.5);
+    this.tweens.add({
+      targets: ft, y: oy-45, alpha:0, scaleX:1.2, scaleY:1.2,
+      duration:600, ease:'Power2',
+      onComplete: function(){ ft.destroy(); }
+    });
+
     this.orbsCollected++;
     this.score += ORB_SCORE;
     this.updateScore();
 
-    // Flash effect
-    this.cameras.main.flash(80, 255, 255, 0, true);
+    // Streak
+    this.streakCount++;
+    this.streakTimer = 3000;
+    if (this.streakCount >= 3) {
+      this.streakText.setText('\\u{1f525} ' + this.streakCount + ' STREAK');
+    }
+
+    // Flash
+    this.flashScreen(0xffff00, 0.12, 150);
   }
 
   hitSpike(player, spike){
@@ -448,8 +741,8 @@ class GameScene extends Phaser.Scene {
   onLand(player, platform){
     if (player.body.touching.down) {
       if (!this.wasOnGround && this.alive) {
-        // Landing effect
-        this.landEmitter.emitParticleAt(player.x, player.y + 16, 6);
+        this.landEmitter.emitParticleAt(player.x, player.y + 16, 8);
+        sfxLand();
       }
       this.jumpCount = 0;
       this.isDoubleJumpAvailable = true;
@@ -462,57 +755,70 @@ class GameScene extends Phaser.Scene {
     this.deathTriggered = true;
     this.alive = false;
 
-    this.deathEmitter.emitParticleAt(this.player.x, this.player.y, 30);
+    sfxDeath();
+
+    // Multi-layer death explosion
+    this.deathEmitter.emitParticleAt(this.player.x, this.player.y, 35);
     this.player.setVisible(false);
     this.player.body.setVelocity(0, 0);
     this.player.body.setAllowGravity(false);
 
-    this.cameras.main.shake(300, 0.015);
-    this.cameras.main.flash(200, 255, 0, 50, true);
+    this.cameras.main.shake(400, 0.02);
+    this.flashScreen(0xff0044, 0.35, 300);
 
     const finalScore = this.score;
+    var self = this;
 
-    this.time.delayedCall(600, () => {
-      // Game over overlay
-      const overlay = this.add.rectangle(W/2, H/2, W, H, 0x000000, 0.7)
+    this.time.delayedCall(700, () => {
+      var overlay = this.add.rectangle(W/2, H/2, W, H, 0x000000, 0)
         .setScrollFactor(0).setDepth(200);
-      overlay.alpha = 0;
-      this.tweens.add({ targets: overlay, alpha: 1, duration: 400 });
+      this.tweens.add({ targets: overlay, fillAlpha: 0.7, duration: 400 });
 
-      const goText = this.add.text(W/2, H * 0.35, 'GAME OVER', {
+      var goText = this.add.text(W/2, H * 0.33, 'GAME OVER', {
         fontFamily: '"Courier New", monospace',
-        fontSize: '36px',
-        color: '#ff0066',
-        stroke: '#330011',
-        strokeThickness: 4,
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
-
-      this.add.text(W/2, H * 0.48, 'SCORE: ' + finalScore, {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '24px',
-        color: '#00ffff',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
-
-      this.add.text(W/2, H * 0.56, Math.floor(this.distance) + 'm  |  ' + this.orbsCollected + ' orbs', {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '14px',
-        color: '#8888aa',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
-
-      const retry = this.add.text(W/2, H * 0.68, '[ TAP TO RETRY ]', {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '20px',
-        color: '#ffff00',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setInteractive();
+        fontSize: '34px', color: '#ff0066',
+        stroke: '#330011', strokeThickness: 4,
+        shadow: { offsetX:0, offsetY:0, color:'#ff0066', blur:15, fill:true }
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setScale(0.3).setAlpha(0);
 
       this.tweens.add({
-        targets: retry, alpha: { from: 1, to: 0.4 },
-        duration: 600, yoyo: true, repeat: -1,
+        targets: goText, alpha:1, scaleX:1, scaleY:1, duration:400, ease:'Back.easeOut'
       });
 
-      retry.on('pointerdown', () => { this.scene.restart(); });
-      this.input.keyboard.once('keydown-SPACE', () => { this.scene.restart(); });
-      this.input.keyboard.once('keydown-ENTER', () => { this.scene.restart(); });
+      this.time.delayedCall(300, () => {
+        this.add.text(W/2, H * 0.46, 'SCORE: ' + finalScore, {
+          fontFamily: '"Courier New", monospace',
+          fontSize: '22px', color: '#00ffff',
+          stroke:'#000', strokeThickness:3,
+          shadow: { offsetX:0, offsetY:0, color:'#00ffff', blur:8, fill:true }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+
+        this.add.text(W/2, H * 0.54, Math.floor(this.distance) + 'm  \\u2022  ' + this.orbsCollected + ' orbs', {
+          fontFamily: '"Courier New", monospace',
+          fontSize: '14px', color: '#8888aa',
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+
+        var retry = this.add.text(W/2, H * 0.66, '\\u25b6 TAP TO RETRY', {
+          fontFamily: '"Courier New", monospace',
+          fontSize: '18px', color: '#ffff00',
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setInteractive();
+
+        this.tweens.add({
+          targets: retry, alpha: { from: 1, to: 0.3 },
+          duration: 700, yoyo: true, repeat: -1,
+        });
+
+        this.time.delayedCall(300, () => {
+          retry.on('pointerdown', () => { this.scene.restart(); });
+          this.input.keyboard.once('keydown-SPACE', () => { this.scene.restart(); });
+          this.input.keyboard.once('keydown-ENTER', () => { this.scene.restart(); });
+        });
+      });
+
+      this.tweens.add({
+        targets: goText, scaleX:1.05, scaleY:1.05, yoyo:true,
+        repeat:-1, duration:700, ease:'Sine.easeInOut'
+      });
 
       try {
         window.parent.postMessage({ type: 'gameOver', score: finalScore }, '*');
@@ -522,16 +828,15 @@ class GameScene extends Phaser.Scene {
 
   updateScore(){
     this.scoreText.setText('SCORE: ' + this.score);
-    this.distText.setText(Math.floor(this.distance) + 'm  |  ' + this.orbsCollected + ' orbs');
+    this.distText.setText(Math.floor(this.distance) + 'm  \\u2022  ' + this.orbsCollected + ' orbs');
   }
 
   drawGrid(dt){
     const g = this.gridGraphics;
     g.clear();
-    g.lineStyle(1, C.grid, 0.3);
+    g.lineStyle(1, C.grid, 0.25);
 
     this.gridOffset = (this.gridOffset + this.scrollSpeed * dt * 0.001) % 60;
-
     const camY = this.cameras.main.scrollY;
     const startY = Math.floor(camY / 60) * 60;
 
@@ -543,8 +848,6 @@ class GameScene extends Phaser.Scene {
     }
     g.setDepth(0);
     g.setScrollFactor(0);
-
-    // Re-position to camera
     g.setPosition(0, 0);
   }
 
@@ -568,27 +871,22 @@ class GameScene extends Phaser.Scene {
   }
 
   updateTrail(){
-    // Add current position
+    // Use Graphics to draw trail instead of creating/destroying images
+    this.trailGfx.clear();
     if (this.alive && this.player.visible) {
       this.trailPositions.unshift({ x: this.player.x, y: this.player.y, a: 0.6 });
     }
+    if (this.trailPositions.length > 10) this.trailPositions.length = 10;
 
-    // Limit trail length
-    if (this.trailPositions.length > 8) {
-      this.trailPositions.length = 8;
-    }
-
-    // Remove old trail sprites
-    this.trailContainer.removeAll(true);
-
-    // Draw trail
     for (let i = 1; i < this.trailPositions.length; i++) {
       const t = this.trailPositions[i];
-      t.a *= 0.75;
-      if (t.a < 0.05) continue;
-      const s = this.add.image(t.x, t.y, 'trail').setAlpha(t.a).setDepth(8);
-      s.setTint(Phaser.Display.Color.GetColor(0, Math.floor(255 * t.a * 0.6), Math.floor(255 * t.a)));
-      this.trailContainer.add(s);
+      t.a *= 0.72;
+      if (t.a < 0.04) continue;
+      var r = Math.floor(0);
+      var g = Math.floor(160 * t.a);
+      var b = Math.floor(255 * t.a);
+      this.trailGfx.fillStyle(Phaser.Display.Color.GetColor(r, g, b), t.a * 0.8);
+      this.trailGfx.fillRect(t.x - 10, t.y - 14, 20, 28);
     }
   }
 
@@ -605,29 +903,30 @@ class GameScene extends Phaser.Scene {
       this.coyoteTimer = 0;
       this.jumpHeld = true;
       this.jumpEmitter.setParticleTint([0xff00ff, 0xaa00ff]);
-      this.jumpEmitter.emitParticleAt(this.player.x + this.wallSide * 12, this.player.y, 8);
+      this.jumpEmitter.emitParticleAt(this.player.x + this.wallSide * 12, this.player.y, 10);
+      sfxWallJump();
       return true;
     }
 
     if (onGround || canCoyote) {
-      // Normal jump
       this.player.body.setVelocityY(JUMP_VEL);
       this.jumpCount = 1;
       this.coyoteTimer = 0;
       this.jumpHeld = true;
       this.jumpEmitter.setParticleTint([C.particle1, 0xffffff]);
-      this.jumpEmitter.emitParticleAt(this.player.x, this.player.y + 16, 8);
+      this.jumpEmitter.emitParticleAt(this.player.x, this.player.y + 16, 10);
+      sfxJump();
       return true;
     }
 
     if (this.isDoubleJumpAvailable && this.jumpCount >= 1) {
-      // Double jump
       this.player.body.setVelocityY(DOUBLE_JUMP_VEL);
       this.isDoubleJumpAvailable = false;
       this.jumpCount = 2;
       this.jumpHeld = true;
       this.jumpEmitter.setParticleTint([C.particle2, C.particle3]);
-      this.jumpEmitter.emitParticleAt(this.player.x, this.player.y + 16, 12);
+      this.jumpEmitter.emitParticleAt(this.player.x, this.player.y + 16, 14);
+      sfxDoubleJump();
       return true;
     }
 
@@ -637,12 +936,10 @@ class GameScene extends Phaser.Scene {
   update(time, delta){
     if (!this.alive && this.deathTriggered) return;
 
-    const dt = Math.min(delta, 33.33); // Cap at ~30fps equivalent
-
+    const dt = Math.min(delta, 33.33);
     this.drawGrid(dt);
 
     if (!this.gameStarted) {
-      // Idle bobbing
       this.player.y = H * 0.5 + Math.sin(time * 0.003) * 8;
       return;
     }
@@ -652,28 +949,19 @@ class GameScene extends Phaser.Scene {
     const onGround = this.player.body.blocked.down || this.player.body.touching.down;
 
     // Coyote time
-    if (onGround) {
-      this.coyoteTimer = COYOTE_TIME;
-    } else {
-      this.coyoteTimer -= dt;
-    }
+    if (onGround) this.coyoteTimer = COYOTE_TIME;
+    else this.coyoteTimer -= dt;
 
     // Wall detection
     this.isOnWall = false;
     if (!onGround) {
-      if (this.player.body.blocked.left) {
-        this.isOnWall = true;
-        this.wallSide = -1;
-      } else if (this.player.body.blocked.right) {
-        this.isOnWall = true;
-        this.wallSide = 1;
-      }
+      if (this.player.body.blocked.left) { this.isOnWall = true; this.wallSide = -1; }
+      else if (this.player.body.blocked.right) { this.isOnWall = true; this.wallSide = 1; }
     }
 
     // Wall slide
     if (this.isOnWall && this.player.body.velocity.y > 0) {
       this.player.body.setVelocityY(WALL_SLIDE_VEL);
-      // Wall slide particles
       if (Math.random() < 0.3) {
         this.landEmitter.emitParticleAt(
           this.player.x + this.wallSide * -12,
@@ -697,49 +985,35 @@ class GameScene extends Phaser.Scene {
     if (leftKey || this.touchLeft) moveDir = -1;
     if (rightKey || this.touchRight) moveDir = 1;
 
-    // Horizontal movement with acceleration
     const targetVx = moveDir * PLAYER_SPEED;
     const currentVx = this.player.body.velocity.x;
     const accel = onGround ? 0.2 : 0.12;
     this.player.body.setVelocityX(Phaser.Math.Linear(currentVx, targetVx, accel));
 
-    // Jump
     if (jumpJustPressed || this.touchJump) {
       this.jumpBufferTimer = JUMP_BUFFER;
       this.touchJump = false;
     }
 
     if (this.jumpBufferTimer > 0) {
-      if (this.tryJump()) {
-        this.jumpBufferTimer = 0;
-      }
+      if (this.tryJump()) this.jumpBufferTimer = 0;
     }
 
-    // Variable jump height
-    if (this.jumpHeld && (jumpKey || this.touchJump)) {
-      // Holding jump - do nothing, let full jump happen
-    } else if (this.player.body.velocity.y < JUMP_VEL * 0.4) {
-      // Released jump early - cut velocity
-      if (!jumpKey && !this.touchJump && this.jumpHeld === false) {
-        // Already released
-      }
-    }
+    // Variable jump height (cleaned up)
     if (!jumpKey && !this.touchJump && this.player.body.velocity.y < 0) {
-      // Short hop: increase gravity when jump released early
       this.player.body.setVelocityY(this.player.body.velocity.y * 0.92);
     }
 
-    // Scroll everything left
+    // Scroll
     const scrollDelta = this.scrollSpeed * dt * 0.001;
     this.distance += scrollDelta * 0.1;
     this.score = Math.floor(this.distance) + this.orbsCollected * ORB_SCORE;
     this.updateScore();
 
-    // Difficulty scaling
     this.difficultyMult = 1 + this.distance * 0.008;
     this.scrollSpeed = PLATFORM_SCROLL_SPEED + this.distance * 0.5;
 
-    // Move platforms left
+    // Move platforms
     this.platforms.children.each((p) => {
       p.x -= scrollDelta;
       p.refreshBody();
@@ -748,37 +1022,33 @@ class GameScene extends Phaser.Scene {
 
     this.movingPlatforms.children.each((p) => {
       p.x -= scrollDelta;
-      // Sine wave vertical movement
       p.y = p.originY + Math.sin(time * 0.001 * p.moveSpeed + p.movePhase) * p.moveAmplitude;
       p.body.updateFromGameObject();
       if (p.x < -128) p.destroy();
     });
 
-    // Move orbs
     this.orbs.children.each((o) => {
+      if (!o.active) return;
       o.x -= scrollDelta;
       o.y = o.baseY + Math.sin(time * 0.004 + o.bobPhase) * 8;
-      // Pulsing scale
-      o.setScale(0.9 + Math.sin(time * 0.006 + o.bobPhase) * 0.2);
+      o.setScale(0.8 + Math.sin(time * 0.006 + o.bobPhase) * 0.2);
       o.setAlpha(0.7 + Math.sin(time * 0.005) * 0.3);
       if (o.x < -32) o.destroy();
     });
 
-    // Move spikes
     this.spikes.children.each((s) => {
       s.x -= scrollDelta;
       if (s.x < -32) s.destroy();
     });
 
-    // Generate new platforms as needed
+    // Generate
     const camRight = this.cameras.main.scrollX + W + 200;
     while (this.lastPlatformX < camRight + W) {
       this.generateNextPlatform();
     }
-    // Also shift lastPlatformX with scroll
     this.lastPlatformX -= scrollDelta;
 
-    // Player tint based on state
+    // Player tint
     if (this.isOnWall) {
       this.player.setTint(0xff00ff);
     } else if (!onGround && this.jumpCount >= 2) {
@@ -793,20 +1063,22 @@ class GameScene extends Phaser.Scene {
     // Speed lines
     this.drawSpeedLines(dt);
 
-    // Death check: fell off bottom
-    if (this.player.y > this.cameras.main.scrollY + H + 50) {
-      this.die();
+    // Streak timer
+    if (this.streakTimer > 0) {
+      this.streakTimer -= dt;
+      if (this.streakTimer <= 0) {
+        this.streakCount = 0;
+        this.streakText.setText('');
+      }
     }
 
-    // Death check: scrolled off left
-    if (this.player.x < this.cameras.main.scrollX - 50) {
-      this.die();
-    }
+    // Death checks
+    if (this.player.y > this.cameras.main.scrollY + H + 50) this.die();
+    if (this.player.x < this.cameras.main.scrollX - 50) this.die();
 
-    // Track ground state for landing detection
     this.wasOnGround = onGround;
 
-    // Player glow effect (simple scale pulse)
+    // Player pulse
     if (onGround) {
       this.player.setScale(1);
     } else {
@@ -823,24 +1095,15 @@ const config = {
   backgroundColor: '#0a0a1a',
   physics: {
     default: 'arcade',
-    arcade: {
-      gravity: { y: 0 },
-      debug: false,
-    },
+    arcade: { gravity: { y: 0 }, debug: false },
   },
   scale: {
     mode: Phaser.Scale.NONE,
     autoCenter: Phaser.Scale.NO_CENTER,
   },
-  input: {
-    activePointers: 3,
-  },
+  input: { activePointers: 3 },
   scene: [BootScene, GameScene],
-  render: {
-    pixelArt: false,
-    antialias: true,
-  },
-  audio: { noAudio: true },
+  render: { pixelArt: false, antialias: true },
 };
 
 const game = new Phaser.Game(config);
