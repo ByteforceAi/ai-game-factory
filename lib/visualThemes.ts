@@ -45,7 +45,17 @@ export const VISUAL_THEMES: VisualTheme[] = [
     css: `
       * { --neon-primary: #ff00ff; --neon-secondary: #00ffff; }
       body { background: #0a0010 !important; }
-      canvas { filter: saturate(1.4) contrast(1.1); }
+      canvas { filter: saturate(1.8) contrast(1.2) brightness(1.05); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 0% 0%, rgba(255,0,255,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 100% 100%, rgba(0,255,255,0.12) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -58,7 +68,21 @@ export const VISUAL_THEMES: VisualTheme[] = [
     previewPattern: 'scanlines',
     css: `
       body { background: #1a0a2e !important; }
-      canvas { filter: saturate(1.6) hue-rotate(320deg) brightness(1.1); }
+      canvas { filter: saturate(2.0) hue-rotate(320deg) brightness(1.15); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgba(255,113,206,0.06) 3px,
+          rgba(255,113,206,0.06) 4px
+        );
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -70,7 +94,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #0077b6, #023e8a, #00b4d8)',
     css: `
       body { background: #000a14 !important; }
-      canvas { filter: hue-rotate(200deg) saturate(1.3) brightness(0.95); }
+      canvas { filter: hue-rotate(200deg) saturate(1.8) brightness(0.9); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 35%, rgba(0,40,120,0.35) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -82,7 +114,17 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #ff6b35, #f7931e, #9b59b6)',
     css: `
       body { background: #1a0800 !important; }
-      canvas { filter: hue-rotate(340deg) saturate(1.5) brightness(1.05); }
+      canvas { filter: hue-rotate(340deg) saturate(2.2) brightness(1.1) contrast(1.15); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(255,107,53,0.15) 0%, transparent 60%),
+          radial-gradient(ellipse at 50% 0%, rgba(155,89,182,0.12) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -94,7 +136,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #ffb7c5, #ff69b4, #fff0f5)',
     css: `
       body { background: #1a0a12 !important; }
-      canvas { filter: hue-rotate(330deg) saturate(0.8) brightness(1.15); }
+      canvas { filter: hue-rotate(330deg) saturate(1.2) brightness(1.2) contrast(1.05); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(255,183,197,0.08) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -107,7 +157,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #00ff41, #003300)',
     css: `
       body { background: #000800 !important; }
-      canvas { filter: hue-rotate(100deg) saturate(2) brightness(0.9); }
+      canvas { filter: hue-rotate(100deg) saturate(2.5) brightness(0.85) contrast(1.2); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 30%, rgba(0,30,0,0.4) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -119,7 +177,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #e0f7fa, #4dd0e1, #006064)',
     css: `
       body { background: #0a0e14 !important; }
-      canvas { filter: hue-rotate(180deg) saturate(0.7) brightness(1.2) contrast(0.9); }
+      canvas { filter: hue-rotate(180deg) saturate(1.0) brightness(1.25) contrast(1.05); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(200,240,255,0.06) 0%, rgba(0,40,80,0.2) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -131,7 +197,17 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #ff0000, #ff6600, #ffcc00)',
     css: `
       body { background: #140000 !important; }
-      canvas { filter: hue-rotate(350deg) saturate(2) brightness(1.1) contrast(1.2); }
+      canvas { filter: hue-rotate(350deg) saturate(2.5) brightness(1.15) contrast(1.3); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(255,0,0,0.15) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 0%, rgba(255,100,0,0.1) 0%, transparent 40%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -143,7 +219,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #191970, #000033, #ffd700)',
     css: `
       body { background: #000008 !important; }
-      canvas { filter: hue-rotate(240deg) saturate(1.2) brightness(0.85); }
+      canvas { filter: hue-rotate(240deg) saturate(1.6) brightness(0.8) contrast(1.15); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,30,0.45) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -155,7 +239,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #ff9a9e, #fad0c4, #a18cd1)',
     css: `
       body { background: #1a0a1a !important; }
-      canvas { filter: saturate(0.7) brightness(1.3) contrast(0.85); }
+      canvas { filter: saturate(1.0) brightness(1.35) contrast(0.9); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(255,154,158,0.06) 0%, rgba(161,140,209,0.1) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -167,7 +259,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #2d5016, #1a3a0a, #8B4513)',
     css: `
       body { background: #050a02 !important; }
-      canvas { filter: hue-rotate(80deg) saturate(1.4) brightness(0.9); }
+      canvas { filter: hue-rotate(80deg) saturate(1.8) brightness(0.85) contrast(1.1); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 35%, rgba(0,20,0,0.35) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -180,7 +280,17 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'linear-gradient(135deg, #4a0080, #7b2ff7, #ff6ec7)',
     css: `
       body { background: #08001a !important; }
-      canvas { filter: hue-rotate(280deg) saturate(1.8) brightness(1.05); }
+      canvas { filter: hue-rotate(280deg) saturate(2.2) brightness(1.1) contrast(1.1); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 30% 20%, rgba(123,47,247,0.1) 0%, transparent 50%),
+          radial-gradient(ellipse at 70% 80%, rgba(255,110,199,0.08) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
 
@@ -201,8 +311,8 @@ export const VISUAL_THEMES: VisualTheme[] = [
           0deg,
           transparent,
           transparent 2px,
-          rgba(0,0,0,0.15) 2px,
-          rgba(0,0,0,0.15) 4px
+          rgba(0,0,0,0.25) 2px,
+          rgba(0,0,0,0.25) 4px
         );
         pointer-events: none;
         z-index: 9999;
@@ -221,7 +331,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+        background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%);
         pointer-events: none;
         z-index: 9999;
       }
@@ -233,8 +343,8 @@ export const VISUAL_THEMES: VisualTheme[] = [
           0deg,
           transparent,
           transparent 1px,
-          rgba(0,255,0,0.03) 1px,
-          rgba(0,255,0,0.03) 2px
+          rgba(0,255,0,0.06) 1px,
+          rgba(0,255,0,0.06) 2px
         );
         pointer-events: none;
         z-index: 9998;
@@ -275,10 +385,10 @@ export const VISUAL_THEMES: VisualTheme[] = [
         inset: 0;
         background: linear-gradient(
           to bottom,
-          rgba(0,0,0,0.35) 0%,
-          transparent 25%,
-          transparent 75%,
-          rgba(0,0,0,0.35) 100%
+          rgba(0,0,0,0.5) 0%,
+          transparent 20%,
+          transparent 80%,
+          rgba(0,0,0,0.5) 100%
         );
         backdrop-filter: blur(0px);
         pointer-events: none;
@@ -310,13 +420,13 @@ export const VISUAL_THEMES: VisualTheme[] = [
     preview: 'radial-gradient(circle, rgba(255,255,255,0.3), transparent)',
     css: `
       canvas {
-        filter: brightness(1.1) contrast(1.15);
+        filter: brightness(1.2) contrast(1.2);
       }
       body::after {
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 70%);
+        background: radial-gradient(ellipse at 50% 50%, rgba(99,102,241,0.15) 0%, transparent 70%);
         pointer-events: none;
         z-index: 9999;
         mix-blend-mode: screen;
@@ -359,13 +469,14 @@ export const VISUAL_THEMES: VisualTheme[] = [
         position: fixed;
         inset: 0;
         background-image:
-          linear-gradient(transparent 95%, rgba(120,180,255,0.15) 95%, rgba(120,180,255,0.15) 95.5%, transparent 95.5%),
-          linear-gradient(transparent 92%, rgba(120,180,255,0.1) 92%, rgba(120,180,255,0.1) 92.3%, transparent 92.3%);
-        background-size: 30px 60px, 50px 80px;
-        animation: rain 0.8s linear infinite;
+          linear-gradient(transparent 93%, rgba(120,180,255,0.3) 93%, rgba(120,180,255,0.3) 94%, transparent 94%),
+          linear-gradient(transparent 90%, rgba(140,200,255,0.2) 90%, rgba(140,200,255,0.2) 91%, transparent 91%),
+          linear-gradient(transparent 96%, rgba(100,160,255,0.25) 96%, rgba(100,160,255,0.25) 96.8%, transparent 96.8%);
+        background-size: 25px 55px, 40px 70px, 55px 85px;
+        animation: rain 0.6s linear infinite;
         pointer-events: none;
         z-index: 9999;
-        opacity: 0.7;
+        opacity: 0.9;
       }
     `,
   },
@@ -386,14 +497,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
         position: fixed;
         inset: 0;
         background-image:
-          radial-gradient(2px 2px at 100px 50px, white 50%, transparent 50%),
-          radial-gradient(2px 2px at 200px 150px, rgba(255,255,255,0.8) 50%, transparent 50%),
-          radial-gradient(1px 1px at 50px 200px, rgba(255,255,255,0.6) 50%, transparent 50%);
-        background-size: 350px 300px, 250px 200px, 150px 150px;
-        animation: snow 8s linear infinite;
+          radial-gradient(3px 3px at 100px 50px, white 50%, transparent 50%),
+          radial-gradient(4px 4px at 200px 150px, rgba(255,255,255,0.9) 50%, transparent 50%),
+          radial-gradient(2px 2px at 50px 200px, rgba(255,255,255,0.7) 50%, transparent 50%),
+          radial-gradient(3px 3px at 300px 100px, rgba(255,255,255,0.8) 50%, transparent 50%);
+        background-size: 300px 250px, 220px 180px, 130px 130px, 280px 220px;
+        animation: snow 6s linear infinite;
         pointer-events: none;
         z-index: 9999;
-        opacity: 0.8;
+        opacity: 1;
       }
     `,
   },
@@ -414,11 +526,11 @@ export const VISUAL_THEMES: VisualTheme[] = [
         position: fixed;
         inset: 0;
         background-image:
-          radial-gradient(1px 1px at 50px 30px, rgba(255,255,255,0.8) 50%, transparent 50%),
-          radial-gradient(1px 1px at 150px 100px, rgba(255,255,255,0.6) 50%, transparent 50%),
-          radial-gradient(1.5px 1.5px at 250px 60px, rgba(255,255,255,0.9) 50%, transparent 50%),
-          radial-gradient(1px 1px at 80px 180px, rgba(255,255,255,0.5) 50%, transparent 50%),
-          radial-gradient(1px 1px at 320px 150px, rgba(255,255,255,0.7) 50%, transparent 50%);
+          radial-gradient(2px 2px at 50px 30px, rgba(255,255,255,0.9) 50%, transparent 50%),
+          radial-gradient(2px 2px at 150px 100px, rgba(255,255,255,0.8) 50%, transparent 50%),
+          radial-gradient(3px 3px at 250px 60px, rgba(255,255,255,1.0) 50%, transparent 50%),
+          radial-gradient(2px 2px at 80px 180px, rgba(255,255,255,0.7) 50%, transparent 50%),
+          radial-gradient(2px 2px at 320px 150px, rgba(255,255,255,0.85) 50%, transparent 50%);
         background-size: 400px 250px;
         animation: twinkle 3s ease-in-out infinite;
         pointer-events: none;
@@ -439,8 +551,8 @@ export const VISUAL_THEMES: VisualTheme[] = [
         position: fixed;
         inset: 0;
         background:
-          linear-gradient(rgba(99,102,241,0.08) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(99,102,241,0.08) 1px, transparent 1px);
+          linear-gradient(rgba(99,102,241,0.15) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(99,102,241,0.15) 1px, transparent 1px);
         background-size: 40px 40px;
         pointer-events: none;
         z-index: 9999;
@@ -461,7 +573,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+        background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%);
         pointer-events: none;
         z-index: 9999;
       }
@@ -483,9 +595,9 @@ export const VISUAL_THEMES: VisualTheme[] = [
         position: fixed;
         inset: 0;
         background-image:
-          radial-gradient(3px 3px at 25% 30%, rgba(99,102,241,0.5) 50%, transparent 50%),
-          radial-gradient(2px 2px at 75% 60%, rgba(16,185,129,0.4) 50%, transparent 50%),
-          radial-gradient(3px 3px at 50% 80%, rgba(244,114,182,0.4) 50%, transparent 50%);
+          radial-gradient(4px 4px at 25% 30%, rgba(99,102,241,0.7) 50%, transparent 50%),
+          radial-gradient(3px 3px at 75% 60%, rgba(16,185,129,0.6) 50%, transparent 50%),
+          radial-gradient(4px 4px at 50% 80%, rgba(244,114,182,0.6) 50%, transparent 50%);
         background-size: 300px 300px, 200px 200px, 250px 250px;
         animation: float1 6s ease-in-out infinite;
         pointer-events: none;
@@ -549,7 +661,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #333, #000)',
     css: `
-      canvas { filter: grayscale(0.85) contrast(1.3) brightness(0.9); }
+      canvas { filter: grayscale(0.95) contrast(1.4) brightness(0.85); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -560,7 +680,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #d4a574, #8b6914)',
     css: `
-      canvas { filter: sepia(0.7) contrast(1.1) brightness(0.95); }
+      canvas { filter: sepia(0.85) contrast(1.2) brightness(0.9); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at center, rgba(180,140,80,0.06) 0%, rgba(50,30,0,0.3) 100%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -571,12 +699,12 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #e8d5f5, #c5a3e8, #f5d5e8)',
     css: `
-      canvas { filter: brightness(1.15) contrast(0.85) saturate(0.8); }
+      canvas { filter: brightness(1.25) contrast(0.8) saturate(0.7) blur(0.5px); }
       body::after {
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(ellipse at center, rgba(200,180,255,0.08) 0%, transparent 70%);
+        background: radial-gradient(ellipse at center, rgba(200,180,255,0.15) 0%, rgba(180,160,240,0.08) 70%);
         pointer-events: none;
         z-index: 9999;
       }
@@ -590,12 +718,12 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #1a0000, #330000, #000)',
     css: `
-      canvas { filter: contrast(1.4) brightness(0.7) saturate(0.5); }
+      canvas { filter: contrast(1.5) brightness(0.6) saturate(0.4); }
       body::after {
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%);
+        background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.8) 100%);
         pointer-events: none;
         z-index: 9999;
       }
@@ -609,14 +737,14 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #ff006e, #8338ec, #3a86ff)',
     css: `
-      canvas { filter: saturate(1.8) contrast(1.2) brightness(1.05); }
+      canvas { filter: saturate(2.2) contrast(1.25) brightness(1.1); }
       body::after {
         content: '';
         position: fixed;
         inset: 0;
         background:
-          linear-gradient(135deg, rgba(255,0,110,0.05) 0%, transparent 50%),
-          linear-gradient(225deg, rgba(58,134,255,0.05) 0%, transparent 50%);
+          linear-gradient(135deg, rgba(255,0,110,0.12) 0%, transparent 50%),
+          linear-gradient(225deg, rgba(58,134,255,0.12) 0%, transparent 50%);
         pointer-events: none;
         z-index: 9999;
       }
@@ -630,7 +758,15 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #fff3b0, #ffdd57, #ffb347)',
     css: `
-      canvas { filter: brightness(1.2) saturate(1.1) contrast(0.95) sepia(0.15); }
+      canvas { filter: brightness(1.3) saturate(1.3) contrast(1.0) sepia(0.2); }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 30%, rgba(255,220,100,0.1) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 9999;
+      }
     `,
   },
   {
@@ -641,7 +777,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
     category: 'mood',
     preview: 'linear-gradient(135deg, #006994, #004466, #00cccc)',
     css: `
-      canvas { filter: hue-rotate(160deg) saturate(1.3) brightness(0.85) contrast(0.9); }
+      canvas { filter: hue-rotate(160deg) saturate(1.6) brightness(0.8) contrast(0.85); }
       @keyframes underwater {
         0%,100% { opacity: 0.04; }
         50% { opacity: 0.08; }
@@ -650,7 +786,7 @@ export const VISUAL_THEMES: VisualTheme[] = [
         content: '';
         position: fixed;
         inset: 0;
-        background: linear-gradient(0deg, rgba(0,100,200,0.08) 0%, transparent 100%);
+        background: linear-gradient(0deg, rgba(0,100,200,0.15) 0%, transparent 100%);
         animation: underwater 4s ease-in-out infinite;
         pointer-events: none;
         z-index: 9999;

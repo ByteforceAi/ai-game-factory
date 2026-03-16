@@ -190,6 +190,50 @@ function sfxGameOver(){
   }catch(e){}
 }
 
+/* ───────── background beat ───────── */
+var bgBeatInterval = null;
+function startBgBeat(){
+  if(!actx || bgBeatInterval) return;
+  var bpm = 120;
+  var beatIdx = 0;
+  bgBeatInterval = setInterval(function(){
+    if(!actx) return;
+    try{
+      var t = actx.currentTime;
+      var osc = actx.createOscillator();
+      var gain = actx.createGain();
+      osc.type = 'sine';
+      var freq = (beatIdx % 4 === 0 || beatIdx % 4 === 2) ? 55 : 44;
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(30, t+0.08);
+      gain.gain.setValueAtTime(0.06, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.start(t); osc.stop(t+0.12);
+      if(beatIdx % 2 === 1){
+        var bufSize = Math.floor(actx.sampleRate * 0.03);
+        var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+        var data = buf.getChannelData(0);
+        for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,5);
+        var src = actx.createBufferSource();
+        src.buffer = buf;
+        var hpf = actx.createBiquadFilter();
+        hpf.type='highpass'; hpf.frequency.setValueAtTime(8000, t);
+        var g2 = actx.createGain();
+        g2.gain.setValueAtTime(0.03, t);
+        g2.gain.exponentialRampToValueAtTime(0.001, t+0.03);
+        src.connect(hpf); hpf.connect(g2); g2.connect(actx.destination);
+        src.start(t);
+      }
+      beatIdx++;
+    }catch(e){}
+  }, 60000/bpm/2);
+}
+
+function stopBgBeat(){
+  if(bgBeatInterval){ clearInterval(bgBeatInterval); bgBeatInterval=null; }
+}
+
 /* ───────── constants ───────── */
 var W = window.innerWidth;
 var H = window.innerHeight;
@@ -736,6 +780,7 @@ var GameScene = new Phaser.Class({
       targets: readyText, alpha:1, duration:400, yoyo:true, hold:600,
       onComplete: function(){
         readyText.destroy();
+        startBgBeat();
         sc.spawnWave();
       }
     });
@@ -867,35 +912,60 @@ var GameScene = new Phaser.Class({
     var sc = this;
     sc.totalEnemiesInWave = 1;
     sc.bossAlive = true;
-    var e = sc.enemies.get(sc.gameW/2, -80, 'boss');
-    if(!e) return;
-    e.setActive(true).setVisible(true).setDepth(5);
-    e.body.enable = true;
-    e.setScale(1.8);
-    e.setBlendMode(Phaser.BlendModes.ADD);
-    var bossHp = 15 + sc.wave * 4;
-    e.hp = bossHp;
-    e.maxHp = bossHp;
-    e.speed = 18;
-    e.shootTimer = 0;
-    e.shootInterval = Math.max(350, 500 - sc.wave * 5);
-    e.movePattern = 3;
-    e.baseX = sc.gameW/2;
-    e.time = 0;
-    e.isBoss = true;
-    e.body.setVelocityY(25);
-    e.body.setSize(e.width*1.3, e.height*1.3);
-    sc.bossRef = e;
 
-    sc.bossHpBg.setVisible(true);
-    sc.bossHpBar.setVisible(true);
-    sc.bossLabel.setVisible(true);
+    // WARNING cinematic
+    var dimOverlay = sc.add.rectangle(sc.gameW/2, sc.gameH/2, sc.gameW, sc.gameH, 0x000000, 0);
+    dimOverlay.setDepth(180);
+    sc.tweens.add({ targets: dimOverlay, alpha: 0.4, duration: 300 });
 
-    // warning flash
-    sc.flashScreen(0xff0044, 0.3, 400);
+    var warnText = sc.add.text(sc.gameW/2, sc.gameH*0.35, '\\u26a0 WARNING \\u26a0', {
+      fontFamily:'"Courier New", monospace', fontSize:'40px', color:'#ff0044',
+      stroke:'#000', strokeThickness:5,
+      shadow:{offsetX:0,offsetY:0,color:'#ff0044',blur:25,fill:true}
+    }).setOrigin(0.5).setDepth(200).setAlpha(0);
 
-    sc.time.delayedCall(2200, function(){
-      if(e.active) e.body.setVelocityY(0);
+    // Flash 3 times then spawn boss
+    sc.tweens.add({
+      targets: warnText, alpha:1, duration:150, yoyo:true, repeat:2,
+      onComplete: function(){
+        warnText.destroy();
+        sc.tweens.add({ targets: dimOverlay, alpha:0, duration:300, onComplete: function(){ dimOverlay.destroy(); }});
+
+        // NOW spawn the actual boss
+        var e = sc.enemies.get(sc.gameW/2, -80, 'boss');
+        if(!e) return;
+        e.setActive(true).setVisible(true).setDepth(5);
+        e.body.enable = true;
+        e.setScale(1.8);
+        e.setBlendMode(Phaser.BlendModes.ADD);
+        var bossHp = 15 + sc.wave * 4;
+        e.hp = bossHp;
+        e.maxHp = bossHp;
+        e.speed = 18;
+        e.shootTimer = 0;
+        e.shootInterval = Math.max(350, 500 - sc.wave * 5);
+        e.movePattern = 3;
+        e.baseX = sc.gameW/2;
+        e.time = 0;
+        e.isBoss = true;
+        e.body.setVelocityY(25);
+        e.body.setSize(e.width*1.3, e.height*1.3);
+        sc.bossRef = e;
+
+        sc.bossHpBg.setVisible(true);
+        sc.bossHpBar.setVisible(true);
+        sc.bossLabel.setVisible(true);
+
+        sc.flashScreen(0xff0044, 0.3, 400);
+        sc.cameras.main.zoomTo(1.05, 200, 'Power2');
+        sc.time.delayedCall(400, function(){
+          sc.cameras.main.zoomTo(1, 300, 'Power2');
+        });
+
+        sc.time.delayedCall(2200, function(){
+          if(e.active) e.body.setVelocityY(0);
+        });
+      }
     });
   },
 
@@ -1015,6 +1085,47 @@ var GameScene = new Phaser.Class({
     sc.multiplier = 1 + Math.floor(sc.comboCount / 4) * 0.5;
     if(sc.multiplier > 5) sc.multiplier = 5;
 
+    // Kill streak announcements
+    var streakTexts = {3:'DOUBLE KILL!', 5:'TRIPLE KILL!', 8:'MEGA KILL!', 12:'UNSTOPPABLE!'};
+    var streakColors = {3:'#ffff00', 5:'#ff8800', 8:'#ff0044', 12:'#ff00ff'};
+    if(streakTexts[sc.comboCount]){
+      var stColor = streakColors[sc.comboCount];
+      var st = sc.add.text(sc.gameW/2, sc.gameH*0.3, streakTexts[sc.comboCount], {
+        fontFamily:'"Courier New", monospace', fontSize:'36px',
+        color: stColor,
+        stroke:'#000', strokeThickness:5,
+        shadow: { offsetX:0, offsetY:0, color: stColor, blur:20, fill:true }
+      }).setOrigin(0.5).setDepth(200).setScale(0.3).setAlpha(0);
+      sc.tweens.add({
+        targets: st, alpha:1, scaleX:1.3, scaleY:1.3, duration:200, ease:'Back.easeOut',
+        onComplete: function(){
+          sc.tweens.add({
+            targets: st, alpha:0, y: st.y-50, scaleX:1.5, scaleY:1.5,
+            duration:600, delay:400,
+            onComplete: function(){ st.destroy(); }
+          });
+        }
+      });
+      sc.cameras.main.shake(300, 0.012);
+      // streak sound effect
+      if(actx){
+        try{
+          var stt = actx.currentTime;
+          var notes = [660, 880, 1100];
+          for(var ni=0;ni<notes.length;ni++){
+            var sosc = actx.createOscillator();
+            var sgain = actx.createGain();
+            sosc.type = 'sine';
+            sosc.frequency.setValueAtTime(notes[ni], stt + ni*0.06);
+            sgain.gain.setValueAtTime(0.08, stt + ni*0.06);
+            sgain.gain.exponentialRampToValueAtTime(0.001, stt + ni*0.06 + 0.12);
+            sosc.connect(sgain); sgain.connect(actx.destination);
+            sosc.start(stt + ni*0.06); sosc.stop(stt + ni*0.06 + 0.13);
+          }
+        }catch(e){}
+      }
+    }
+
     var baseScore = isBoss ? 500 : (10 + sc.wave * 2);
     var pts = Math.floor(baseScore * sc.multiplier);
     sc.score += pts;
@@ -1046,6 +1157,13 @@ var GameScene = new Phaser.Class({
       sc.bossHpBg.setVisible(false);
       sc.bossHpBar.setVisible(false);
       sc.bossLabel.setVisible(false);
+      // SLOW-MO EFFECT on boss kill
+      sc.time.timeScale = 0.3;
+      sc.cameras.main.zoomTo(1.15, 300, 'Power2');
+      sc.time.delayedCall(600, function(){
+        sc.time.timeScale = 1;
+        sc.cameras.main.zoomTo(1, 200, 'Power2');
+      });
     }
 
     if(sc.enemiesKilledThisWave >= sc.totalEnemiesInWave){
@@ -1123,6 +1241,7 @@ var GameScene = new Phaser.Class({
     sc.player.setVisible(false);
     sc.player.body.enable = false;
     sc.engineEmitter.stop();
+    stopBgBeat();
 
     sfxGameOver();
 
