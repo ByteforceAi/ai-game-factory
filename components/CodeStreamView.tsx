@@ -112,16 +112,38 @@ function highlightCode(code: string): React.ReactNode[] {
   return result;
 }
 
-/** AI companion messages that pop up during code generation */
-const AI_COMPANION_MESSAGES = [
-  { at: 5, text: '열심히 코딩하고 있어요! 💻', emoji: '💻' },
-  { at: 15, text: '게임 엔진 뼈대가 잡혔어요! 이제 살을 붙여볼게요 🦴', emoji: '🦴' },
-  { at: 25, text: '오 이 부분 좀 까다로운데... 잠깐만요! 🤔', emoji: '🤔' },
-  { at: 40, text: '해결했어요! 이 게임 재밌을 것 같아요 🔥', emoji: '🔥' },
-  { at: 55, text: '절반 넘었어요! 거의 다 왔어요 💪', emoji: '💪' },
-  { at: 70, text: '터치 컨트롤 넣는 중... 모바일에서도 잘 돌아갈 거예요 📱', emoji: '📱' },
-  { at: 85, text: '마무리 최적화 중! 곧 플레이할 수 있어요 ✨', emoji: '✨' },
-  { at: 95, text: '거의 완성! 두근두근하지 않나요? 🎮', emoji: '🎮' },
+/** AI companion — code pattern detection + contextual line pointing */
+interface CodeInsight {
+  pattern: RegExp;
+  text: string;
+  label: string;       // short label for the pointer badge
+  color: string;       // accent color
+  priority: number;    // higher = shown later (prevents early spoilers)
+}
+
+const CODE_INSIGHTS: CodeInsight[] = [
+  { pattern: /<!DOCTYPE|<html|<head/i, text: 'HTML 문서 구조를 잡고 있어요', label: 'HTML', color: '#ff79c6', priority: 0 },
+  { pattern: /<style|css|background|color:|font-/i, text: '스타일링 넣는 중... 예쁘게 만들어 볼게요!', label: 'CSS', color: '#8be9fd', priority: 1 },
+  { pattern: /<canvas/i, text: '캔버스 생성! 여기에 게임이 그려져요 🎨', label: 'Canvas', color: '#50fa7b', priority: 2 },
+  { pattern: /getContext\s*\(\s*['"]2d['"]\)|WebGL|webgl/i, text: '렌더링 컨텍스트 연결 완료!', label: 'Render', color: '#bd93f9', priority: 3 },
+  { pattern: /class\s+\w+|function\s+\w+Game|const\s+game/i, text: '게임 클래스 설계 중... 뼈대가 잡혔어요! 🦴', label: 'Engine', color: '#f1fa8c', priority: 4 },
+  { pattern: /velocity|gravity|acceleration|physics|Math\.(sin|cos|sqrt|abs|random)/i, text: '물리 엔진 계산식이에요! 자연스러운 움직임의 비밀 ⚡', label: 'Physics', color: '#ffb86c', priority: 5 },
+  { pattern: /collision|hitbox|intersect|overlap|AABB|bounce/i, text: '충돌 감지 시스템! 이게 게임을 게임답게 만들어요 💥', label: 'Collision', color: '#ff5555', priority: 6 },
+  { pattern: /addEventListener|keydown|keyup|touch|click|pointer/i, text: '입력 핸들러 연결 중... 터치도 키보드도 OK! 🎮', label: 'Input', color: '#50fa7b', priority: 7 },
+  { pattern: /new\s+Audio|AudioContext|playSound|sound|\.mp3|\.wav/i, text: '사운드 이펙트 추가! 소리가 있으면 몰입감이 달라요 🔊', label: 'Audio', color: '#f8f8f2', priority: 8 },
+  { pattern: /score|point|life|lives|health|level/i, text: '점수 시스템 구현 중! 중독성의 핵심이죠 🏆', label: 'Score', color: '#f1fa8c', priority: 9 },
+  { pattern: /requestAnimationFrame|gameLoop|update\s*\(|render\s*\(/i, text: '게임 루프 가동! 초당 60프레임으로 돌아가요 🔄', label: 'Loop', color: '#bd93f9', priority: 10 },
+  { pattern: /particle|spawn|emit|explosion|effect/i, text: '파티클 이펙트! 시각적 화려함 추가 ✨', label: 'VFX', color: '#ff79c6', priority: 11 },
+  { pattern: /gameOver|game_over|endGame|restart|reset/i, text: '게임 오버 처리... 다시 시작 버튼도 만들어야지!', label: 'GameOver', color: '#ff5555', priority: 12 },
+];
+
+/** Fallback progress-based messages (when no code pattern matches) */
+const FALLBACK_MESSAGES = [
+  { at: 5, text: '열심히 코딩하고 있어요! 💻' },
+  { at: 30, text: '오 이 부분 좀 까다로운데... 잠깐만요! 🤔' },
+  { at: 55, text: '절반 넘었어요! 거의 다 왔어요 💪' },
+  { at: 85, text: '마무리 최적화 중! 곧 플레이할 수 있어요 ✨' },
+  { at: 95, text: '거의 완성! 두근두근하지 않나요? 🎮' },
 ];
 
 export default function CodeStreamView({
@@ -138,10 +160,14 @@ export default function CodeStreamView({
   const [done, setDone] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [companionMsg, setCompanionMsg] = useState('');
+  const [companionLabel, setCompanionLabel] = useState('');
+  const [companionColor, setCompanionColor] = useState('#6366f1');
+  const [companionLine, setCompanionLine] = useState(0); // 0 = bottom float, >0 = pointing to line
   const [companionKey, setCompanionKey] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [previewSrcdoc, setPreviewSrcdoc] = useState('');
-  const shownMsgsRef = useRef(new Set<number>());
+  const shownInsightsRef = useRef(new Set<number>()); // tracks shown insight priorities
+  const shownFallbacksRef = useRef(new Set<number>());
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(Date.now());
@@ -211,18 +237,49 @@ export default function CodeStreamView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameHtml, handleComplete, duration]);
 
-  // AI companion message trigger based on progress
+  // ═══ Smart AI Companion — code pattern detection + line pointing ═══
   useEffect(() => {
     if (done) return;
-    for (const msg of AI_COMPANION_MESSAGES) {
-      if (progress >= msg.at && !shownMsgsRef.current.has(msg.at)) {
-        shownMsgsRef.current.add(msg.at);
-        setCompanionMsg(msg.text);
+
+    // Scan last ~20 lines for new patterns
+    const lines = code.split('\n');
+    const scanStart = Math.max(0, lines.length - 20);
+    const recentCode = lines.slice(scanStart).join('\n');
+
+    // Find a new insight that hasn't been shown yet
+    for (const insight of CODE_INSIGHTS) {
+      if (shownInsightsRef.current.has(insight.priority)) continue;
+      const match = recentCode.match(insight.pattern);
+      if (match) {
+        shownInsightsRef.current.add(insight.priority);
+
+        // Find the exact line number of the match
+        const matchIdx = recentCode.indexOf(match[0]);
+        const linesBeforeMatch = recentCode.slice(0, matchIdx).split('\n').length;
+        const matchLineNum = scanStart + linesBeforeMatch;
+
+        setCompanionMsg(insight.text);
+        setCompanionLabel(insight.label);
+        setCompanionColor(insight.color);
+        setCompanionLine(matchLineNum);
         setCompanionKey(prev => prev + 1);
-        break;
+        return; // Only one insight per update
       }
     }
-  }, [progress, done]);
+
+    // Fallback progress-based messages
+    for (const fb of FALLBACK_MESSAGES) {
+      if (progress >= fb.at && !shownFallbacksRef.current.has(fb.at)) {
+        shownFallbacksRef.current.add(fb.at);
+        setCompanionMsg(fb.text);
+        setCompanionLabel('');
+        setCompanionColor('#6366f1');
+        setCompanionLine(0); // bottom float
+        setCompanionKey(prev => prev + 1);
+        return;
+      }
+    }
+  }, [code, progress, done]);
 
   // ═══ Live Mini Preview — debounced srcdoc update ═══
   // Update preview every 8% progress or 600ms, whichever comes first
@@ -280,23 +337,31 @@ export default function CodeStreamView({
     ];
   }, [code]);
 
-  // Line number gutter — with active line highlight
+  // Line number gutter — with active line highlight + insight line glow
   const lineNumberElements = useMemo(() => {
     const elems: React.ReactNode[] = [];
     for (let i = 1; i <= lineCount; i++) {
       const isActive = !done && i === lineCount;
       const isNear = !done && i >= lineCount - 2 && i < lineCount;
+      // Highlight insight-pointed line
+      const isInsightLine = !done && companionLine > 0 && Math.abs(i - companionLine) <= 1;
       elems.push(
         <div
           key={i}
           style={{
             color: isActive
               ? 'rgba(99,102,241,0.9)'
-              : isNear
-                ? 'rgba(99,102,241,0.3)'
-                : 'rgba(255,255,255,0.1)',
-            textShadow: isActive ? '0 0 8px rgba(99,102,241,0.6)' : 'none',
-            transition: 'color 0.15s ease',
+              : isInsightLine
+                ? companionColor + 'cc'
+                : isNear
+                  ? 'rgba(99,102,241,0.3)'
+                  : 'rgba(255,255,255,0.1)',
+            textShadow: isActive
+              ? '0 0 8px rgba(99,102,241,0.6)'
+              : isInsightLine
+                ? `0 0 8px ${companionColor}66`
+                : 'none',
+            transition: 'color 0.3s ease, text-shadow 0.3s ease',
           }}
         >
           {i}
@@ -304,7 +369,7 @@ export default function CodeStreamView({
       );
     }
     return elems;
-  }, [lineCount, done]);
+  }, [lineCount, done, companionLine, companionColor]);
 
   return (
     <div style={{
@@ -477,6 +542,25 @@ export default function CodeStreamView({
                 }}
               />
             )}
+            {/* Insight line highlight — colored glow on the matched code section */}
+            {!done && companionLine > 0 && companionLine < lineCount - 3 && (
+              <div
+                key={`insight-${companionKey}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${(companionLine - 1) * 18}px`,
+                  height: '54px', // 3 lines
+                  background: `linear-gradient(90deg, ${companionColor}0a 0%, ${companionColor}04 60%, transparent 100%)`,
+                  borderLeft: `2px solid ${companionColor}60`,
+                  boxShadow: `0 0 30px ${companionColor}08`,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                  animation: 'insightGlow 2s ease-out forwards',
+                }}
+              />
+            )}
             <pre style={{
               margin: 0,
               padding: '0 24px',
@@ -531,13 +615,16 @@ export default function CodeStreamView({
         }} />
       </div>
 
-      {/* AI Companion bubble */}
+      {/* ═══ AI Companion — Smart Code Line Pointer ═══ */}
       {companionMsg && !done && (
         <div
           key={companionKey}
           style={{
             position: 'absolute',
-            bottom: '90px',
+            ...(companionLine > 0
+              ? { bottom: '90px' }  // Will use bottom positioning for now
+              : { bottom: '90px' }
+            ),
             left: '16px',
             right: '16px',
             zIndex: 10,
@@ -548,31 +635,72 @@ export default function CodeStreamView({
             pointerEvents: 'none',
           }}
         >
+          {/* AI Avatar */}
           <div style={{
             width: '32px', height: '32px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+            background: `linear-gradient(135deg, ${companionColor}, #a855f7)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '12px', fontWeight: 700, color: '#fff', flexShrink: 0,
-            boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
+            boxShadow: `0 4px 16px ${companionColor}66`,
+            transition: 'background 0.3s ease',
           }}>
             AI
           </div>
-          <div style={{
-            background: 'rgba(99,102,241,0.12)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(99,102,241,0.2)',
-            borderRadius: '14px',
-            borderTopLeftRadius: '4px',
-            padding: '10px 16px',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.85)',
-            lineHeight: 1.5,
-            maxWidth: '80%',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-          }}>
-            {companionMsg}
+
+          {/* Message bubble with optional code label */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '85%' }}>
+            {/* Code section label badge */}
+            {companionLabel && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                alignSelf: 'flex-start',
+              }}>
+                <div style={{
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: `${companionColor}20`,
+                  border: `1px solid ${companionColor}40`,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  color: companionColor,
+                  textTransform: 'uppercase',
+                }}>
+                  {companionLabel}
+                </div>
+                {companionLine > 0 && (
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '9px',
+                    color: 'rgba(255,255,255,0.25)',
+                    letterSpacing: '0.04em',
+                  }}>
+                    L{companionLine}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Message text */}
+            <div style={{
+              background: `${companionColor}15`,
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: `1px solid ${companionColor}30`,
+              borderRadius: '14px',
+              borderTopLeftRadius: '4px',
+              padding: '10px 16px',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.85)',
+              lineHeight: 1.5,
+              boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 20px ${companionColor}10`,
+            }}>
+              {companionMsg}
+            </div>
           </div>
         </div>
       )}
