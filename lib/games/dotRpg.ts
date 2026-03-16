@@ -7,1182 +7,573 @@ export const DOT_RPG_HTML = `<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#1a0e2e;touch-action:none}
-canvas{display:block}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+#ui{position:absolute;top:0;left:0;width:100%;pointer-events:none;font-family:'Courier New',monospace}
+#dialog{position:absolute;bottom:12px;left:12px;right:12px;background:rgba(10,5,30,0.92);border:2px solid #8b6fff;border-radius:8px;padding:12px 16px;color:#e8deff;font-size:14px;line-height:1.6;display:none;pointer-events:auto;cursor:pointer}
+#dialog .name{color:#ffd700;font-weight:bold;margin-bottom:4px;font-size:12px}
+#hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;font-size:11px;color:#c8b8ff}
+#hud .stat{background:rgba(10,5,30,0.8);border:1px solid rgba(139,111,255,0.3);border-radius:4px;padding:3px 8px}
+#battle{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto}
+#battle .enemy-area{text-align:center;margin-bottom:20px}
+#battle .enemy-sprite{font-size:48px;animation:battleBounce 0.6s ease-in-out infinite alternate}
+#battle .enemy-name{color:#ff6b6b;font-family:'Courier New',monospace;font-size:14px;margin-top:4px}
+#battle .enemy-hp-bar{width:120px;height:8px;background:#2a1545;border:1px solid #8b6fff;border-radius:4px;margin:8px auto;overflow:hidden}
+#battle .enemy-hp-fill{height:100%;background:linear-gradient(90deg,#ff4444,#ff6b6b);border-radius:3px;transition:width 0.3s}
+#battle .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#battle .actions button{background:rgba(139,111,255,0.2);border:2px solid #8b6fff;color:#e8deff;padding:8px 16px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;pointer-events:auto;transition:all 0.2s}
+#battle .actions button:hover{background:rgba(139,111,255,0.5);transform:scale(1.05)}
+#battle .battle-msg{color:#ffd700;font-family:'Courier New',monospace;font-size:12px;margin:12px 0;min-height:16px;text-align:center}
+#dpad{position:absolute;bottom:16px;left:16px;pointer-events:auto;display:none}
+#dpad button{position:absolute;width:44px;height:44px;border-radius:8px;background:rgba(139,111,255,0.25);border:1px solid rgba(139,111,255,0.4);color:#c8b8ff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#dpad button:active{background:rgba(139,111,255,0.6)}
+#dpad .up{left:44px;top:0}
+#dpad .down{left:44px;top:88px}
+#dpad .left{left:0;top:44px}
+#dpad .right{left:88px;top:44px}
+@keyframes battleBounce{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
 </style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud">
+    <span class="stat" id="hud-hp">HP 30/30</span>
+    <span class="stat" id="hud-lv">LV 1</span>
+    <span class="stat" id="hud-gold">Gold 0</span>
+  </div>
+  <div id="dialog" onclick="advanceDialog()"><div class="name" id="dlg-name"></div><div id="dlg-text"></div></div>
+  <div id="battle">
+    <div class="enemy-area">
+      <div class="enemy-sprite" id="b-sprite"></div>
+      <div class="enemy-name" id="b-name"></div>
+      <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="b-hp"></div></div>
+    </div>
+    <div class="battle-msg" id="b-msg"></div>
+    <div class="actions" id="b-actions"></div>
+  </div>
+  <div id="dpad">
+    <button class="up" ontouchstart="dpadDown('up')" ontouchend="dpadUp('up')" onmousedown="dpadDown('up')" onmouseup="dpadUp('up')">▲</button>
+    <button class="down" ontouchstart="dpadDown('down')" ontouchend="dpadUp('down')" onmousedown="dpadDown('down')" onmouseup="dpadUp('down')">▼</button>
+    <button class="left" ontouchstart="dpadDown('left')" ontouchend="dpadUp('left')" onmousedown="dpadDown('left')" onmouseup="dpadUp('left')">◀</button>
+    <button class="right" ontouchstart="dpadDown('right')" ontouchend="dpadUp('right')" onmousedown="dpadDown('right')" onmouseup="dpadUp('right')">▶</button>
+  </div>
+</div>
 <script>
 'use strict';
 (function(){
 
-/* ═══════════════════════════════════════════════
-   GLOBAL STATE (for gameExtensions bridge)
-   ═══════════════════════════════════════════════ */
 window.score = 0;
 window.gameOver = false;
 
-/* ═══════════════════════════════════════════════
-   PROCEDURAL AUDIO ENGINE
-   ═══════════════════════════════════════════════ */
-var AudioCtx = window.AudioContext || window.webkitAudioContext;
-var actx = null;
-function ensureAudio(){
-  if(!actx){ try{ actx = new AudioCtx(); }catch(e){ actx=null; } }
-  if(actx && actx.state==='suspended') actx.resume().catch(function(){});
+var canvas = document.getElementById('c');
+var ctx = canvas.getContext('2d');
+var W, H, TILE = 32, COLS, ROWS;
+var camX = 0, camY = 0;
+
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W; canvas.height = H;
+  COLS = Math.ceil(W/TILE)+2; ROWS = Math.ceil(H/TILE)+2;
+  if('ontouchstart' in window) document.getElementById('dpad').style.display = 'block';
 }
+window.addEventListener('resize', resize);
+resize();
 
-function sfxStep(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var osc = actx.createOscillator();
-    var gain = actx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(180 + Math.random()*40, t);
-    osc.frequency.exponentialRampToValueAtTime(100, t+0.06);
-    gain.gain.setValueAtTime(0.06, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t+0.06);
-    osc.connect(gain); gain.connect(actx.destination);
-    osc.start(t); osc.stop(t+0.07);
-  }catch(e){}
-}
-
-function sfxAttack(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var osc = actx.createOscillator();
-    var osc2 = actx.createOscillator();
-    var gain = actx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(600, t);
-    osc.frequency.exponentialRampToValueAtTime(150, t+0.12);
-    osc2.type = 'square';
-    osc2.frequency.setValueAtTime(400, t);
-    osc2.frequency.exponentialRampToValueAtTime(80, t+0.12);
-    gain.gain.setValueAtTime(0.1, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t+0.15);
-    osc.connect(gain); osc2.connect(gain); gain.connect(actx.destination);
-    osc.start(t); osc.stop(t+0.16);
-    osc2.start(t); osc2.stop(t+0.16);
-  }catch(e){}
-}
-
-function sfxHit(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var bufSize = Math.floor(actx.sampleRate * 0.1);
-    var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
-    var d = buf.getChannelData(0);
-    for(var i=0;i<bufSize;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/bufSize, 3);
-    var src = actx.createBufferSource();
-    src.buffer = buf;
-    var gain = actx.createGain();
-    gain.gain.setValueAtTime(0.08, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t+0.1);
-    var filt = actx.createBiquadFilter();
-    filt.type = 'lowpass';
-    filt.frequency.setValueAtTime(800, t);
-    src.connect(filt); filt.connect(gain); gain.connect(actx.destination);
-    src.start(t);
-  }catch(e){}
-}
-
-function sfxTalk(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    for(var i=0;i<3;i++){
-      var osc = actx.createOscillator();
-      var gain = actx.createGain();
-      osc.type = 'square';
-      var freq = 280 + Math.random()*120;
-      osc.frequency.setValueAtTime(freq, t+i*0.07);
-      osc.frequency.setValueAtTime(freq * 0.8, t+i*0.07+0.04);
-      gain.gain.setValueAtTime(0.05, t+i*0.07);
-      gain.gain.exponentialRampToValueAtTime(0.001, t+i*0.07+0.06);
-      osc.connect(gain); gain.connect(actx.destination);
-      osc.start(t+i*0.07); osc.stop(t+i*0.07+0.07);
-    }
-  }catch(e){}
-}
-
-function sfxKill(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var notes = [523, 659, 784];
-    for(var i=0;i<3;i++){
-      var osc = actx.createOscillator();
-      var gain = actx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(notes[i], t+i*0.08);
-      gain.gain.setValueAtTime(0.08, t+i*0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, t+i*0.08+0.15);
-      osc.connect(gain); gain.connect(actx.destination);
-      osc.start(t+i*0.08); osc.stop(t+i*0.08+0.16);
-    }
-  }catch(e){}
-}
-
-function sfxDeath(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var osc = actx.createOscillator();
-    var gain = actx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(400, t);
-    osc.frequency.exponentialRampToValueAtTime(60, t+0.6);
-    gain.gain.setValueAtTime(0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t+0.6);
-    osc.connect(gain); gain.connect(actx.destination);
-    osc.start(t); osc.stop(t+0.65);
-  }catch(e){}
-}
-
-function sfxLevelUp(){
-  if(!actx) return;
-  try{
-    var t = actx.currentTime;
-    var notes = [523, 659, 784, 1047];
-    for(var i=0;i<4;i++){
-      var osc = actx.createOscillator();
-      var gain = actx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(notes[i], t+i*0.1);
-      gain.gain.setValueAtTime(0.1, t+i*0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, t+i*0.1+0.2);
-      osc.connect(gain); gain.connect(actx.destination);
-      osc.start(t+i*0.1); osc.stop(t+i*0.1+0.22);
-    }
-  }catch(e){}
-}
-
-/* ═══════════════════════════════════════════════
-   PROCEDURAL PIXEL ART — Canvas2D Textures
-   ═══════════════════════════════════════════════ */
-var T = 32; // tile size
-
-function makeCanvas(w, h){
-  var c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  return c;
-}
-
-// ── Grass tile (with variation) ──
-function drawGrassTile(variant){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  // base
-  var g = ctx.createLinearGradient(0,0,0,T);
-  g.addColorStop(0, '#2d5a1e');
-  g.addColorStop(1, '#1a3d12');
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,T,T);
-  // grass blades
-  ctx.fillStyle = '#3d7a2e';
-  var seed = variant * 7;
-  for(var i=0;i<6;i++){
-    var x = ((seed + i*13)%29) + 1;
-    var y = ((seed + i*17)%25) + 3;
-    ctx.fillRect(x, y, 1, 3);
-  }
-  ctx.fillStyle = '#4a8a3a';
-  for(var i=0;i<4;i++){
-    var x = ((seed + i*19)%27) + 2;
-    var y = ((seed + i*23)%22) + 5;
-    ctx.fillRect(x, y, 1, 2);
-  }
-  return c;
-}
-
-// ── Dirt path tile ──
-function drawDirtTile(){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  var g = ctx.createLinearGradient(0,0,T,T);
-  g.addColorStop(0, '#8b6914');
-  g.addColorStop(0.5, '#7a5c12');
-  g.addColorStop(1, '#6b4e10');
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,T,T);
-  // pebbles
-  ctx.fillStyle = '#9a7a24';
-  ctx.fillRect(5, 8, 2, 2);
-  ctx.fillRect(18, 20, 2, 1);
-  ctx.fillRect(25, 6, 1, 2);
-  return c;
-}
-
-// ── Water tile ──
-function drawWaterTile(){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  var g = ctx.createRadialGradient(T/2,T/2,2, T/2,T/2,T*0.7);
-  g.addColorStop(0, '#1a5fa8');
-  g.addColorStop(1, '#0e3a6a');
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,T,T);
-  // wave highlights
-  ctx.fillStyle = 'rgba(100,180,255,0.3)';
-  ctx.fillRect(4,10,8,1);
-  ctx.fillRect(16,18,7,1);
-  ctx.fillRect(8,26,6,1);
-  return c;
-}
-
-// ── Tree ──
-function drawTree(){
-  var c = makeCanvas(T, T*2);
-  var ctx = c.getContext('2d');
-  // trunk
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(13, T+4, 6, T-4);
-  // canopy layers
-  var colors = ['#1a5a20','#2a7a30','#1e6a25'];
-  for(var i=0;i<3;i++){
-    ctx.fillStyle = colors[i];
-    var y = T - 8 + i*8;
-    var w = 24 - i*4;
-    var x = (T-w)/2;
-    ctx.fillRect(x, y-8, w, 12);
-  }
-  // highlights
-  ctx.fillStyle = '#3a9a40';
-  ctx.fillRect(10, T-6, 3, 2);
-  ctx.fillRect(18, T+2, 4, 2);
-  return c;
-}
-
-// ── House ──
-function drawHouse(){
-  var c = makeCanvas(T*2, T*2);
-  var ctx = c.getContext('2d');
-  // wall
-  var g = ctx.createLinearGradient(0,T*0.5,0,T*2);
-  g.addColorStop(0, '#c8a868');
-  g.addColorStop(1, '#a88848');
-  ctx.fillStyle = g;
-  ctx.fillRect(8, T*0.7, T*2-16, T*1.3);
-  // roof
-  ctx.fillStyle = '#8b2020';
-  ctx.beginPath();
-  ctx.moveTo(4, T*0.7);
-  ctx.lineTo(T, 4);
-  ctx.lineTo(T*2-4, T*0.7);
-  ctx.closePath();
-  ctx.fill();
-  // roof highlight
-  ctx.fillStyle = '#a83030';
-  ctx.beginPath();
-  ctx.moveTo(8, T*0.7);
-  ctx.lineTo(T, 8);
-  ctx.lineTo(T+8, T*0.5);
-  ctx.lineTo(8, T*0.7);
-  ctx.closePath();
-  ctx.fill();
-  // door
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(T-5, T*1.3, 10, T*0.7);
-  // window
-  ctx.fillStyle = '#6ac0e8';
-  ctx.fillRect(16, T, 8, 8);
-  ctx.fillRect(T+8, T, 8, 8);
-  // window cross
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(19, T, 2, 8);
-  ctx.fillRect(16, T+3, 8, 2);
-  ctx.fillRect(T+11, T, 2, 8);
-  ctx.fillRect(T+8, T+3, 8, 2);
-  return c;
-}
-
-// ── Stone wall (collision) ──
-function drawStoneWall(){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  var g = ctx.createLinearGradient(0,0,0,T);
-  g.addColorStop(0, '#7a7a7a');
-  g.addColorStop(1, '#4a4a4a');
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,T,T);
-  // brick lines
-  ctx.strokeStyle = '#3a3a3a';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0, 0, T/2, T/2);
-  ctx.strokeRect(T/2, 0, T/2, T/2);
-  ctx.strokeRect(T/4, T/2, T/2, T/2);
-  return c;
-}
-
-// ── Player sprite (4 directions × 2 frames) ──
-function drawPlayer(dir, frame){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  // body color (일랜시아 감성 — 파란 옷)
-  var bodyG = ctx.createLinearGradient(8,8,24,28);
-  bodyG.addColorStop(0, '#4488cc');
-  bodyG.addColorStop(1, '#2266aa');
-  // hair
-  ctx.fillStyle = '#3a2a1a';
-  ctx.fillRect(11, 3, 10, 6);
-  // skin
-  ctx.fillStyle = '#f0c8a0';
-  // face
-  ctx.fillRect(12, 7, 8, 7);
-  // body
-  ctx.fillStyle = bodyG;
-  ctx.fillRect(10, 14, 12, 10);
-  // belt
-  ctx.fillStyle = '#8b6914';
-  ctx.fillRect(10, 21, 12, 2);
-  // legs
-  var legOff = frame === 1 ? 2 : 0;
-  ctx.fillStyle = '#2a4a6a';
-  ctx.fillRect(11 + legOff, 24, 4, 5);
-  ctx.fillRect(17 - legOff, 24, 4, 5);
-  // boots
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(11 + legOff, 28, 4, 3);
-  ctx.fillRect(17 - legOff, 28, 4, 3);
-  // eyes based on direction
-  ctx.fillStyle = '#1a1a1a';
-  if(dir === 0){ // down
-    ctx.fillRect(14, 10, 2, 2);
-    ctx.fillRect(18, 10, 2, 2);
-  } else if(dir === 1){ // left
-    ctx.fillRect(12, 10, 2, 2);
-    ctx.fillRect(16, 10, 2, 2);
-  } else if(dir === 2){ // right
-    ctx.fillRect(16, 10, 2, 2);
-    ctx.fillRect(20, 10, 2, 2);
-  } else { // up
-    // no eyes visible from behind
-    ctx.fillStyle = '#3a2a1a';
-    ctx.fillRect(12, 7, 8, 8); // hair covers face
-  }
-  // arms
-  ctx.fillStyle = '#f0c8a0';
-  var armOff = frame === 1 ? 1 : 0;
-  ctx.fillRect(8, 15 + armOff, 2, 6);
-  ctx.fillRect(22, 15 - armOff, 2, 6);
-  return c;
-}
-
-// ── NPC sprite ──
-function drawNPC(){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  // hat
-  ctx.fillStyle = '#cc4444';
-  ctx.fillRect(9, 1, 14, 4);
-  ctx.fillRect(7, 4, 18, 3);
-  // hair
-  ctx.fillStyle = '#e0c040';
-  ctx.fillRect(11, 5, 10, 4);
-  // face
-  ctx.fillStyle = '#f0c8a0';
-  ctx.fillRect(12, 7, 8, 7);
-  // eyes
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(14, 10, 2, 2);
-  ctx.fillRect(18, 10, 2, 2);
-  // mouth (smile)
-  ctx.fillStyle = '#cc6060';
-  ctx.fillRect(15, 12, 4, 1);
-  // robe (바람의나라 NPC 감성 — 빨간 로브)
-  var robeG = ctx.createLinearGradient(8,14,24,30);
-  robeG.addColorStop(0, '#cc3333');
-  robeG.addColorStop(1, '#881818');
-  ctx.fillStyle = robeG;
-  ctx.fillRect(10, 14, 12, 12);
-  // robe detail
-  ctx.fillStyle = '#e8c040';
-  ctx.fillRect(15, 14, 2, 12);
-  // feet
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(11, 26, 4, 3);
-  ctx.fillRect(17, 26, 4, 3);
-  return c;
-}
-
-// ── Monster sprites ──
-function drawSlime(color1, color2, eyeColor){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  var g = ctx.createRadialGradient(T/2, T/2+4, 2, T/2, T/2, T*0.45);
-  g.addColorStop(0, color1);
-  g.addColorStop(1, color2);
-  ctx.fillStyle = g;
-  // blob shape
-  ctx.beginPath();
-  ctx.ellipse(T/2, T/2+4, 12, 10, 0, 0, Math.PI*2);
-  ctx.fill();
-  // bottom bumps
-  ctx.beginPath();
-  ctx.ellipse(T/2-5, T/2+12, 5, 4, 0, 0, Math.PI);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(T/2+5, T/2+12, 5, 4, 0, 0, Math.PI);
-  ctx.fill();
-  // eyes
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(12, T/2, 4, 4);
-  ctx.fillRect(19, T/2, 4, 4);
-  ctx.fillStyle = eyeColor || '#1a1a1a';
-  ctx.fillRect(14, T/2+1, 2, 3);
-  ctx.fillRect(21, T/2+1, 2, 3);
-  // shine
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.fillRect(12, T/2-4, 3, 2);
-  return c;
-}
-
-function drawSkeleton(){
-  var c = makeCanvas(T, T);
-  var ctx = c.getContext('2d');
-  // skull
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(11, 2, 10, 9);
-  ctx.fillRect(12, 1, 8, 1);
-  // eye sockets
-  ctx.fillStyle = '#1a0a2e';
-  ctx.fillRect(13, 5, 3, 3);
-  ctx.fillRect(18, 5, 3, 3);
-  // eye glow
-  ctx.fillStyle = '#ff4444';
-  ctx.fillRect(14, 6, 1, 1);
-  ctx.fillRect(19, 6, 1, 1);
-  // teeth
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(14, 9, 2, 2);
-  ctx.fillRect(17, 9, 2, 2);
-  // spine
-  ctx.fillStyle = '#d0c8b8';
-  ctx.fillRect(15, 11, 2, 3);
-  // ribcage
-  ctx.fillStyle = '#d0c8b8';
-  ctx.fillRect(10, 14, 12, 2);
-  ctx.fillRect(11, 16, 10, 1);
-  ctx.fillRect(10, 17, 12, 2);
-  // arms (bone)
-  ctx.fillStyle = '#d0c8b8';
-  ctx.fillRect(7, 14, 3, 2);
-  ctx.fillRect(5, 16, 3, 6);
-  ctx.fillRect(22, 14, 3, 2);
-  ctx.fillRect(24, 16, 3, 6);
-  // pelvis + legs
-  ctx.fillStyle = '#d0c8b8';
-  ctx.fillRect(12, 19, 8, 2);
-  ctx.fillRect(12, 21, 3, 6);
-  ctx.fillRect(17, 21, 3, 6);
-  // feet
-  ctx.fillRect(11, 27, 5, 2);
-  ctx.fillRect(16, 27, 5, 2);
-  return c;
-}
-
-// ── Sword slash effect ──
-function drawSlash(){
-  var c = makeCanvas(T*2, T*2);
-  var ctx = c.getContext('2d');
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#ffcc44';
-  ctx.shadowBlur = 8;
-  ctx.beginPath();
-  ctx.arc(T, T, T*0.6, -Math.PI*0.3, Math.PI*0.3);
-  ctx.stroke();
-  ctx.strokeStyle = '#ffcc44';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(T, T, T*0.5, -Math.PI*0.2, Math.PI*0.2);
-  ctx.stroke();
-  return c;
-}
-
-// ── Heart icon ──
-function drawHeart(full){
-  var c = makeCanvas(12, 12);
-  var ctx = c.getContext('2d');
-  ctx.fillStyle = full ? '#ff3344' : '#4a2a2a';
-  // pixel heart
-  var h = [
-    '  **  **  ',
-    ' ******** ',
-    '**********',
-    '**********',
-    ' ******** ',
-    '  ******  ',
-    '   ****   ',
-    '    **    ',
-  ];
-  for(var y=0;y<h.length;y++){
-    for(var x=0;x<h[y].length;x++){
-      if(h[y][x]==='*') ctx.fillRect(x+1, y+1, 1, 1);
-    }
-  }
-  if(full){
-    ctx.fillStyle = 'rgba(255,200,200,0.5)';
-    ctx.fillRect(3, 2, 2, 2);
-  }
-  return c;
-}
-
-/* ═══════════════════════════════════════════════
-   TILE MAP — 20×15 grid (640×480 logical)
-   ═══════════════════════════════════════════════ */
-var MAP_W = 20;
-var MAP_H = 15;
-// 0=grass, 1=dirt, 2=water, 3=wall, 4=tree, 5=house(anchor), 6=npc_spot
-var TILEMAP = [
-  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
-  [3,0,0,0,0,4,0,0,0,1,1,0,0,0,4,0,0,0,0,3],
-  [3,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,3],
-  [3,0,4,0,0,0,0,1,1,5,0,1,1,0,0,0,4,0,0,3],
-  [3,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,3],
-  [3,0,0,0,0,0,1,1,0,6,0,0,1,1,0,0,0,0,0,3],
-  [3,0,4,0,0,1,1,0,0,0,0,0,0,1,1,0,0,4,0,3],
-  [3,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,3],
-  [3,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,3],
-  [3,2,2,1,0,0,0,4,0,0,0,4,0,0,0,1,0,0,0,3],
-  [3,2,2,2,0,0,0,0,0,0,0,0,0,0,1,1,0,4,0,3],
-  [3,0,2,2,2,0,0,0,0,0,0,0,0,1,1,0,0,0,0,3],
-  [3,0,0,2,0,0,4,0,0,0,0,4,0,0,0,0,0,0,0,3],
-  [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
-  [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
-];
-
-function isBlocked(tx, ty){
-  if(tx<0||ty<0||tx>=MAP_W||ty>=MAP_H) return true;
-  var t = TILEMAP[ty][tx];
-  return t===2||t===3||t===4||t===5;
-}
-
-/* ═══════════════════════════════════════════════
-   PHASER GAME
-   ═══════════════════════════════════════════════ */
-var GW = MAP_W * T; // 640
-var GH = MAP_H * T; // 480
-
-var config = {
-  type: Phaser.AUTO,
-  width: GW,
-  height: GH,
-  parent: document.body,
-  backgroundColor: '#1a0e2e',
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
-  scene: { preload: preload, create: create, update: update },
+/* ═══ Tile Map ═══ */
+var MAP_W = 40, MAP_H = 30;
+var tiles = []; // 0=grass, 1=path, 2=water, 3=tree, 4=house, 5=flower, 6=rock, 7=bridge
+var tileColors = {
+  0: ['#2d5a1e','#347a22','#2a6e1c'], // grass variations
+  1: ['#c4a96a','#b8975a','#d4b97a'], // path
+  2: ['#1a4a7a','#1e5a8e','#226aa2'], // water
+  3: ['#1a4a20','#1e5a24','#226a28'], // tree trunk area
+  5: ['#2d5a1e'], // flower (on grass)
+  6: ['#5a5a6a','#6a6a7a'], // rock
+  7: ['#8a7050','#9a8060'], // bridge
 };
 
-var game = new Phaser.Game(config);
+// Generate map procedurally
+function generateMap(){
+  for(var y=0;y<MAP_H;y++){
+    tiles[y]=[];
+    for(var x=0;x<MAP_W;x++){
+      tiles[y][x] = 0; // default grass
+    }
+  }
+  // River
+  var rx = 20;
+  for(var y=0;y<MAP_H;y++){
+    rx += Math.floor(Math.random()*3)-1;
+    rx = Math.max(15,Math.min(25,rx));
+    for(var dx=-1;dx<=1;dx++) if(rx+dx>=0&&rx+dx<MAP_W) tiles[y][rx+dx]=2;
+  }
+  // Bridge
+  tiles[15][rx-1]=7; tiles[15][rx]=7; tiles[15][rx+1]=7;
 
-// ── State ──
-var player, cursors, wasd;
-var playerDir = 0; // 0=down,1=left,2=right,3=up
-var playerFrame = 0;
-var stepTimer = 0;
-var moving = false;
+  // Paths
+  for(var x=5;x<rx-1;x++) tiles[15][x]=1;
+  for(var y=8;y<22;y++) tiles[y][8]=1;
+  for(var x=3;x<14;x++) tiles[12][x]=1;
 
-var playerHP = 10;
-var playerMaxHP = 10;
-var playerATK = 3;
-var playerLv = 1;
-var playerEXP = 0;
-var playerKills = 0;
+  // Houses
+  var houses = [[5,10],[10,10],[5,18],[12,18]];
+  houses.forEach(function(h){ tiles[h[1]][h[0]]=4; tiles[h[1]][h[0]+1]=4; tiles[h[1]-1][h[0]]=4; tiles[h[1]-1][h[0]+1]=4; });
 
-var npcSprite, npcDialog = null;
-var dialogText = '';
-var dialogTimer = 0;
-var dialogLines = [
-  '용사여, 잘 왔도다.\\n이 마을에 몬스터가 나타났다!',
-  '마을 주변의 슬라임과 스켈레톤을\\n물리쳐주겠는가?',
-  '조심해라, 스켈레톤은 강하다.\\n체력이 떨어지면 돌아오거라.',
-  '그대의 무운을 빈다!',
+  // Trees (scattered)
+  for(var i=0;i<60;i++){
+    var tx=Math.floor(Math.random()*MAP_W), ty=Math.floor(Math.random()*MAP_H);
+    if(tiles[ty][tx]===0) tiles[ty][tx]=3;
+  }
+  // Flowers
+  for(var i=0;i<30;i++){
+    var fx=Math.floor(Math.random()*MAP_W), fy=Math.floor(Math.random()*MAP_H);
+    if(tiles[fy][fx]===0) tiles[fy][fx]=5;
+  }
+  // Rocks
+  for(var i=0;i<15;i++){
+    var rx2=Math.floor(Math.random()*MAP_W), ry=Math.floor(Math.random()*MAP_H);
+    if(tiles[ry][rx2]===0) tiles[ry][rx2]=6;
+  }
+}
+generateMap();
+
+/* ═══ Player ═══ */
+var player = {
+  x: 8, y: 15, dir: 0, // tile coords
+  hp: 30, maxHp: 30, atk: 8, def: 3,
+  lv: 1, exp: 0, nextExp: 20, gold: 0,
+  moving: false, moveProgress: 0, moveDir: {x:0,y:0},
+  stepTimer: 0
+};
+
+/* ═══ NPCs ═══ */
+var npcs = [
+  { x:6,y:10,sprite:'👴',name:'마을 장로',lines:['어서오거라, 젊은 모험가여.','이 마을 동쪽에 강이 흐르고...','다리를 건너면 몬스터가 나온다.','조심하거라!'], color:'#ffd700' },
+  { x:11,y:10,sprite:'👩',name:'포션 상인',lines:['포션 하나 10골드!','...근데 아직 상점은 준비 중이야 😅'], color:'#ff69b4' },
+  { x:6,y:18,sprite:'🧙',name:'마법사 루나',lines:['나는 마법사 루나.','레벨 5가 되면 마법을 가르쳐 줄게!'], color:'#8b6fff' },
+  { x:13,y:18,sprite:'🐱',name:'고양이',lines:['냐옹~','...','냐냐옹! (머리를 쓰다듬어 달라는 것 같다)'], color:'#ffaa44' },
 ];
-var dialogIndex = 0;
+
+/* ═══ Monsters (east of river) ═══ */
+var monsters = [
+  { name:'슬라임', sprite:'🟢', hp:15, maxHp:15, atk:5, def:1, exp:8, gold:5 },
+  { name:'박쥐', sprite:'🦇', hp:12, maxHp:12, atk:7, def:0, exp:6, gold:3 },
+  { name:'버섯독', sprite:'🍄', hp:20, maxHp:20, atk:6, def:3, exp:12, gold:8 },
+  { name:'해골병사', sprite:'💀', hp:30, maxHp:30, atk:10, def:5, exp:20, gold:15 },
+];
+
+/* ═══ Dialog System ═══ */
+var dialogQueue = [];
 var dialogActive = false;
 
-var monsters = [];
+function showDialog(name, lines, color){
+  dialogQueue = lines.slice();
+  document.getElementById('dlg-name').textContent = name;
+  document.getElementById('dlg-name').style.color = color || '#ffd700';
+  document.getElementById('dlg-text').textContent = dialogQueue.shift();
+  document.getElementById('dialog').style.display = 'block';
+  dialogActive = true;
+}
+
+window.advanceDialog = function(){
+  if(dialogQueue.length > 0){
+    document.getElementById('dlg-text').textContent = dialogQueue.shift();
+  } else {
+    document.getElementById('dialog').style.display = 'none';
+    dialogActive = false;
+  }
+};
+
+/* ═══ Battle System ═══ */
 var battleActive = false;
-var battleMonster = null;
-var battleAnim = 0;
-var battlePlayerTurn = true;
-var battleMsg = '';
-var battleMsgTimer = 0;
+var battleEnemy = null;
+var battleTurn = 'player';
 
-var damageNumbers = [];
-var screenFlash = 0;
+function startBattle(){
+  var idx = player.lv >= 3 ? Math.floor(Math.random()*monsters.length) : Math.floor(Math.random()*2);
+  battleEnemy = JSON.parse(JSON.stringify(monsters[idx]));
+  battleActive = true;
+  battleTurn = 'player';
+  var bEl = document.getElementById('battle');
+  bEl.style.display = 'flex';
+  document.getElementById('b-sprite').textContent = battleEnemy.sprite;
+  document.getElementById('b-name').textContent = battleEnemy.name + ' 출현!';
+  updateBattleHP();
+  showBattleActions();
+  setBattleMsg(battleEnemy.name + '이(가) 나타났다!');
+}
 
-// cached textures
-var texGrass = [], texDirt, texWater, texWall, texTree, texHouse;
-var texPlayer = []; // [dir][frame]
-var texNPC, texSlash;
-var texMonsters = {};
-var texHeartFull, texHeartEmpty;
+function updateBattleHP(){
+  var pct = Math.max(0, battleEnemy.hp / battleEnemy.maxHp * 100);
+  document.getElementById('b-hp').style.width = pct + '%';
+}
 
-function preload(){}
+function setBattleMsg(msg){
+  document.getElementById('b-msg').textContent = msg;
+}
 
-function create(){
-  var scene = this;
-  ensureAudio();
-
-  // Build textures
-  for(var i=0;i<4;i++) texGrass.push(scene.textures.addCanvas('grass'+i, drawGrassTile(i)).getSourceImage());
-  texDirt = scene.textures.addCanvas('dirt', drawDirtTile()).getSourceImage();
-  texWater = scene.textures.addCanvas('water', drawWaterTile()).getSourceImage();
-  texWall = scene.textures.addCanvas('wall', drawStoneWall()).getSourceImage();
-  texTree = scene.textures.addCanvas('tree', drawTree()).getSourceImage();
-  texHouse = scene.textures.addCanvas('house', drawHouse()).getSourceImage();
-
-  // Player textures
-  for(var d=0;d<4;d++){
-    texPlayer[d] = [];
-    for(var f=0;f<2;f++){
-      texPlayer[d][f] = scene.textures.addCanvas('p'+d+'_'+f, drawPlayer(d, f)).getSourceImage();
-    }
-  }
-
-  texNPC = scene.textures.addCanvas('npc', drawNPC()).getSourceImage();
-  texSlash = scene.textures.addCanvas('slash', drawSlash()).getSourceImage();
-
-  // Monster textures
-  texMonsters.greenSlime = scene.textures.addCanvas('greenSlime', drawSlime('#44cc44','#228822')).getSourceImage();
-  texMonsters.blueSlime = scene.textures.addCanvas('blueSlime', drawSlime('#4488ee','#2255aa','#ff4444')).getSourceImage();
-  texMonsters.skeleton = scene.textures.addCanvas('skeleton', drawSkeleton()).getSourceImage();
-
-  texHeartFull = scene.textures.addCanvas('hFull', drawHeart(true)).getSourceImage();
-  texHeartEmpty = scene.textures.addCanvas('hEmpty', drawHeart(false)).getSourceImage();
-
-  // input
-  cursors = scene.input.keyboard.createCursorKeys();
-  wasd = scene.input.keyboard.addKeys('W,A,S,D');
-
-  // spawn player at center dirt path
-  player = { tx: 9, ty: 7, x: 9*T, y: 7*T, targetX: 9*T, targetY: 7*T, speed: 120 };
-
-  // NPC position (from map marker)
-  npcSprite = { tx: 9, ty: 5, x: 9*T, y: 5*T };
-
-  // Spawn monsters
-  spawnMonsters();
-
-  // touch controls (handled by gameExtensions but also native)
-  scene.input.on('pointerdown', function(ptr){
-    ensureAudio();
-    if(window.gameOver){
-      restartGame();
-      return;
-    }
-    if(battleActive){
-      handleBattleInput();
-      return;
-    }
-    if(dialogActive){
-      advanceDialog();
-      return;
-    }
-    // touch-to-move: determine direction
-    var dx = ptr.x - (player.x + T/2);
-    var dy = ptr.y - (player.y + T/2);
-    if(Math.abs(dx) > Math.abs(dy)){
-      if(dx > 0) tryMove(1, 0);
-      else tryMove(-1, 0);
-    } else {
-      if(dy > 0) tryMove(0, 1);
-      else tryMove(0, -1);
-    }
-  });
-
-  // space / enter for interact
-  scene.input.keyboard.on('keydown-SPACE', function(){
-    ensureAudio();
-    if(battleActive) handleBattleInput();
-    else if(dialogActive) advanceDialog();
-    else tryInteract();
+function showBattleActions(){
+  var el = document.getElementById('b-actions');
+  el.innerHTML = '';
+  var actions = [
+    {label:'⚔️ 공격', fn: doAttack},
+    {label:'🛡️ 방어', fn: doDefend},
+    {label:'🏃 도망', fn: doRun},
+  ];
+  actions.forEach(function(a){
+    var btn = document.createElement('button');
+    btn.textContent = a.label;
+    btn.onclick = a.fn;
+    el.appendChild(btn);
   });
 }
 
-function spawnMonsters(){
-  monsters = [];
-  // Green slime
-  monsters.push({ type:'greenSlime', name:'초록 슬라임', tx:3, ty:8, hp:5, maxHp:5, atk:1, exp:3, alive:true });
-  // Blue slime
-  monsters.push({ type:'blueSlime', name:'파랑 슬라임', tx:16, ty:4, hp:8, maxHp:8, atk:2, exp:5, alive:true });
-  // Skeleton
-  monsters.push({ type:'skeleton', name:'스켈레톤', tx:14, ty:10, hp:15, maxHp:15, atk:4, exp:10, alive:true });
-  // set pixel positions
-  for(var i=0;i<monsters.length;i++){
-    monsters[i].x = monsters[i].tx * T;
-    monsters[i].y = monsters[i].ty * T;
-    monsters[i].bobTimer = Math.random() * Math.PI * 2;
-  }
+function clearBattleActions(){
+  document.getElementById('b-actions').innerHTML = '';
 }
 
-function tryMove(dx, dy){
-  if(battleActive || dialogActive || window.gameOver) return;
-  // set direction
-  if(dx < 0) playerDir = 1;
-  else if(dx > 0) playerDir = 2;
-  else if(dy < 0) playerDir = 3;
-  else playerDir = 0;
-
-  var ntx = player.tx + dx;
-  var nty = player.ty + dy;
-
-  // check NPC collision
-  if(ntx === npcSprite.tx && nty === npcSprite.ty){
-    startDialog();
+function doAttack(){
+  if(battleTurn !== 'player') return;
+  clearBattleActions();
+  var dmg = Math.max(1, player.atk + Math.floor(Math.random()*4) - battleEnemy.def);
+  battleEnemy.hp -= dmg;
+  updateBattleHP();
+  setBattleMsg(dmg + ' 데미지를 입혔다!');
+  if(battleEnemy.hp <= 0){
+    setTimeout(function(){ endBattle(true); }, 800);
     return;
   }
+  battleTurn = 'enemy';
+  setTimeout(enemyTurn, 1000);
+}
 
-  // check monster collision
-  for(var i=0;i<monsters.length;i++){
-    if(monsters[i].alive && ntx === monsters[i].tx && nty === monsters[i].ty){
-      startBattle(monsters[i]);
-      return;
+function doDefend(){
+  if(battleTurn !== 'player') return;
+  clearBattleActions();
+  setBattleMsg('방어 자세를 취했다!');
+  battleTurn = 'enemy';
+  setTimeout(function(){ enemyTurn(true); }, 800);
+}
+
+function doRun(){
+  if(battleTurn !== 'player') return;
+  if(Math.random() < 0.6){
+    setBattleMsg('도망쳤다!');
+    setTimeout(function(){ endBattle(false); }, 600);
+  } else {
+    clearBattleActions();
+    setBattleMsg('도망치지 못했다!');
+    battleTurn = 'enemy';
+    setTimeout(enemyTurn, 800);
+  }
+}
+
+function enemyTurn(defended){
+  var def = defended ? player.def * 2 : player.def;
+  var dmg = Math.max(1, battleEnemy.atk + Math.floor(Math.random()*3) - def);
+  player.hp -= dmg;
+  if(player.hp < 0) player.hp = 0;
+  setBattleMsg(battleEnemy.name + '의 공격! ' + dmg + ' 데미지!');
+  updateHUD();
+  if(player.hp <= 0){
+    setTimeout(function(){
+      setBattleMsg('쓰러졌다... 마을로 돌아갑니다.');
+      setTimeout(function(){
+        player.hp = player.maxHp;
+        player.x = 8; player.y = 15;
+        endBattle(false);
+        updateHUD();
+      }, 1500);
+    }, 800);
+    return;
+  }
+  battleTurn = 'player';
+  setTimeout(showBattleActions, 600);
+}
+
+function endBattle(won){
+  battleActive = false;
+  document.getElementById('battle').style.display = 'none';
+  if(won){
+    player.exp += battleEnemy.exp;
+    player.gold += battleEnemy.gold;
+    window.score = player.gold;
+    // Level up check
+    while(player.exp >= player.nextExp){
+      player.lv++;
+      player.exp -= player.nextExp;
+      player.nextExp = Math.floor(player.nextExp * 1.5);
+      player.maxHp += 5;
+      player.hp = player.maxHp;
+      player.atk += 2;
+      player.def += 1;
+      showDialog('시스템','[레벨 업!] LV ' + player.lv + '\\n공격력 +2, 방어력 +1, HP +5','#ffd700');
     }
+    updateHUD();
+  }
+}
+
+function updateHUD(){
+  document.getElementById('hud-hp').textContent = 'HP ' + player.hp + '/' + player.maxHp;
+  document.getElementById('hud-lv').textContent = 'LV ' + player.lv;
+  document.getElementById('hud-gold').textContent = 'Gold ' + player.gold;
+}
+
+/* ═══ Input ═══ */
+var keys = {};
+window.addEventListener('keydown', function(e){ keys[e.key]=true; e.preventDefault(); });
+window.addEventListener('keyup', function(e){ keys[e.key]=false; });
+
+var dpadState = {};
+window.dpadDown = function(dir){ dpadState[dir]=true; };
+window.dpadUp = function(dir){ dpadState[dir]=false; };
+
+function getInput(){
+  var dx=0, dy=0;
+  if(keys['ArrowUp']||keys['w']||keys['W']||dpadState['up']){ dy=-1; }
+  else if(keys['ArrowDown']||keys['s']||keys['S']||dpadState['down']){ dy=1; }
+  else if(keys['ArrowLeft']||keys['a']||keys['A']||dpadState['left']){ dx=-1; }
+  else if(keys['ArrowRight']||keys['d']||keys['D']||dpadState['right']){ dx=1; }
+  return {x:dx,y:dy};
+}
+
+/* ═══ Drawing ═══ */
+function drawTile(x, y, type){
+  var px = x*TILE - camX, py = y*TILE - camY;
+  if(px < -TILE || px > W || py < -TILE || py > H) return;
+
+  // Base grass under everything
+  ctx.fillStyle = '#2d5a1e';
+  ctx.fillRect(px, py, TILE, TILE);
+
+  switch(type){
+    case 0: // grass with subtle variation
+      if((x+y)%3===0){ ctx.fillStyle='#347a22'; ctx.fillRect(px+4,py+4,TILE-8,TILE-8); }
+      break;
+    case 1: // path
+      ctx.fillStyle = tileColors[1][(x+y)%3];
+      ctx.fillRect(px, py, TILE, TILE);
+      ctx.fillStyle = 'rgba(0,0,0,0.05)';
+      ctx.fillRect(px, py, TILE, 1);
+      break;
+    case 2: // water
+      var wt = Date.now()/1000;
+      ctx.fillStyle = tileColors[2][Math.floor((x+y+wt)%3)];
+      ctx.fillRect(px, py, TILE, TILE);
+      // Wave highlights
+      ctx.fillStyle = 'rgba(100,200,255,0.15)';
+      ctx.fillRect(px + Math.sin(wt+x)*4+12, py + Math.cos(wt+y)*3+8, 8, 2);
+      break;
+    case 3: // tree
+      ctx.fillStyle = '#3a2a1a'; ctx.fillRect(px+12, py+16, 8, 16); // trunk
+      ctx.fillStyle = '#1a6a24'; ctx.beginPath(); ctx.arc(px+16,py+12,12,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#24aa30'; ctx.beginPath(); ctx.arc(px+14,py+10,8,0,Math.PI*2); ctx.fill();
+      break;
+    case 4: // house
+      ctx.fillStyle = '#8a6a4a'; ctx.fillRect(px+2, py+10, TILE-4, TILE-10); // wall
+      ctx.fillStyle = '#cc4444'; // roof
+      ctx.beginPath(); ctx.moveTo(px,py+12); ctx.lineTo(px+16,py+2); ctx.lineTo(px+32,py+12); ctx.fill();
+      ctx.fillStyle = '#4a3a2a'; ctx.fillRect(px+12, py+18, 8, 14); // door
+      ctx.fillStyle = '#88ccff'; ctx.fillRect(px+5, py+14, 6, 6); // window
+      break;
+    case 5: // flower on grass
+      var fc = ['#ff6b9d','#ffaa44','#44aaff','#ff4444','#aa44ff'];
+      ctx.fillStyle = fc[(x*7+y*13)%fc.length];
+      ctx.beginPath(); ctx.arc(px+16,py+16,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#44aa22';
+      ctx.fillRect(px+15, py+19, 2, 6);
+      break;
+    case 6: // rock
+      ctx.fillStyle = '#6a6a7a';
+      ctx.beginPath(); ctx.arc(px+16,py+18,10,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#8a8a9a';
+      ctx.beginPath(); ctx.arc(px+14,py+16,7,0,Math.PI*2); ctx.fill();
+      break;
+    case 7: // bridge
+      ctx.fillStyle = '#8a7050'; ctx.fillRect(px, py, TILE, TILE);
+      ctx.fillStyle = '#6a5040'; ctx.fillRect(px, py, TILE, 3); ctx.fillRect(px, py+TILE-3, TILE, 3);
+      break;
+  }
+}
+
+function drawPlayer(){
+  var px, py;
+  if(player.moving){
+    var p = player.moveProgress;
+    var ox = player.x - player.moveDir.x;
+    var oy = player.y - player.moveDir.y;
+    px = (ox + player.moveDir.x * p) * TILE - camX;
+    py = (oy + player.moveDir.y * p) * TILE - camY;
+  } else {
+    px = player.x * TILE - camX;
+    py = player.y * TILE - camY;
   }
 
-  if(!isBlocked(ntx, nty)){
-    player.tx = ntx;
-    player.ty = nty;
-    player.targetX = ntx * T;
-    player.targetY = nty * T;
-    moving = true;
-    playerFrame = playerFrame === 0 ? 1 : 0;
-    sfxStep();
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.ellipse(px+16, py+30, 10, 4, 0, 0, Math.PI*2); ctx.fill();
+
+  // Body
+  ctx.fillStyle = '#4488ff';
+  ctx.fillRect(px+10, py+14, 12, 12);
+  // Head
+  ctx.fillStyle = '#ffcc88';
+  ctx.beginPath(); ctx.arc(px+16, py+10, 8, 0, Math.PI*2); ctx.fill();
+  // Hair
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath(); ctx.arc(px+16, py+7, 8, Math.PI, 0); ctx.fill();
+  // Eyes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(px+13, py+9, 2, 2);
+  ctx.fillRect(px+18, py+9, 2, 2);
+  // Legs (animated)
+  var legAnim = Math.sin(Date.now()/100) * (player.moving ? 3 : 0);
+  ctx.fillStyle = '#3366cc';
+  ctx.fillRect(px+11, py+26, 4, 6 + legAnim);
+  ctx.fillRect(px+17, py+26, 4, 6 - legAnim);
+}
+
+function drawNPCs(){
+  npcs.forEach(function(npc){
+    var px = npc.x * TILE - camX;
+    var py = npc.y * TILE - camY;
+    if(px < -TILE*2 || px > W+TILE || py < -TILE*2 || py > H+TILE) return;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath(); ctx.ellipse(px+16, py+30, 10, 3, 0, 0, Math.PI*2); ctx.fill();
+    // Emoji sprite
+    ctx.font = '24px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(npc.sprite, px+16, py+22);
+    // Name tag
+    ctx.font = '9px Courier New';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.textAlign = 'center';
+    ctx.fillText(npc.name, px+16, py-2);
+  });
+}
+
+/* ═══ Game Logic ═══ */
+function canMove(tx, ty){
+  if(tx<0||ty<0||tx>=MAP_W||ty>=MAP_H) return false;
+  var t = tiles[ty][tx];
+  if(t===2||t===3||t===4||t===6) return false; // water, tree, house, rock
+  // NPCs block
+  for(var i=0;i<npcs.length;i++){
+    if(npcs[i].x===tx && npcs[i].y===ty) return false;
   }
+  return true;
 }
 
 function tryInteract(){
-  // check if facing NPC
-  var dx = [0,-1,1,0][playerDir];
-  var dy = [1,0,0,-1][playerDir];
-  var fx = player.tx + dx;
-  var fy = player.ty + dy;
-  if(fx === npcSprite.tx && fy === npcSprite.ty){
-    startDialog();
-    return;
-  }
-  // check if facing monster
-  for(var i=0;i<monsters.length;i++){
-    if(monsters[i].alive && fx === monsters[i].tx && fy === monsters[i].ty){
-      startBattle(monsters[i]);
-      return;
-    }
-  }
-}
-
-// ── Dialog System ──
-function startDialog(){
-  if(dialogActive) return;
-  dialogActive = true;
-  dialogIndex = 0;
-
-  // check if all monsters dead → victory dialog
-  var allDead = true;
-  for(var i=0;i<monsters.length;i++) if(monsters[i].alive) allDead = false;
-  if(allDead){
-    dialogLines = [
-      '대단하구나, 용사여!\\n모든 몬스터를 물리쳤다!',
-      'Lv.' + playerLv + ' — ' + playerKills + '마리 처치!\\n마을에 평화가 찾아왔도다.',
-      '다시 도전하고 싶다면\\n아무 곳이나 터치하여라.',
-    ];
-  } else if(playerHP < playerMaxHP){
-    dialogLines = [
-      '용사여, 상처를 입었구나.\\n내가 치료해주마.',
-      '...... 치유의 빛이여!',
-    ];
-    playerHP = playerMaxHP;
-  } else {
-    dialogLines = [
-      '용사여, 잘 왔도다.\\n이 마을에 몬스터가 나타났다!',
-      '마을 주변의 슬라임과 스켈레톤을\\n물리쳐주겠는가?',
-      '조심해라, 스켈레톤은 강하다.\\n체력이 떨어지면 돌아오거라.',
-      '그대의 무운을 빈다!',
-    ];
-  }
-
-  dialogText = dialogLines[0];
-  sfxTalk();
-}
-
-function advanceDialog(){
-  dialogIndex++;
-  if(dialogIndex >= dialogLines.length){
-    dialogActive = false;
-    dialogText = '';
-    return;
-  }
-  dialogText = dialogLines[dialogIndex];
-  sfxTalk();
-}
-
-// ── Battle System ──
-function startBattle(mon){
-  battleActive = true;
-  battleMonster = mon;
-  battlePlayerTurn = true;
-  battleAnim = 0;
-  battleMsg = mon.name + '이(가) 나타났다!';
-  battleMsgTimer = 60;
-  sfxAttack();
-}
-
-function handleBattleInput(){
-  if(!battleActive || !battlePlayerTurn || battleMsgTimer > 0) return;
-
-  // Player attacks
-  var dmg = playerATK + Math.floor(Math.random() * 2);
-  battleMonster.hp -= dmg;
-  battleMsg = playerATK + ' + ' + (dmg - playerATK) + ' = ' + dmg + ' 데미지!';
-  battleMsgTimer = 40;
-  battleAnim = 10;
-  sfxAttack();
-
-  // damage number
-  damageNumbers.push({
-    x: battleMonster.x + T/2, y: battleMonster.y - 8,
-    text: '-' + dmg, color: '#ffcc44', life: 40
-  });
-
-  if(battleMonster.hp <= 0){
-    battleMonster.hp = 0;
-    battleMonster.alive = false;
-    battleMsg = battleMonster.name + ' 처치! +' + battleMonster.exp + ' EXP';
-    battleMsgTimer = 60;
-    playerEXP += battleMonster.exp;
-    playerKills++;
-    window.score = playerKills;
-    sfxKill();
-
-    // level up check
-    var needed = playerLv * 8;
-    if(playerEXP >= needed){
-      playerLv++;
-      playerEXP -= needed;
-      playerMaxHP += 3;
-      playerHP = playerMaxHP;
-      playerATK += 1;
-      battleMsg += '\\nLEVEL UP! Lv.' + playerLv;
-      sfxLevelUp();
-    }
-
-    // check all dead
-    var allDead = true;
-    for(var i=0;i<monsters.length;i++) if(monsters[i].alive) allDead = false;
-    if(allDead){
-      battleMsg += '\\n모든 몬스터를 처치했다!';
-    }
-
-    setTimeout(function(){ battleActive = false; battleMonster = null; }, 1200);
-    return;
-  }
-
-  // Monster turn after delay
-  battlePlayerTurn = false;
-  setTimeout(function(){
-    if(!battleActive) return;
-    var monDmg = battleMonster.atk + Math.floor(Math.random() * 2);
-    playerHP -= monDmg;
-    battleMsg = battleMonster.name + '의 공격! ' + monDmg + ' 데미지!';
-    battleMsgTimer = 40;
-    screenFlash = 8;
-    sfxHit();
-
-    damageNumbers.push({
-      x: player.x + T/2, y: player.y - 8,
-      text: '-' + monDmg, color: '#ff4444', life: 40
-    });
-
-    if(playerHP <= 0){
-      playerHP = 0;
-      window.gameOver = true;
-      window.score = playerKills;
-      battleMsg = '용사가 쓰러졌다...';
-      battleMsgTimer = 120;
-      sfxDeath();
-
-      try{
-        window.parent.postMessage({ type: 'gameOver', score: playerKills }, '*');
-      }catch(e){}
-
-      setTimeout(function(){ battleActive = false; }, 2000);
-      return;
-    }
-    battlePlayerTurn = true;
-  }, 800);
-}
-
-function restartGame(){
-  window.gameOver = false;
-  window.score = 0;
-  playerHP = 10;
-  playerMaxHP = 10;
-  playerATK = 3;
-  playerLv = 1;
-  playerEXP = 0;
-  playerKills = 0;
-  player.tx = 9; player.ty = 7;
-  player.x = 9*T; player.y = 7*T;
-  player.targetX = 9*T; player.targetY = 7*T;
-  playerDir = 0;
-  dialogActive = false;
-  battleActive = false;
-  battleMonster = null;
-  spawnMonsters();
-}
-
-function update(time, dt){
-  if(!dt) dt = 16;
-  var dtSec = dt / 1000;
-
-  // smooth movement
-  var spd = player.speed * dtSec * T / 8;
-  if(Math.abs(player.x - player.targetX) > 1){
-    player.x += (player.targetX - player.x > 0 ? 1 : -1) * Math.min(spd, Math.abs(player.targetX - player.x));
-  } else {
-    player.x = player.targetX;
-  }
-  if(Math.abs(player.y - player.targetY) > 1){
-    player.y += (player.targetY - player.y > 0 ? 1 : -1) * Math.min(spd, Math.abs(player.targetY - player.y));
-  } else {
-    player.y = player.targetY;
-  }
-
-  // keyboard movement
-  if(!battleActive && !dialogActive && !window.gameOver){
-    stepTimer -= dt;
-    if(stepTimer <= 0){
-      var moved = false;
-      if(cursors.left.isDown || wasd.A.isDown){ tryMove(-1, 0); moved = true; }
-      else if(cursors.right.isDown || wasd.D.isDown){ tryMove(1, 0); moved = true; }
-      else if(cursors.up.isDown || wasd.W.isDown){ tryMove(0, -1); moved = true; }
-      else if(cursors.down.isDown || wasd.S.isDown){ tryMove(0, 1); moved = true; }
-      if(moved) stepTimer = 150; // movement repeat delay
-    }
-  }
-
-  // monster bob
-  for(var i=0;i<monsters.length;i++){
-    if(monsters[i].alive) monsters[i].bobTimer += dtSec * 2.5;
-  }
-
-  // battle anim
-  if(battleAnim > 0) battleAnim--;
-  if(battleMsgTimer > 0) battleMsgTimer--;
-  if(screenFlash > 0) screenFlash--;
-
-  // damage numbers
-  for(var i=damageNumbers.length-1;i>=0;i--){
-    damageNumbers[i].y -= dtSec * 30;
-    damageNumbers[i].life--;
-    if(damageNumbers[i].life <= 0) damageNumbers.splice(i, 1);
-  }
-
-  // ── RENDER ──
-  var canvas = this.sys.game.canvas;
-  var ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-
-  // screen flash
-  if(screenFlash > 0){
-    ctx.fillStyle = 'rgba(255,50,50,' + (screenFlash/8*0.3) + ')';
-    ctx.fillRect(0, 0, GW, GH);
-  }
-
-  // draw tilemap
-  for(var ty=0;ty<MAP_H;ty++){
-    for(var tx=0;tx<MAP_W;tx++){
-      var tile = TILEMAP[ty][tx];
-      var px = tx * T;
-      var py = ty * T;
-      // base grass under everything
-      ctx.drawImage(texGrass[(tx+ty*3)%4], px, py, T, T);
-
-      if(tile===1) ctx.drawImage(texDirt, px, py, T, T);
-      else if(tile===2) ctx.drawImage(texWater, px, py, T, T);
-      else if(tile===3) ctx.drawImage(texWall, px, py, T, T);
-      else if(tile===4) ctx.drawImage(texTree, px, py - T, T, T*2);
-      else if(tile===5) ctx.drawImage(texHouse, px - T/2, py - T, T*2, T*2);
-    }
-  }
-
-  // NPC
-  ctx.drawImage(texNPC, npcSprite.x, npcSprite.y, T, T);
-  // NPC indicator (!)
-  if(!dialogActive){
-    var bounce = Math.sin(Date.now()/300) * 3;
-    ctx.fillStyle = '#ffcc00';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('!', npcSprite.x + T/2, npcSprite.y - 6 + bounce);
-  }
-
-  // Monsters
-  for(var i=0;i<monsters.length;i++){
-    var m = monsters[i];
-    if(!m.alive) continue;
-    var bob = Math.sin(m.bobTimer) * 2;
-    var tex = texMonsters[m.type];
-    ctx.drawImage(tex, m.x, m.y + bob, T, T);
-
-    // HP bar above monster
-    var hpRatio = m.hp / m.maxHp;
-    ctx.fillStyle = '#333333';
-    ctx.fillRect(m.x + 4, m.y - 6, T-8, 4);
-    ctx.fillStyle = hpRatio > 0.5 ? '#44cc44' : hpRatio > 0.25 ? '#cccc44' : '#cc4444';
-    ctx.fillRect(m.x + 4, m.y - 6, (T-8)*hpRatio, 4);
-  }
-
-  // Player
-  ctx.drawImage(texPlayer[playerDir][playerFrame], player.x, player.y, T, T);
-
-  // Battle slash animation
-  if(battleAnim > 0 && battleMonster){
-    ctx.globalAlpha = battleAnim / 10;
-    ctx.drawImage(texSlash, battleMonster.x - T/2, battleMonster.y - T/2, T*2, T*2);
-    ctx.globalAlpha = 1;
-  }
-
-  // Damage numbers
-  for(var i=0;i<damageNumbers.length;i++){
-    var dn = damageNumbers[i];
-    ctx.globalAlpha = Math.min(1, dn.life / 15);
-    ctx.fillStyle = dn.color;
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(dn.text, dn.x, dn.y);
-    ctx.globalAlpha = 1;
-  }
-
-  // ── HUD ──
-  // HP hearts
-  for(var i=0;i<playerMaxHP;i++){
-    var hx = 8 + i * 14;
-    var hy = 8;
-    if(i < playerHP) ctx.drawImage(texHeartFull, hx, hy, 12, 12);
-    else ctx.drawImage(texHeartEmpty, hx, hy, 12, 12);
-  }
-
-  // Level / Kills
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '12px monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('Lv.' + playerLv + '  ATK:' + playerATK + '  EXP:' + playerEXP + '/' + (playerLv*8), 8, 34);
-  ctx.fillText('KILLS: ' + playerKills, 8, 48);
-
-  // ── Dialog Box ──
-  if(dialogActive && dialogText){
-    // semi-transparent box
-    ctx.fillStyle = 'rgba(10,5,30,0.92)';
-    var boxY = GH - 110;
-    var boxH = 100;
-    ctx.fillRect(16, boxY, GW-32, boxH);
-    // border
-    ctx.strokeStyle = '#8b6914';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(16, boxY, GW-32, boxH);
-    // inner border
-    ctx.strokeStyle = '#c8a040';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(20, boxY+4, GW-40, boxH-8);
-    // NPC name
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = 'bold 13px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('마을 장로', 32, boxY + 20);
-    // dialog text
-    ctx.fillStyle = '#e8e0d0';
-    ctx.font = '12px monospace';
-    var lines = dialogText.split('\\\\n');
-    for(var i=0;i<lines.length;i++){
-      ctx.fillText(lines[i], 32, boxY + 40 + i*18);
-    }
-    // continue indicator
-    var blink = Math.sin(Date.now()/300) > 0;
-    if(blink){
-      ctx.fillStyle = '#ffcc44';
-      ctx.fillText('▼', GW - 48, boxY + boxH - 14);
-    }
-  }
-
-  // ── Battle UI ──
-  if(battleActive && battleMonster){
-    // darken edges
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(0, 0, GW, GH);
-
-    // battle message
-    if(battleMsg){
-      ctx.fillStyle = 'rgba(10,5,30,0.9)';
-      ctx.fillRect(GW/2-160, GH/2-30, 320, 60);
-      ctx.strokeStyle = '#cc4444';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(GW/2-160, GH/2-30, 320, 60);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px monospace';
-      ctx.textAlign = 'center';
-      var bLines = battleMsg.split('\\\\n');
-      for(var i=0;i<bLines.length;i++){
-        ctx.fillText(bLines[i], GW/2, GH/2 - 5 + i*18);
+  var dirs = [{x:0,y:-1},{x:0,y:1},{x:-1,y:0},{x:1,y:0}];
+  for(var i=0;i<dirs.length;i++){
+    var tx = player.x+dirs[i].x, ty = player.y+dirs[i].y;
+    for(var j=0;j<npcs.length;j++){
+      if(npcs[j].x===tx && npcs[j].y===ty){
+        showDialog(npcs[j].name, npcs[j].lines, npcs[j].color);
+        return;
       }
     }
+  }
+}
 
-    // monster HP
-    if(battleMonster.alive){
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(battleMonster.name + ' HP: ' + battleMonster.hp + '/' + battleMonster.maxHp, GW/2, GH/2 - 45);
+var stepCount = 0;
+var moveCD = 0;
+
+function update(dt){
+  if(dialogActive || battleActive) return;
+
+  moveCD -= dt;
+  if(moveCD > 0) return;
+
+  if(!player.moving){
+    var inp = getInput();
+    if(inp.x !== 0 || inp.y !== 0){
+      var nx = player.x + inp.x;
+      var ny = player.y + inp.y;
+      if(canMove(nx, ny)){
+        player.moveDir = inp;
+        player.moving = true;
+        player.moveProgress = 0;
+      }
+      moveCD = 0.05;
     }
+    // Interact with space/enter
+    if(keys[' '] || keys['Enter']){
+      tryInteract();
+      keys[' '] = false; keys['Enter'] = false;
+    }
+  }
 
-    // "tap to attack" prompt
-    if(battlePlayerTurn && battleMsgTimer <= 0 && battleMonster.alive){
-      var blink2 = Math.sin(Date.now()/200) > 0;
-      if(blink2){
-        ctx.fillStyle = '#ffcc44';
-        ctx.font = 'bold 12px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('[ 터치하여 공격 ]', GW/2, GH/2 + 50);
+  if(player.moving){
+    player.moveProgress += dt * 5; // movement speed
+    if(player.moveProgress >= 1){
+      player.x += player.moveDir.x;
+      player.y += player.moveDir.y;
+      player.moving = false;
+      player.moveProgress = 0;
+      stepCount++;
+
+      // Random encounter east of river (tile x > 22)
+      if(player.x > 22 && tiles[player.y][player.x] !== 7){
+        if(Math.random() < 0.18) startBattle();
       }
     }
   }
 
-  // ── GAME OVER ──
-  if(window.gameOver){
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(0,0,GW,GH);
-
-    ctx.fillStyle = '#ff4444';
-    ctx.font = 'bold 28px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', GW/2, GH/2 - 30);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '16px monospace';
-    ctx.fillText('Lv.' + playerLv + '  처치: ' + playerKills + '마리', GW/2, GH/2 + 10);
-
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = '13px monospace';
-    ctx.fillText('터치하여 재시작', GW/2, GH/2 + 40);
-  }
-
-  // ── Mini instruction (first few seconds) ──
-  if(!window.gameOver && !battleActive && !dialogActive && playerKills === 0){
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('방향키/WASD: 이동 | NPC/몬스터에게 다가가기', GW/2, GH - 12);
-  }
+  // Camera smooth follow
+  var targetCX = player.x * TILE - W/2 + TILE/2;
+  var targetCY = player.y * TILE - H/2 + TILE/2;
+  camX += (targetCX - camX) * 0.1;
+  camY += (targetCY - camY) * 0.1;
+  camX = Math.max(0, Math.min(MAP_W*TILE - W, camX));
+  camY = Math.max(0, Math.min(MAP_H*TILE - H, camY));
 }
+
+function render(){
+  ctx.fillStyle = '#1a0e2e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw visible tiles
+  var startCol = Math.max(0, Math.floor(camX/TILE));
+  var startRow = Math.max(0, Math.floor(camY/TILE));
+  var endCol = Math.min(MAP_W, startCol + COLS);
+  var endRow = Math.min(MAP_H, startRow + ROWS);
+
+  for(var y=startRow; y<endRow; y++){
+    for(var x=startCol; x<endCol; x++){
+      drawTile(x, y, tiles[y][x]);
+    }
+  }
+
+  drawNPCs();
+  drawPlayer();
+
+  // Vignette overlay
+  var vg = ctx.createRadialGradient(W/2,H/2,W*0.3,W/2,H/2,W*0.7);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,0.3)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0,0,W,H);
+}
+
+/* ═══ Game Loop ═══ */
+var lastTime = 0;
+function loop(time){
+  var dt = Math.min(0.05, (time - lastTime) / 1000);
+  lastTime = time;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+// Initial dialog
+setTimeout(function(){
+  showDialog('시스템', ['잊혀진 마을에 오신 것을 환영합니다!','방향키로 이동, 스페이스바로 NPC와 대화하세요.','강 동쪽으로 가면 몬스터와 전투할 수 있어요!'], '#8b6fff');
+}, 500);
+
+requestAnimationFrame(loop);
 
 })();
 </script>

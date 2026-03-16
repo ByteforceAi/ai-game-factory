@@ -15,7 +15,10 @@ const CHIPS = [
   { label: '🎮 3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
   { label: '🧱 테트리스', prompt: '클래식 테트리스 게임' },
   { label: '😄 이모지 캐치', prompt: '떨어지는 이모지 받기 게임' },
-  { label: '⚔️ 도트 RPG', prompt: '일랜시아 감성 도트 RPG 마을 탐험' },
+  { label: '⚔️ 도트 RPG', prompt: '픽셀 도트 RPG 마을 탐험과 턴제 전투' },
+  { label: '🐱 고양이 점프', prompt: '귀여운 고양이 점프 게임' },
+  { label: '🎈 풍선 팝', prompt: '풍선 터뜨리기 타이머 게임' },
+  { label: '⭐ 별 모으기', prompt: '밤하늘 별 모으기 게임' },
 ];
 
 interface ModOption { value: string; label: string }

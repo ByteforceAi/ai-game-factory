@@ -1424,6 +1424,9 @@ import { NEON_PLATFORMER_HTML } from './games/neonPlatformer';
 import { TEMPLE_RUNNER_HTML as TEMPLE_RUNNER_V2 } from './games/templeRunner';
 import { TETRIS_HTML as TETRIS_V2 } from './games/tetris';
 import { DOT_RPG_HTML } from './games/dotRpg';
+import { CAT_JUMP_HTML } from './games/catJump';
+import { BALLOON_POP_HTML } from './games/balloonPop';
+import { STAR_CATCH_HTML } from './games/starCatch';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1465,10 +1468,37 @@ export const DEMO_GAMES: DemoGame[] = [
   {
     id: 'dot-rpg',
     title: '도트 RPG',
-    description: '일랜시아 감성 도트 RPG. NPC 대화 + 턴제 전투 + 레벨업',
+    description: '픽셀 도트 RPG. NPC 대화 + 턴제 전투 + 레벨업',
     prompt: 'Phaser 3 도트 픽셀아트 RPG 마을 탐험',
     icon: '⚔',
     accentColor: '#FFD700',
     html: DOT_RPG_HTML,
+  },
+  {
+    id: 'cat-jump',
+    title: '고양이 점프',
+    description: '귀여운 고양이가 끝없이 점프! 풍선 플랫폼 + 하트 수집',
+    prompt: 'Canvas 2D 고양이 점프 플랫포머',
+    icon: '🐱',
+    accentColor: '#ff8844',
+    html: CAT_JUMP_HTML,
+  },
+  {
+    id: 'balloon-pop',
+    title: '풍선 팝',
+    description: '60초 안에 풍선을 최대한 많이 터뜨려요! 콤보 + 폭탄 주의',
+    prompt: 'Canvas 2D 풍선 터뜨리기 게임',
+    icon: '🎈',
+    accentColor: '#ff6b8a',
+    html: BALLOON_POP_HTML,
+  },
+  {
+    id: 'star-catch',
+    title: '별 모으기',
+    description: '밤하늘에서 떨어지는 별을 구름이 받아요! 번개 피하기',
+    prompt: 'Canvas 2D 별 모으기 캐치 게임',
+    icon: '⭐',
+    accentColor: '#ffd700',
+    html: STAR_CATCH_HTML,
   },
 ];

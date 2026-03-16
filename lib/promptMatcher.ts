@@ -51,15 +51,36 @@ const GAME_KEYWORDS: Record<string, {
     systems: 'Physics Drop + Combo + Speed Ramp',
   },
   'dot-rpg': {
-    keywords: ['rpg', 'RPG', '알피지', '도트', '픽셀', '마을', '일랜시아', '바람의나라', '던전', '몬스터', '퀘스트', '용사', '모험', '탐험', '전투', '턴제', '레벨', '경험치', 'npc', '대화', '슬라임', '검', '방패', '기사', '캐릭터', '성장'],
+    keywords: ['rpg', 'RPG', '알피지', '도트', '픽셀', '마을', '던전', '몬스터', '퀘스트', '용사', '탐험', '전투', '턴제', '레벨', '경험치', 'npc', '대화', '슬라임', '검', '방패', '기사', '캐릭터', '성장'],
     genre: 'Pixel Dot RPG',
-    engine: 'Phaser.js 3.80 — Canvas2D Pixel Art',
-    artStyle: 'Classic Korean Dot RPG',
+    engine: 'Canvas 2D — Tile Map',
+    artStyle: 'Classic Pixel RPG',
     systems: 'Tile Map + NPC Dialog + Turn Battle + Level Up',
+  },
+  'cat-jump': {
+    keywords: ['고양이', '냥이', '캣', 'cat', '점프', '뛰기', '올라가기', '위로', '귀여운', '아기자기', '냥', '발바닥', '털실'],
+    genre: 'Cute Platformer',
+    engine: 'Canvas 2D — 60fps',
+    artStyle: 'Kawaii Pastel',
+    systems: 'Infinite Jump + Moving Platforms + Hearts',
+  },
+  'balloon-pop': {
+    keywords: ['풍선', '터뜨리기', '팝', 'balloon', 'pop', '터치', '탭', '콤보', '시간제한', '타이머'],
+    genre: 'Tap & Pop',
+    engine: 'Canvas 2D — Touch',
+    artStyle: 'Pastel Rainbow',
+    systems: 'Tap Pop + Combo + Timer + Bombs',
+  },
+  'star-catch': {
+    keywords: ['별', '모으기', 'star', '밤하늘', '하늘', '달', '구름', '캐치', '받기', '모아', '떨어지는별', '소원'],
+    genre: 'Catch & Collect',
+    engine: 'Canvas 2D — Night Sky',
+    artStyle: 'Dreamy Night',
+    systems: 'Mouse Follow + Item Types + Level Scaling',
   },
 };
 
-const FALLBACK_ORDER = ['neon-shooter', 'temple-runner', 'neon-platformer', 'tetris', 'emoji-burger'];
+const FALLBACK_ORDER = ['neon-shooter', 'temple-runner', 'neon-platformer', 'tetris', 'emoji-burger', 'cat-jump', 'balloon-pop', 'star-catch'];
 
 export function matchPromptToGame(input: string): MatchResult {
   const lower = input.toLowerCase();
