@@ -228,6 +228,7 @@ export default function CodeStreamView({
 
   const lineCount = code.split('\n').length;
   const tokPerSec = elapsed > 0 ? Math.round(lineCount * 8.5 / elapsed) : 0;
+  const currentLineNum = lineCount;
 
   // Fake system metrics
   const gpu = Math.min(95, 40 + progress * 0.55 + Math.sin(elapsed * 1.3) * 8);
@@ -248,13 +249,31 @@ export default function CodeStreamView({
     ];
   }, [code]);
 
-  // Line number gutter
-  const lineNumbers = useMemo(() => {
-    const count = code.split('\n').length;
-    const nums: string[] = [];
-    for (let i = 1; i <= count; i++) nums.push(String(i));
-    return nums.join('\n');
-  }, [code]);
+  // Line number gutter — with active line highlight
+  const lineNumberElements = useMemo(() => {
+    const elems: React.ReactNode[] = [];
+    for (let i = 1; i <= lineCount; i++) {
+      const isActive = !done && i === lineCount;
+      const isNear = !done && i >= lineCount - 2 && i < lineCount;
+      elems.push(
+        <div
+          key={i}
+          style={{
+            color: isActive
+              ? 'rgba(99,102,241,0.9)'
+              : isNear
+                ? 'rgba(99,102,241,0.3)'
+                : 'rgba(255,255,255,0.1)',
+            textShadow: isActive ? '0 0 8px rgba(99,102,241,0.6)' : 'none',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          {i}
+        </div>
+      );
+    }
+    return elems;
+  }, [lineCount, done]);
 
   return (
     <div style={{
@@ -391,51 +410,77 @@ export default function CodeStreamView({
           minHeight: '100%',
           padding: '24px 0',
         }}>
-          {/* Line numbers gutter */}
-          <pre style={{
+          {/* Line numbers gutter — active line highlighted */}
+          <div style={{
             margin: 0,
             padding: '0 16px 0 24px',
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '10px',
             lineHeight: 1.8,
-            color: 'rgba(255,255,255,0.1)',
             textAlign: 'right',
             userSelect: 'none',
             borderRight: '1px solid rgba(255,255,255,0.03)',
             minWidth: '48px',
             whiteSpace: 'pre',
           }}>
-            {lineNumbers}
-          </pre>
+            {lineNumberElements}
+          </div>
 
-          {/* Code content */}
-          <pre style={{
-            margin: 0,
-            padding: '0 24px',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '11px',
-            lineHeight: 1.8,
-            color: '#e2e8f0',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-all',
-            flex: 1,
-            animation: done ? 'glitch-complete 0.3s ease-out' : undefined,
-          }}>
-            {highlighted}
-            {!done && (
-              <span style={{
-                display: 'inline-block',
-                width: '7px',
-                height: '16px',
-                background: 'linear-gradient(180deg, var(--ai-indigo), var(--ai-violet))',
-                animation: 'blink 0.6s ease-in-out infinite',
-                marginLeft: '1px',
-                verticalAlign: 'middle',
-                boxShadow: '0 0 10px rgba(99,102,241,0.8), 0 0 20px rgba(99,102,241,0.3)',
-                borderRadius: '1px',
-              }} />
+          {/* Code content with active line glow */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            {/* Active line highlight bar */}
+            {!done && lineCount > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${(lineCount - 1) * 18}px`,
+                  height: '18px',
+                  background: 'linear-gradient(90deg, rgba(99,102,241,0.08) 0%, rgba(99,102,241,0.03) 60%, transparent 100%)',
+                  borderLeft: '2px solid rgba(99,102,241,0.5)',
+                  boxShadow: '0 0 20px rgba(99,102,241,0.08)',
+                  pointerEvents: 'none',
+                  transition: 'top 0.05s linear',
+                  zIndex: 1,
+                }}
+              />
             )}
-          </pre>
+            <pre style={{
+              margin: 0,
+              padding: '0 24px',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '11px',
+              lineHeight: 1.8,
+              color: '#e2e8f0',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              position: 'relative',
+              zIndex: 2,
+              animation: done ? 'glitch-complete 0.3s ease-out' : undefined,
+            }}>
+              {highlighted}
+              {!done && (
+                <span className="code-cursor" style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '18px',
+                  background: 'linear-gradient(180deg, #818cf8, #6366f1)',
+                  animation: 'cursorPulse 0.8s ease-in-out infinite',
+                  marginLeft: '1px',
+                  verticalAlign: 'middle',
+                  boxShadow: `
+                    0 0 8px rgba(99,102,241,1),
+                    0 0 20px rgba(99,102,241,0.6),
+                    0 0 40px rgba(99,102,241,0.3),
+                    0 0 60px rgba(139,92,246,0.15)
+                  `,
+                  borderRadius: '1px',
+                  position: 'relative',
+                }} />
+              )}
+            </pre>
+          </div>
         </div>
 
         {/* Scroll sentinel — this is what auto-scrolls */}

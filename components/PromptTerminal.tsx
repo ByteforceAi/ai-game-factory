@@ -386,64 +386,83 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         height: 'min(88dvh, 740px)',
       }}>
 
-        {/* ═══ Title ═══ */}
+        {/* ═══ Title — Glass pill badges ═══ */}
         <div style={{ textAlign: 'center', marginBottom: '20px', flexShrink: 0 }}>
+          {/* Top badges row */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
-            marginBottom: '12px',
+            gap: '8px',
+            marginBottom: '14px',
           }}>
             <span style={{
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "'JetBrains Mono', monospace",
               fontSize: '10px',
               fontWeight: 600,
               letterSpacing: '0.08em',
-              padding: '3px 10px',
+              padding: '5px 14px',
               borderRadius: '100px',
-              background: 'rgba(255,255,255,0.7)',
-              border: '1px solid rgba(99,102,241,0.15)',
-              color: '#6366f1',
+              background: 'rgba(99,102,241,0.2)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(99,102,241,0.3)',
+              color: '#a5b4fc',
+              boxShadow: '0 2px 8px rgba(99,102,241,0.15)',
             }}>
               CLOSED BETA
             </span>
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: '10px',
-              color: '#94a3b8',
-              letterSpacing: '0.08em',
+              fontWeight: 500,
+              letterSpacing: '0.06em',
+              padding: '5px 14px',
+              borderRadius: '100px',
+              background: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.5)',
             }}>
               NEURAL ENGINE v4.0
             </span>
           </div>
-          <h1 style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: 'clamp(18px, 4vw, 26px)',
-            fontWeight: 800,
-            letterSpacing: '-0.01em',
-            margin: 0,
-            lineHeight: 1.2,
+          {/* Title in glass bar */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: '10px',
+            padding: '10px 28px',
+            borderRadius: '16px',
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
           }}>
-            <span style={{ color: '#1e293b' }}>VIBE CODING</span>
-            {' '}
+            <h1 style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 'clamp(18px, 4vw, 26px)',
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              margin: 0,
+              lineHeight: 1.2,
+              color: '#f0f0f5',
+              textShadow: '0 0 30px rgba(99,102,241,0.2)',
+            }}>
+              VIBE CODING
+            </h1>
             <span style={{
-              color: '#6366f1',
-              fontSize: '0.6em',
-              letterSpacing: '0.2em',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 'clamp(10px, 2vw, 13px)',
               fontWeight: 600,
+              letterSpacing: '0.25em',
+              color: 'rgba(99,102,241,0.7)',
             }}>
               WORKSHOP
             </span>
-          </h1>
-          {/* Gradient underline */}
-          <div style={{
-            width: '50px',
-            height: '2px',
-            margin: '10px auto 0',
-            background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-            borderRadius: '1px',
-          }} />
+          </div>
         </div>
 
         {/* ═══ Glass container — white card ═══ */}
@@ -552,7 +571,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           </div>
         </div>
 
-        {/* ═══ Footer ═══ */}
+        {/* ═══ Footer — glass pills on space ═══ */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -560,7 +579,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           gap: '6px',
           marginTop: '16px',
           flexShrink: 0,
-          opacity: 0.5,
+          opacity: 0.4,
         }}>
           <div style={{
             display: 'flex',
@@ -574,19 +593,20 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                 alignItems: 'center',
                 gap: '4px',
                 padding: '3px 10px',
-                background: 'rgba(255,255,255,0.6)',
-                border: '1px solid rgba(0,0,0,0.04)',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '100px',
               }}>
                 {i === 0 && <span style={{
                   width: 4, height: 4, borderRadius: '50%',
-                  background: '#10b981',
+                  background: '#22c55e',
+                  boxShadow: '0 0 6px rgba(34,197,94,0.5)',
                 }} />}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '8px',
                   fontWeight: 500,
-                  color: i === 0 ? '#10b981' : '#64748b',
+                  color: i === 0 ? '#22c55e' : 'rgba(255,255,255,0.45)',
                   letterSpacing: '0.08em',
                 }}>{label}</span>
               </div>
@@ -595,7 +615,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '8px',
-            color: '#94a3b8',
+            color: 'rgba(255,255,255,0.2)',
             letterSpacing: '0.08em',
           }}>
             AI GAME FACTORY — PROTOTYPE v0.4.0

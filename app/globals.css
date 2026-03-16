@@ -551,6 +551,27 @@ body {
   75% { transform: translate(15px, 25px) scale(1.03); }
 }
 
+/* ============================================
+   CODE CURSOR (CodeStreamView)
+   ============================================ */
+@keyframes cursorPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 8px rgba(99,102,241,1),
+      0 0 20px rgba(99,102,241,0.6),
+      0 0 40px rgba(99,102,241,0.3),
+      0 0 60px rgba(139,92,246,0.15);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow:
+      0 0 4px rgba(99,102,241,0.6),
+      0 0 12px rgba(99,102,241,0.3),
+      0 0 24px rgba(99,102,241,0.1);
+  }
+}
+
 /* Safe area for notched phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .overlay-game-over {
