@@ -3,365 +3,341 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
 import { matchPromptToGame, MatchResult } from '@/lib/promptMatcher';
-import { playSelect, playPing, playComplete, playWhoosh, playTick } from '@/lib/sounds';
+import { playSelect, playComplete, playWhoosh, playTick } from '@/lib/sounds';
+import ParticleBackground from './ParticleBackground';
 
-/* ──────────────────────────────────────────────
-   Chip suggestions — quick-select presets
-   ────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   Data — chips, modifiers, reactions
+   ═══════════════════════════════════════════════ */
 const CHIPS = [
-  { label: '우주 슈팅게임', prompt: '우주에서 적을 쏘는 네온 슈팅게임', icon: '🚀' },
-  { label: '네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임', icon: '🏃' },
-  { label: '3D 러너', prompt: '3D 장애물 피하는 템플 러너', icon: '🏛️' },
-  { label: '테트리스', prompt: '클래식 테트리스 게임', icon: '🧩' },
-  { label: '이모지 캐치', prompt: '떨어지는 이모지 받기 게임', icon: '🎯' },
-  { label: '도트 RPG', prompt: '일랜시아 감성 도트 RPG 마을 탐험', icon: '⚔️' },
+  { label: '우주 슈팅게임', prompt: '우주에서 적을 쏘는 네온 슈팅게임' },
+  { label: '네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임' },
+  { label: '3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
+  { label: '테트리스', prompt: '클래식 테트리스 게임' },
+  { label: '이모지 캐치', prompt: '떨어지는 이모지 받기 게임' },
+  { label: '도트 RPG', prompt: '일랜시아 감성 도트 RPG 마을 탐험' },
 ];
+
+interface ModOption { value: string; label: string }
+
+const MODIFIER_SLOTS = [
+  {
+    id: 'difficulty',
+    question: '난이도를 선택해주세요.',
+    options: [
+      { value: 'easy', label: '이지' },
+      { value: 'normal', label: '노멀' },
+      { value: 'hard', label: '하드' },
+      { value: 'nightmare', label: '나이트메어' },
+    ] as ModOption[],
+  },
+  {
+    id: 'style',
+    question: '비주얼 스타일은요?',
+    options: [
+      { value: 'neon', label: '네온' },
+      { value: 'retro', label: '레트로' },
+      { value: 'minimal', label: '미니멀' },
+      { value: 'cyber', label: '사이버펑크' },
+    ] as ModOption[],
+  },
+  {
+    id: 'effect',
+    question: '특수효과를 추가할까요?',
+    options: [
+      { value: 'particle', label: '파티클' },
+      { value: 'shake', label: '화면흔들림' },
+      { value: 'combo', label: '콤보 시스템' },
+      { value: 'slowmo', label: '슬로우모션' },
+    ] as ModOption[],
+    hasSkip: true,
+  },
+];
+
+const AI_REACTIONS: Record<string, Record<string, string>> = {
+  difficulty: {
+    easy: '좋아요, 편하게 즐기는 걸로.',
+    normal: '적당한 도전. 좋은 선택이에요.',
+    hard: '도전적이네요. 멋져요.',
+    nightmare: '진심이군요. 존경합니다.',
+  },
+  style: {
+    neon: '사이버 시티 분위기로 갈게요.',
+    retro: '90년대 감성, 알겠어요.',
+    minimal: '깔끔하게. 좋은 취향이에요.',
+    cyber: '미래 도시 느낌으로 만들어볼게요.',
+  },
+  effect: {
+    particle: '화면 가득 파티클을 뿌릴게요.',
+    shake: '타격감 있는 흔들림, 넣을게요.',
+    combo: '연속 히트의 쾌감을 드릴게요.',
+    slowmo: '시간이 느려지는 순간을 만들게요.',
+    skip: '깔끔하게 기본으로 갈게요.',
+  },
+};
+
+/* ═══════════════════════════════════════════════
+   Types
+   ═══════════════════════════════════════════════ */
+interface ChatItem {
+  id: string;
+  type: 'ai' | 'user' | 'input' | 'chips' | 'options' | 'progress';
+  text?: string;
+  options?: ModOption[];
+  slotId?: string;
+  hasSkip?: boolean;
+  visible: boolean;
+}
 
 interface PromptTerminalProps {
   onComplete: (game: DemoGame) => void;
 }
 
-/* ──────────────────────────────────────────────
-   Modifier options
-   ────────────────────────────────────────────── */
-interface ModOption { value: string; label: string; color: string }
-interface ModifierSlot {
-  id: string;
-  label: string;
-  icon: string;
-  question: string;
-  options: ModOption[];
-}
-
-const MODIFIER_SLOTS: ModifierSlot[] = [
-  {
-    id: 'difficulty',
-    label: '난이도',
-    icon: '⚡',
-    question: '난이도를 골라주세요! 얼마나 빡센 걸 원하나요?',
-    options: [
-      { value: 'easy', label: '이지', color: '#22c55e' },
-      { value: 'normal', label: '노멀', color: '#3b82f6' },
-      { value: 'hard', label: '하드', color: '#f97316' },
-      { value: 'nightmare', label: '나이트메어', color: '#ef4444' },
-    ],
-  },
-  {
-    id: 'style',
-    label: '비주얼',
-    icon: '🎨',
-    question: '비주얼 스타일을 선택해주세요!',
-    options: [
-      { value: 'neon', label: '네온', color: '#06b6d4' },
-      { value: 'retro', label: '레트로', color: '#eab308' },
-      { value: 'minimal', label: '미니멀', color: '#6b7280' },
-      { value: 'cyber', label: '사이버펑크', color: '#a855f7' },
-    ],
-  },
-  {
-    id: 'effect',
-    label: '특수효과',
-    icon: '✨',
-    question: '마지막! 어떤 특수효과를 넣을까요?',
-    options: [
-      { value: 'particle', label: '파티클', color: '#8b5cf6' },
-      { value: 'shake', label: '화면흔들림', color: '#f97316' },
-      { value: 'combo', label: '콤보 시스템', color: '#ef4444' },
-      { value: 'slowmo', label: '슬로우모션', color: '#06b6d4' },
-    ],
-  },
-];
-
-/** AI reaction messages */
-const AI_REACTIONS: Record<string, Record<string, string>> = {
-  difficulty: {
-    easy: '편하게 즐기는 스타일이군요! 가볍게 시작해봐요 🌱',
-    normal: '균형 잡힌 선택! 적당한 도전감이 최고죠 👍',
-    hard: '오 도전적이네요! 각오 단단히 하세요 🔥',
-    nightmare: '진짜요?! 나이트메어... 존경합니다 💀',
-  },
-  style: {
-    neon: '네온 감성 좋죠! 사이버 시티 느낌으로 갑니다 ✨',
-    retro: '레트로 감성! 90년대 오락실 느낌 나게 해볼게요 🕹️',
-    minimal: '깔끔함의 미학! 군더더기 없이 갑니다 🤍',
-    cyber: '사이버펑크! 미래 도시 분위기 제대로 넣을게요 🌃',
-  },
-  effect: {
-    particle: '파티클 뿌려줄게요! 화면이 화려해질 거예요 💫',
-    shake: '화면 흔들림! 타격감이 확 올라갈 거예요 💥',
-    combo: '콤보 시스템! 연속 히트 쾌감을 느껴보세요 🎯',
-    slowmo: '슬로우모션! 매트릭스처럼 시간이 느려져요 ⏳',
-  },
-};
-
-/* ──────────────────────────────────────────────
-   Chat message types
-   ────────────────────────────────────────────── */
-type ChatRole = 'ai' | 'user' | 'system';
-interface ChatMessage {
-  id: string;
-  role: ChatRole;
-  text: string;
-  widget?: 'options' | 'chips' | 'input' | 'analysis';
-  options?: ModOption[];
-  slotId?: string;
-  analysisSteps?: { label: string; value: string }[];
-  matchResult?: MatchResult;
-  accentColor?: string;
-}
-
-type Step = 0 | 1 | 2 | 3 | 4;
-
-/* ──────────────────────────────────────────────
-   Light theme color tokens
-   ────────────────────────────────────────────── */
-const T = {
-  bg: 'linear-gradient(135deg, #e0f7fa 0%, #e8f5e9 40%, #f3e5f5 100%)',
-  card: 'rgba(255,255,255,0.85)',
-  cardBorder: 'rgba(0,0,0,0.08)',
-  cardShadow: '0 8px 32px rgba(0,0,0,0.08)',
-  aiBubbleBg: '#f0fdf4',
-  aiBubbleBorder: '#bbf7d0',
-  userBubbleBg: '#eff6ff',
-  userBubbleBorder: '#bfdbfe',
-  textPrimary: '#1a1a1a',
-  textSecondary: '#475569',
-  textMuted: '#94a3b8',
-  chipBg: '#ffffff',
-  chipBorder: '#e2e8f0',
-  chipHoverBorder: '#818cf8',
-  chipHoverBg: '#f5f3ff',
-  chipSelectedBg: '#818cf8',
-  inputBg: '#ffffff',
-  inputBorder: '#e2e8f0',
-  accent: '#6366f1',
-  accentLight: '#818cf8',
-  accentGradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  badgeBg: '#ddd6fe',
-  badgeText: '#5b21b6',
-  aiIconBg: '#22c55e',
-  headerBar: 'rgba(255,255,255,0.6)',
-  headerBorder: 'rgba(0,0,0,0.06)',
-  footerBadgeBg: '#f1f5f9',
-  footerBadgeBorder: '#e2e8f0',
-  footerBadgeText: '#64748b',
-};
-
-/* ──────────────────────────────────────────────
+/* ═══════════════════════════════════════════════
    Main Component
-   ────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════ */
 export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [step, setStep] = useState<Step>(0);
+  const [items, setItems] = useState<ChatItem[]>([]);
+  const [typingText, setTypingText] = useState('');
+  const [typingId, setTypingId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [aiTyping, setAiTyping] = useState(false);
+  const [inputTyping, setInputTyping] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
-  const [accentColor, setAccentColor] = useState('#6366f1');
-  const [userPrompt, setUserPrompt] = useState('');
-  const [modifierSelections, setModifierSelections] = useState<Record<string, string>>({});
-  const [analysisStep, setAnalysisStep] = useState(-1);
-  const [analysisDone, setAnalysisDone] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [frozen, setFrozen] = useState<Set<string>>(new Set());
+  const [progressWidth, setProgressWidth] = useState(0);
+
+  const matchRef = useRef<MatchResult | null>(null);
+  const promptRef = useRef('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const typingTimerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const msgCounter = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null!);  // eslint-disable-line
+  const idCounter = useRef(0);
+  const typingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const nextId = () => `msg-${++msgCounter.current}`;
+  const nid = () => `i-${++idCounter.current}`;
 
+  /* ── Scroll ── */
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'smooth',
+          });
+        }
+      });
     });
   }, []);
 
-  const addAiMessage = useCallback((
-    text: string,
-    extra?: Partial<ChatMessage>,
-    delay = 600,
-  ): Promise<void> => {
+  /* ── Type AI text character by character ── */
+  const typeAiText = useCallback((text: string, speed = 60): Promise<string> => {
     return new Promise((resolve) => {
-      setAiTyping(true);
+      const id = nid();
+      setItems(prev => [...prev, { id, type: 'ai', text: '', visible: true }]);
+      setTypingId(id);
+      setTypingText('');
       scrollToBottom();
-      setTimeout(() => {
-        setAiTyping(false);
-        setMessages(prev => [...prev, { id: nextId(), role: 'ai', text, ...extra }]);
-        scrollToBottom();
-        resolve();
-      }, delay);
+
+      const chars = Array.from(text); // handles unicode correctly
+      let i = 0;
+      const iv = setInterval(() => {
+        if (i < chars.length) {
+          setTypingText(text.slice(0, i + 1));
+          i++;
+          scrollToBottom();
+        } else {
+          clearInterval(iv);
+          setTypingId(null);
+          setTypingText('');
+          setItems(prev => prev.map(item =>
+            item.id === id ? { ...item, text } : item
+          ));
+          scrollToBottom();
+          resolve(id);
+        }
+      }, speed);
     });
   }, [scrollToBottom]);
 
-  const addUserMessage = useCallback((text: string) => {
-    playSelect();
-    setMessages(prev => [...prev, { id: nextId(), role: 'user', text }]);
+  /* ── Show typing indicator then type ── */
+  const aiSpeak = useCallback(async (text: string, pauseBefore = 800, speed = 60): Promise<string> => {
+    // Show thinking dots
+    const thinkId = nid();
+    setItems(prev => [...prev, { id: thinkId, type: 'ai', text: '···', visible: true }]);
     scrollToBottom();
+
+    await wait(pauseBefore);
+
+    // Remove thinking dots, then type
+    setItems(prev => prev.filter(item => item.id !== thinkId));
+    const id = await typeAiText(text, speed);
+    return id;
+  }, [typeAiText, scrollToBottom]);
+
+  /* ── Add widget (input, chips, options, progress) ── */
+  const addWidget = useCallback((type: ChatItem['type'], extra?: Partial<ChatItem>): string => {
+    const id = nid();
+    setItems(prev => [...prev, { id, type, visible: true, ...extra }]);
+    scrollToBottom();
+    return id;
   }, [scrollToBottom]);
 
-  /* ── Mount: kick off step 0 ── */
-  useEffect(() => {
-    setMounted(true);
-    const t = setTimeout(async () => {
-      await addAiMessage('안녕하세요! 어떤 게임을 만들어볼까요? 🎮', {
-        widget: 'input',
-      }, 800);
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: nextId(),
-          role: 'ai',
-          text: '아래에서 골라도 좋고, 직접 입력해도 돼요!',
-          widget: 'chips',
-        }]);
-        scrollToBottom();
-      }, 400);
-    }, 300);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  /* ── Add user message ── */
+  const addUser = useCallback((text: string) => {
+    playSelect();
+    const id = nid();
+    setItems(prev => [...prev, { id, type: 'user', text, visible: true }]);
+    scrollToBottom();
+    return id;
+  }, [scrollToBottom]);
+
+  /* ── Fade out a widget ── */
+  const fadeOut = useCallback((id: string) => {
+    setItems(prev => prev.map(item =>
+      item.id === id ? { ...item, visible: false } : item
+    ));
   }, []);
 
-  /* ── Handle game prompt submit ── */
-  const handlePromptSubmit = useCallback(async (prompt: string) => {
-    if (!prompt.trim() || step !== 0) return;
+  /* ── Freeze options (mark as selected) ── */
+  const freeze = useCallback((id: string) => {
+    setFrozen(prev => new Set(prev).add(id));
+  }, []);
 
-    const result = matchPromptToGame(prompt);
-    setMatchResult(result);
-    setUserPrompt(prompt.trim());
-    setAccentColor('#6366f1');
+  /* ═══════ Step Flow ═══════ */
+  const runFlow = useCallback(async () => {
+    // Step 1: Ask what game
+    await wait(500);
+    await aiSpeak('어떤 게임을 만들어볼까요?', 0, 60);
+    await wait(800);
 
-    addUserMessage(prompt.trim());
-    setInputValue('');
-    setStep(1);
+    const inputId = addWidget('input');
+    const chipsId = addWidget('chips');
 
-    const game = DEMO_GAMES.find(g => g.id === result.gameId);
+    // Wait for game selection
+    const prompt = await waitForGamePrompt();
+
+    // Fade out input & chips
+    fadeOut(inputId);
+    fadeOut(chipsId);
+    await wait(300);
+
+    // AI reacts to match
+    const game = DEMO_GAMES.find(g => g.id === matchRef.current?.gameId);
     const gameName = game?.title || '게임';
+    await wait(1200);
+    await aiSpeak(`${gameName}, 좋은 선택이에요.`, 800, 60);
 
-    await addAiMessage(
-      `"${prompt.trim().slice(0, 30)}${prompt.trim().length > 30 ? '...' : ''}" → ${gameName}(으)로 매칭했어요! (신뢰도 ${result.confidence}%)`,
-      undefined, 700,
-    );
+    // Steps 2-4: Modifiers
+    for (let si = 0; si < MODIFIER_SLOTS.length; si++) {
+      const slot = MODIFIER_SLOTS[si];
+      await wait(1000);
+      await aiSpeak(slot.question, 800, 60);
+      await wait(600);
 
-    const slot = MODIFIER_SLOTS[0];
-    await addAiMessage(
-      `${slot.icon} ${slot.question}`,
-      { widget: 'options', options: slot.options, slotId: slot.id },
-      500,
-    );
-  }, [step, addUserMessage, addAiMessage]);
+      const optId = addWidget('options', {
+        options: slot.options,
+        slotId: slot.id,
+        hasSkip: slot.hasSkip,
+      });
 
-  /* ── Handle modifier option select ── */
-  const handleOptionSelect = useCallback(async (slotId: string, opt: ModOption) => {
-    playTick();
-    if (navigator.vibrate) navigator.vibrate(15);
+      const choice = await waitForOption(slot.id);
+      freeze(optId);
+      await wait(300);
+      fadeOut(optId);
+      await wait(300);
 
-    const newSelections = { ...modifierSelections, [slotId]: opt.value };
-    setModifierSelections(newSelections);
-
-    addUserMessage(opt.label);
-
-    const reaction = AI_REACTIONS[slotId]?.[opt.value];
-    if (reaction) {
-      await addAiMessage(reaction, undefined, 500);
-    }
-
-    const currentSlotIndex = MODIFIER_SLOTS.findIndex(s => s.id === slotId);
-    const nextSlotIndex = currentSlotIndex + 1;
-
-    if (nextSlotIndex < MODIFIER_SLOTS.length) {
-      const nextSlot = MODIFIER_SLOTS[nextSlotIndex];
-      setStep((nextSlotIndex + 1) as Step);
-      await addAiMessage(
-        `${nextSlot.icon} ${nextSlot.question}`,
-        { widget: 'options', options: nextSlot.options, slotId: nextSlot.id },
-        500,
-      );
-    } else {
-      setStep(4);
-      playComplete();
-
-      await addAiMessage('완벽해요! 모든 설정이 끝났어요 🎉', undefined, 600);
-
-      if (matchResult) {
-        const steps = buildAnalysisSteps(matchResult, userPrompt);
-        await addAiMessage(
-          '바이브 코딩을 시작할게요... 잠시만요!',
-          {
-            widget: 'analysis',
-            analysisSteps: steps,
-            matchResult: matchResult,
-            accentColor: accentColor,
-          },
-          500,
-        );
-        startAnalysis();
+      const reaction = AI_REACTIONS[slot.id]?.[choice];
+      if (reaction) {
+        await wait(1000);
+        await aiSpeak(reaction, 800, 60);
       }
     }
-  }, [modifierSelections, matchResult, userPrompt, accentColor, addUserMessage, addAiMessage]);
 
-  /* ── Analysis animation ── */
+    // Step 5: Generating
+    await wait(1500);
+    await aiSpeak('완벽해요. 지금 만들어볼게요.', 800, 80);
+    await wait(500);
+
+    // Progress bar
+    const progId = addWidget('progress');
+    playComplete();
+
+    // Animate progress 0 → 100 over 2s
+    await animateProgress();
+
+    await wait(300);
+    playWhoosh();
+    if (game) onComplete(game);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const startAnalysis = useCallback(() => {
-    if (!matchResult) return;
-    const steps = buildAnalysisSteps(matchResult, userPrompt);
-    setAnalysisStep(-1);
-    setAnalysisDone(false);
+  }, []);
 
-    let current = -1;
-    const startTimer = setTimeout(() => {
-      current = 0;
-      setAnalysisStep(0);
-      playPing();
-    }, 500);
+  /* ── Promise-based waiters ── */
+  const gamePromptResolver = useRef<((prompt: string) => void) | null>(null);
+  const optionResolver = useRef<((value: string) => void) | null>(null);
 
-    const iv = setInterval(() => {
-      current++;
-      if (current >= steps.length) {
-        clearInterval(iv);
-        setAnalysisDone(true);
-        playComplete();
-        setTimeout(() => {
-          playWhoosh();
-          const game = DEMO_GAMES.find(g => g.id === matchResult.gameId);
-          if (game) onComplete(game);
-        }, 1200);
-      } else {
-        setAnalysisStep(current);
-        playPing();
-      }
-    }, 550);
+  const waitForGamePrompt = (): Promise<string> => {
+    return new Promise(resolve => { gamePromptResolver.current = resolve; });
+  };
+  const waitForOption = (slotId: string): Promise<string> => {
+    return new Promise(resolve => { optionResolver.current = resolve; });
+  };
 
-    return () => {
-      clearTimeout(startTimer);
-      clearInterval(iv);
-    };
-  }, [matchResult, userPrompt, onComplete]);
+  /* ── Handlers ── */
+  const handlePromptSubmit = useCallback((prompt: string) => {
+    if (!prompt.trim()) return;
+    const result = matchPromptToGame(prompt);
+    matchRef.current = result;
+    promptRef.current = prompt.trim();
+    addUser(prompt.trim());
+    setInputValue('');
+    if (gamePromptResolver.current) {
+      gamePromptResolver.current(prompt.trim());
+      gamePromptResolver.current = null;
+    }
+  }, [addUser]);
 
-  /* ── Chip typewriter ── */
+  const handleOptionSelect = useCallback((slotId: string, opt: ModOption) => {
+    playTick();
+    if (navigator.vibrate) navigator.vibrate(10);
+    addUser(opt.label);
+    if (optionResolver.current) {
+      optionResolver.current(opt.value);
+      optionResolver.current = null;
+    }
+  }, [addUser]);
+
+  const handleSkip = useCallback((slotId: string) => {
+    playTick();
+    addUser('건너뛰기');
+    if (optionResolver.current) {
+      optionResolver.current('skip');
+      optionResolver.current = null;
+    }
+  }, [addUser]);
+
   const handleChipClick = useCallback((chip: typeof CHIPS[0]) => {
-    if (isTyping || step !== 0) return;
-    setIsTyping(true);
+    if (inputTyping) return;
+    setInputTyping(true);
     setInputValue('');
 
-    typingTimerRef.current.forEach(t => clearTimeout(t));
-    typingTimerRef.current = [];
+    typingTimers.current.forEach(t => clearTimeout(t));
+    typingTimers.current = [];
 
     const chars = chip.prompt.split('');
     chars.forEach((_, i) => {
       const timer = setTimeout(() => {
         setInputValue(chip.prompt.slice(0, i + 1));
-        if (i % 2 === 0) playTick();
-      }, i * 35);
-      typingTimerRef.current.push(timer);
+        if (i % 3 === 0) playTick();
+      }, i * 30);
+      typingTimers.current.push(timer);
     });
 
     const submitTimer = setTimeout(() => {
-      setIsTyping(false);
+      setInputTyping(false);
       handlePromptSubmit(chip.prompt);
-    }, chars.length * 35 + 400);
-    typingTimerRef.current.push(submitTimer);
-  }, [handlePromptSubmit, isTyping, step]);
+    }, chars.length * 30 + 300);
+    typingTimers.current.push(submitTimer);
+  }, [handlePromptSubmit, inputTyping]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
@@ -370,15 +346,31 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     }
   }, [inputValue, handlePromptSubmit]);
 
-  const getAnalysisData = useCallback(() => {
-    if (!matchResult) return { steps: [], progress: 0 };
-    const steps = buildAnalysisSteps(matchResult, userPrompt);
-    const progress = steps.length > 0
-      ? Math.min(100, Math.round(((analysisStep + 1) / steps.length) * 100))
-      : 0;
-    return { steps, progress };
-  }, [matchResult, userPrompt, analysisStep]);
+  /* ── Progress animation ── */
+  const animateProgress = (): Promise<void> => {
+    return new Promise(resolve => {
+      setProgressWidth(0);
+      // Use requestAnimationFrame for smooth animation
+      requestAnimationFrame(() => {
+        setProgressWidth(100);
+      });
+      setTimeout(resolve, 2200);
+    });
+  };
 
+  /* ── Mount ── */
+  useEffect(() => {
+    setMounted(true);
+    runFlow();
+    return () => {
+      typingTimers.current.forEach(t => clearTimeout(t));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ═══════════════════════════════════════════════
+     Render
+     ═══════════════════════════════════════════════ */
   return (
     <div style={{
       minHeight: '100dvh',
@@ -389,34 +381,8 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       padding: '24px 16px',
       position: 'relative',
       overflow: 'hidden',
-      background: T.bg,
-      backgroundSize: '400% 400%',
-      animation: 'gradientShift 15s ease infinite',
     }}>
-
-      {/* ═══ Soft floating orbs (replaces ParticleBackground) ═══ */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {[
-          { size: 300, x: '10%', y: '20%', color: 'rgba(167,139,250,0.15)', dur: '20s', delay: '0s' },
-          { size: 250, x: '70%', y: '10%', color: 'rgba(96,165,250,0.12)', dur: '25s', delay: '-5s' },
-          { size: 350, x: '50%', y: '70%', color: 'rgba(52,211,153,0.10)', dur: '22s', delay: '-10s' },
-          { size: 200, x: '85%', y: '60%', color: 'rgba(244,114,182,0.10)', dur: '18s', delay: '-8s' },
-          { size: 280, x: '25%', y: '80%', color: 'rgba(99,102,241,0.08)', dur: '28s', delay: '-3s' },
-        ].map((orb, i) => (
-          <div key={i} style={{
-            position: 'absolute',
-            width: orb.size,
-            height: orb.size,
-            left: orb.x,
-            top: orb.y,
-            borderRadius: '50%',
-            background: orb.color,
-            filter: 'blur(80px)',
-            animation: `orbFloat ${orb.dur} ease-in-out ${orb.delay} infinite`,
-            willChange: 'transform',
-          }} />
-        ))}
-      </div>
+      <ParticleBackground />
 
       <div style={{
         position: 'relative',
@@ -424,21 +390,21 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         width: '100%',
         maxWidth: '520px',
         opacity: mounted ? 1 : 0,
-        transform: mounted ? 'translateY(0)' : 'translateY(30px)',
-        transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)',
+        transform: mounted ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 1.2s ease, transform 1.2s ease',
         display: 'flex',
         flexDirection: 'column',
-        height: 'min(85dvh, 700px)',
+        height: 'min(88dvh, 740px)',
       }}>
 
-        {/* ═══════════════ Title ═══════════════ */}
-        <div style={{ textAlign: 'center', marginBottom: '16px', flexShrink: 0 }}>
+        {/* ═══ Title ═══ */}
+        <div style={{ textAlign: 'center', marginBottom: '20px', flexShrink: 0 }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '10px',
-            marginBottom: '10px',
+            marginBottom: '12px',
           }}>
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
@@ -447,16 +413,16 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
               letterSpacing: '0.15em',
               padding: '2px 8px',
               borderRadius: '100px',
-              background: T.badgeBg,
-              border: 'none',
-              color: T.badgeText,
+              background: 'rgba(99,102,241,0.12)',
+              border: '1px solid rgba(99,102,241,0.2)',
+              color: '#a5b4fc',
             }}>
               CLOSED BETA
             </span>
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: '8px',
-              color: T.textMuted,
+              color: 'rgba(255,255,255,0.25)',
               letterSpacing: '0.15em',
             }}>
               NEURAL ENGINE v4.0
@@ -464,276 +430,146 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           </div>
           <h1 style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 'clamp(20px, 4.5vw, 28px)',
-            fontWeight: 700,
-            letterSpacing: '0.06em',
+            fontSize: 'clamp(18px, 4vw, 26px)',
+            fontWeight: 600,
+            letterSpacing: '0.12em',
             margin: 0,
             lineHeight: 1.2,
           }}>
-            <span style={{
-              background: T.accentGradient,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>VIBE CODING</span>
+            <span style={{ color: 'rgba(255,255,255,0.9)' }}>VIBE CODING</span>
             {' '}
-            <span style={{ color: T.textSecondary, fontSize: '0.55em', letterSpacing: '0.18em' }}>
+            <span style={{
+              color: 'rgba(255,255,255,0.35)',
+              fontSize: '0.55em',
+              letterSpacing: '0.22em',
+            }}>
               WORKSHOP
             </span>
           </h1>
+          {/* Gradient underline */}
           <div style={{
-            width: '80px',
-            height: '2px',
-            margin: '10px auto 0',
-            background: 'linear-gradient(90deg, transparent, #818cf8, transparent)',
-            borderRadius: '1px',
+            width: '60px',
+            height: '1px',
+            margin: '12px auto 0',
+            background: 'linear-gradient(90deg, transparent, rgba(0,229,255,0.4), rgba(139,92,246,0.4), transparent)',
           }} />
         </div>
 
-        {/* ═══════════════ Chat Card ═══════════════ */}
+        {/* ═══ Glass container — no frame, no border ═══ */}
         <div style={{
-          padding: 0,
-          overflow: 'hidden',
-          background: T.card,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderRadius: '24px',
-          border: `1px solid ${T.cardBorder}`,
-          boxShadow: T.cardShadow,
+          background: 'rgba(5,5,16,0.4)',
+          backdropFilter: 'blur(40px)',
+          WebkitBackdropFilter: 'blur(40px)',
+          borderRadius: '32px',
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
+          padding: '40px 32px',
+          overflow: 'hidden',
         }}>
-          {/* Header Bar */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            background: T.headerBar,
-            borderBottom: `1px solid ${T.headerBorder}`,
-            flexShrink: 0,
-            backdropFilter: 'blur(10px)',
-          }}>
-            <div style={{ display: 'flex', gap: '5px' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#eab308' }} />
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
-            </div>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '9px',
-              color: T.textMuted,
-              flex: 1,
-              textAlign: 'center',
-              letterSpacing: '0.05em',
-            }}>
-              vibe-coding-ai — workshop
-            </span>
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: '#22c55e',
-              boxShadow: '0 0 6px rgba(34,197,94,0.4)',
-            }} />
-          </div>
-
-          {/* ═══ Chat Messages Area ═══ */}
+          {/* Scrollable chat area */}
           <div
             ref={scrollRef}
             style={{
               flex: 1,
               overflow: 'auto',
-              padding: '16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: '20px',
               scrollBehavior: 'smooth',
+              /* Hide scrollbar for clean look */
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
             }}
           >
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                {msg.role === 'ai' ? (
-                  <AiBubble text={msg.text} />
-                ) : msg.role === 'user' ? (
-                  <UserBubble text={msg.text} />
-                ) : null}
+            <style>{`
+              .pt-scroll::-webkit-scrollbar { display: none; }
+            `}</style>
+            <div className="pt-scroll" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}>
+              {items.map((item) => {
+                // Fade-out items
+                if (!item.visible && (item.type === 'input' || item.type === 'chips' || item.type === 'options')) {
+                  return (
+                    <div key={item.id} style={{
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      height: 0,
+                      overflow: 'hidden',
+                      marginTop: 0,
+                      marginBottom: 0,
+                      padding: 0,
+                    }} />
+                  );
+                }
 
-                {/* Widget: text input */}
-                {msg.widget === 'input' && step === 0 && (
-                  <div style={{
-                    marginTop: '10px',
-                    animation: 'chatFadeIn 0.3s ease both',
-                  }}>
-                    <div style={{
-                      position: 'relative',
-                      background: T.inputBg,
-                      borderRadius: '16px',
-                      padding: '12px 14px',
-                      border: `1.5px solid ${T.inputBorder}`,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                      transition: 'border-color 0.2s',
-                    }}>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span style={{ color: T.accent, fontWeight: 700, fontSize: '14px' }}>{'>'}</span>
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          value={inputValue}
-                          onChange={(e) => !isTyping && setInputValue(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          placeholder="만들고 싶은 게임을 설명하세요..."
-                          autoComplete="off"
-                          autoCorrect="off"
-                          autoCapitalize="off"
-                          spellCheck={false}
-                          readOnly={isTyping}
-                          style={{
-                            flex: 1,
-                            background: 'transparent',
-                            border: 'none',
-                            outline: 'none',
-                            color: isTyping ? T.accent : T.textPrimary,
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: '13px',
-                            lineHeight: '20px',
-                            padding: 0,
-                            caretColor: T.accent,
-                          }}
-                        />
-                        {isTyping && (
-                          <span style={{
-                            display: 'inline-block',
-                            width: '2px',
-                            height: '16px',
-                            background: T.accent,
-                            animation: 'blink 0.4s infinite',
-                            borderRadius: '1px',
-                            flexShrink: 0,
-                          }} />
-                        )}
-                        {inputValue.trim() && !isTyping && (
-                          <button
-                            onClick={() => handlePromptSubmit(inputValue)}
-                            style={{
-                              background: T.accentGradient,
-                              border: 'none',
-                              borderRadius: '10px',
-                              padding: '8px 14px',
-                              color: '#fff',
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              letterSpacing: '0.08em',
-                              whiteSpace: 'nowrap',
-                              minHeight: '34px',
-                              boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-                              transition: 'transform 0.15s, box-shadow 0.15s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = 'scale(1.03)';
-                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.4)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'scale(1)';
-                              e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.3)';
-                            }}
-                          >
-                            ENTER ↵
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Widget: chip suggestions */}
-                {msg.widget === 'chips' && step === 0 && (
-                  <div style={{
-                    marginTop: '8px',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    animation: 'chatFadeIn 0.5s ease both',
-                  }}>
-                    {CHIPS.map((chip, i) => (
-                      <button
-                        key={chip.label}
-                        onClick={() => handleChipClick(chip)}
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: '12px',
-                          border: `1.5px solid ${T.chipBorder}`,
-                          background: T.chipBg,
-                          color: T.textSecondary,
-                          fontFamily: "'Noto Sans KR', sans-serif",
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          animation: `chatFadeIn 0.4s ease ${i * 0.06}s both`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = T.chipHoverBorder;
-                          e.currentTarget.style.background = T.chipHoverBg;
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 3px 8px rgba(99,102,241,0.12)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = T.chipBorder;
-                          e.currentTarget.style.background = T.chipBg;
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)';
-                        }}
-                      >
-                        <span>{chip.icon}</span>
-                        {chip.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Widget: modifier options */}
-                {msg.widget === 'options' && msg.options && msg.slotId && (
-                  <OptionButtons
-                    options={msg.options}
-                    slotId={msg.slotId}
-                    selected={modifierSelections[msg.slotId]}
-                    onSelect={handleOptionSelect}
-                    disabled={!!modifierSelections[msg.slotId]}
-                  />
-                )}
-
-                {/* Widget: analysis HUD */}
-                {msg.widget === 'analysis' && matchResult && (
-                  <AnalysisHud
-                    matchResult={matchResult}
-                    accentColor={accentColor}
-                    analysisStep={analysisStep}
-                    analysisDone={analysisDone}
-                    getAnalysisData={getAnalysisData}
-                  />
-                )}
-              </div>
-            ))}
-
-            {aiTyping && <TypingIndicator />}
+                switch (item.type) {
+                  case 'ai':
+                    return (
+                      <AiMessage
+                        key={item.id}
+                        text={item.id === typingId ? typingText : (item.text || '')}
+                        isTyping={item.id === typingId}
+                        isThinking={item.text === '···'}
+                      />
+                    );
+                  case 'user':
+                    return <UserMessage key={item.id} text={item.text || ''} />;
+                  case 'input':
+                    return (
+                      <InputWidget
+                        key={item.id}
+                        value={inputValue}
+                        onChange={(v) => !inputTyping && setInputValue(v)}
+                        onSubmit={() => handlePromptSubmit(inputValue)}
+                        onKeyDown={handleKeyDown}
+                        readOnly={inputTyping}
+                        isTyping={inputTyping}
+                        inputRef={inputRef}
+                      />
+                    );
+                  case 'chips':
+                    return (
+                      <ChipsWidget
+                        key={item.id}
+                        chips={CHIPS}
+                        onSelect={handleChipClick}
+                      />
+                    );
+                  case 'options':
+                    return (
+                      <OptionsWidget
+                        key={item.id}
+                        options={item.options || []}
+                        slotId={item.slotId || ''}
+                        onSelect={handleOptionSelect}
+                        onSkip={item.hasSkip ? handleSkip : undefined}
+                        disabled={frozen.has(item.id)}
+                      />
+                    );
+                  case 'progress':
+                    return <ProgressBar key={item.id} width={progressWidth} />;
+                  default:
+                    return null;
+                }
+              })}
+            </div>
           </div>
         </div>
 
-        {/* ═══════════════ Footer ═══════════════ */}
+        {/* ═══ Footer — very quiet ═══ */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
           marginTop: '16px',
           flexShrink: 0,
+          opacity: 0.3,
         }}>
           <div style={{
             display: 'flex',
@@ -741,39 +577,33 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             justifyContent: 'center',
             flexWrap: 'wrap',
           }}>
-            {[
-              { label: 'ONLINE', hasDot: true },
-              { label: 'PHASER.JS', hasDot: false },
-              { label: 'THREE.JS', hasDot: false },
-              { label: 'WEBGL 2.0', hasDot: false },
-            ].map((item, i) => (
+            {['ONLINE', 'PHASER.JS', 'THREE.JS', 'WEBGL 2.0'].map((label, i) => (
               <div key={i} style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                padding: '3px 9px',
-                background: T.footerBadgeBg,
-                border: `1px solid ${T.footerBadgeBorder}`,
+                gap: '4px',
+                padding: '2px 8px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
                 borderRadius: '100px',
               }}>
-                {item.hasDot && <span style={{
-                  width: 5, height: 5, borderRadius: '50%',
+                {i === 0 && <span style={{
+                  width: 4, height: 4, borderRadius: '50%',
                   background: '#22c55e',
-                  boxShadow: '0 0 4px rgba(34,197,94,0.4)',
                 }} />}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '7px',
-                  color: item.hasDot ? '#22c55e' : T.footerBadgeText,
+                  color: i === 0 ? '#22c55e' : 'rgba(255,255,255,0.5)',
                   letterSpacing: '0.1em',
-                }}>{item.label}</span>
+                }}>{label}</span>
               </div>
             ))}
           </div>
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '7px',
-            color: '#cbd5e1',
+            color: 'rgba(255,255,255,0.2)',
             letterSpacing: '0.1em',
           }}>
             AI GAME FACTORY — PROTOTYPE v0.4.0
@@ -781,413 +611,366 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         </div>
       </div>
 
-      {/* ═══ CSS Animations ═══ */}
+      {/* ═══ Keyframes ═══ */}
       <style>{`
-        @keyframes chatFadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+        @keyframes ptFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes dotBounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-4px); }
+        @keyframes ptCursorBlink {
+          0%, 100% { opacity: 0.8; }
+          50%      { opacity: 0; }
         }
-        @keyframes gradientShift {
-          0%   { background-position: 0% 50%; }
-          50%  { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes orbFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33%      { transform: translate(30px, -20px) scale(1.05); }
-          66%      { transform: translate(-20px, 15px) scale(0.95); }
-        }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulseGreen {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-          50% { box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+        @keyframes ptDotGlow {
+          0%, 100% { opacity: 0.2; }
+          50%      { opacity: 0.8; }
         }
       `}</style>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════
-   Sub-components — Light theme
-   ══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   Sub-components — "quiet confidence" style
+   ═══════════════════════════════════════════════ */
 
-function AiBubble({ text }: { text: string }) {
-  return (
-    <div style={{
-      display: 'flex',
-      gap: '8px',
-      alignItems: 'flex-start',
-      animation: 'chatFadeIn 0.3s ease both',
-    }}>
+function AiMessage({ text, isTyping, isThinking }: {
+  text: string;
+  isTyping: boolean;
+  isThinking: boolean;
+}) {
+  if (isThinking) {
+    return (
       <div style={{
-        width: '28px',
-        height: '28px',
-        borderRadius: '10px',
-        background: T.aiIconBg,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '9px',
-        fontWeight: 800,
-        color: '#fff',
-        flexShrink: 0,
-        boxShadow: '0 2px 8px rgba(34,197,94,0.25)',
-        letterSpacing: '0.02em',
+        gap: '10px',
+        animation: 'ptFadeIn 0.4s ease both',
       }}>
-        AI
-      </div>
-      <div style={{
-        background: T.aiBubbleBg,
-        border: `1px solid ${T.aiBubbleBorder}`,
-        borderRadius: '4px 20px 20px 20px',
-        padding: '10px 14px',
-        fontSize: '13px',
-        color: T.textPrimary,
-        fontFamily: "'Noto Sans KR', 'JetBrains Mono', sans-serif",
-        lineHeight: 1.6,
-        maxWidth: '85%',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}>
-        {text}
-      </div>
-    </div>
-  );
-}
-
-function UserBubble({ text }: { text: string }) {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'flex-end',
-      animation: 'chatFadeIn 0.3s ease both',
-    }}>
-      <div style={{
-        background: T.userBubbleBg,
-        border: `1px solid ${T.userBubbleBorder}`,
-        borderRadius: '20px 4px 20px 20px',
-        padding: '10px 14px',
-        fontSize: '13px',
-        color: T.textPrimary,
-        fontFamily: "'Noto Sans KR', 'JetBrains Mono', sans-serif",
-        lineHeight: 1.6,
-        maxWidth: '80%',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}>
-        {text}
-      </div>
-    </div>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div style={{
-      display: 'flex',
-      gap: '8px',
-      alignItems: 'flex-start',
-      animation: 'chatFadeIn 0.2s ease both',
-    }}>
-      <div style={{
-        width: '28px',
-        height: '28px',
-        borderRadius: '10px',
-        background: T.aiIconBg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '9px',
-        fontWeight: 800,
-        color: '#fff',
-        flexShrink: 0,
-      }}>
-        AI
-      </div>
-      <div style={{
-        background: T.aiBubbleBg,
-        border: `1px solid ${T.aiBubbleBorder}`,
-        borderRadius: '4px 20px 20px 20px',
-        padding: '12px 18px',
-        display: 'flex',
-        gap: '4px',
-        alignItems: 'center',
-      }}>
-        {[0, 1, 2].map(i => (
-          <span
-            key={i}
-            style={{
-              width: '6px',
-              height: '6px',
+        <AiDot />
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{
+              width: '4px',
+              height: '4px',
               borderRadius: '50%',
-              background: '#86efac',
-              animation: `dotBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
-            }}
-          />
-        ))}
+              background: 'linear-gradient(135deg, #00E5FF, #8b5cf6)',
+              animation: `ptDotGlow 1.2s ease-in-out ${i * 0.2}s infinite`,
+            }} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function OptionButtons({
-  options,
-  slotId,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  options: ModOption[];
-  slotId: string;
-  selected?: string;
-  onSelect: (slotId: string, opt: ModOption) => void;
-  disabled: boolean;
-}) {
   return (
     <div style={{
-      marginTop: '10px',
       display: 'flex',
-      gap: '8px',
-      flexWrap: 'wrap',
-      marginLeft: '36px',
-      animation: 'chatFadeIn 0.4s ease both',
+      alignItems: 'flex-start',
+      gap: '10px',
+      animation: 'ptFadeIn 0.4s ease both',
     }}>
-      {options.map((opt, i) => {
-        const isSelected = selected === opt.value;
-        const isOther = selected && !isSelected;
-        return (
-          <button
-            key={opt.value}
-            onClick={() => !disabled && onSelect(slotId, opt)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '12px',
-              border: `1.5px solid ${isSelected ? opt.color : T.chipBorder}`,
-              background: isSelected ? opt.color : T.chipBg,
-              color: isSelected ? '#fff' : isOther ? T.textMuted : T.textSecondary,
-              fontFamily: "'Noto Sans KR', sans-serif",
-              fontSize: '12px',
-              fontWeight: isSelected ? 600 : 500,
-              cursor: disabled ? 'default' : 'pointer',
-              transition: 'all 0.2s ease-out',
-              transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-              opacity: isOther ? 0.4 : 1,
-              animation: `chatFadeIn 0.3s ease ${i * 0.06}s both`,
-              minHeight: '36px',
-              boxShadow: isSelected ? `0 3px 10px ${opt.color}40` : '0 1px 2px rgba(0,0,0,0.04)',
-            }}
-            onMouseEnter={(e) => {
-              if (!disabled && !isSelected) {
-                e.currentTarget.style.borderColor = opt.color + '80';
-                e.currentTarget.style.background = opt.color + '10';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!disabled && !isSelected) {
-                e.currentTarget.style.borderColor = T.chipBorder;
-                e.currentTarget.style.background = T.chipBg;
-                e.currentTarget.style.transform = 'scale(1)';
-              }
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function AnalysisHud({
-  matchResult,
-  accentColor,
-  analysisStep,
-  analysisDone,
-  getAnalysisData,
-}: {
-  matchResult: MatchResult;
-  accentColor: string;
-  analysisStep: number;
-  analysisDone: boolean;
-  getAnalysisData: () => { steps: { label: string; value: string }[]; progress: number };
-}) {
-  const { steps, progress } = getAnalysisData();
-
-  return (
-    <div style={{
-      marginTop: '10px',
-      marginLeft: '36px',
-      animation: 'chatFadeIn 0.4s ease both',
-    }}>
+      <AiDot />
       <div style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        border: `1px solid ${T.cardBorder}`,
-        padding: '14px 16px',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        fontFamily: "'Noto Sans KR', sans-serif",
+        fontSize: '15px',
+        fontWeight: 400,
+        color: 'rgba(255,255,255,0.85)',
+        lineHeight: 1.7,
+        maxWidth: '90%',
       }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '12px',
-          paddingBottom: '10px',
-          borderBottom: `1px solid ${T.chipBorder}`,
-        }}>
+        {text}
+        {isTyping && (
           <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '9px',
-            color: T.accent,
-            letterSpacing: '0.15em',
-            fontWeight: 600,
-          }}>
-            AI ANALYSIS — {matchResult.confidence}% MATCH
-          </span>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '9px',
-            color: analysisDone ? '#22c55e' : T.textMuted,
-            fontWeight: 600,
-          }}>
-            {analysisDone ? '✓ COMPLETE' : `${progress}%`}
-          </span>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{
-          height: '3px',
-          background: '#f1f5f9',
-          borderRadius: '2px',
-          overflow: 'hidden',
-          marginBottom: '14px',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${progress}%`,
-            background: analysisDone
-              ? 'linear-gradient(90deg, #22c55e, #4ade80)'
-              : T.accentGradient,
-            borderRadius: '2px',
-            transition: 'width 0.4s ease, background 0.3s',
+            display: 'inline-block',
+            width: '1.5px',
+            height: '16px',
+            marginLeft: '2px',
+            verticalAlign: 'text-bottom',
+            background: '#00E5FF',
+            animation: 'ptCursorBlink 0.8s ease infinite',
           }} />
-        </div>
-
-        {/* Step rows */}
-        {steps.map((s, i) => {
-          const isActive = i <= analysisStep;
-          const isCurrent = i === analysisStep && !analysisDone;
-          return (
-            <div
-              key={s.label}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '5px 0',
-                opacity: isActive ? 1 : 0.3,
-                transform: isActive ? 'translateX(0)' : 'translateX(-8px)',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {isActive ? (
-                  isCurrent ? (
-                    <div style={{
-                      width: '14px', height: '14px',
-                      border: `2px solid ${T.accent}`,
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 0.8s linear infinite',
-                      flexShrink: 0,
-                    }} />
-                  ) : (
-                    <div style={{
-                      width: '14px', height: '14px',
-                      borderRadius: '50%',
-                      background: analysisDone ? '#dcfce7' : '#ede9fe',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '8px', color: analysisDone ? '#22c55e' : T.accent,
-                      flexShrink: 0,
-                      fontWeight: 700,
-                    }}>✓</div>
-                  )
-                ) : (
-                  <div style={{
-                    width: '14px', height: '14px',
-                    borderRadius: '50%',
-                    border: `1.5px solid ${T.chipBorder}`,
-                    flexShrink: 0,
-                  }} />
-                )}
-                <span style={{
-                  fontSize: '11px',
-                  color: isActive ? T.textPrimary : T.textMuted,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: isActive ? 500 : 400,
-                }}>
-                  {s.label}
-                </span>
-              </div>
-              <span style={{
-                fontSize: '10px',
-                fontFamily: "'JetBrains Mono', monospace",
-                color: isActive ? T.accent : T.textMuted,
-                opacity: isActive ? 1 : 0,
-                transition: 'opacity 0.3s 0.2s',
-                textAlign: 'right',
-                maxWidth: '50%',
-                fontWeight: 500,
-              }}>
-                {s.value}
-              </span>
-            </div>
-          );
-        })}
-
-        {/* Launch message */}
-        {analysisDone && (
-          <div style={{
-            textAlign: 'center',
-            marginTop: '12px',
-            animation: 'chatFadeIn 0.4s ease both',
-          }}>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '10px',
-              color: '#22c55e',
-              letterSpacing: '0.15em',
-              fontWeight: 600,
-            }}>
-              CODE GENERATION STARTING...
-            </span>
-          </div>
         )}
       </div>
     </div>
   );
 }
 
-function buildAnalysisSteps(result: MatchResult, userPrompt: string): { label: string; value: string }[] {
-  const game = DEMO_GAMES.find(g => g.id === result.gameId);
-  const loc = game ? game.html.split('\n').length : 500;
-  return [
-    { label: '프롬프트 분석', value: `"${userPrompt.slice(0, 20)}${userPrompt.length > 20 ? '...' : ''}"` },
-    { label: '장르 감지', value: result.genre },
-    { label: '엔진 선택', value: result.engine },
-    { label: '아트 스타일', value: result.artStyle },
-    { label: '게임 시스템', value: result.systems },
-    { label: '렌더링', value: 'WebGL 2.0 + Canvas Fallback' },
-    { label: '예상 코드량', value: `~${loc} Lines of Code` },
-  ];
+function AiDot() {
+  return (
+    <div style={{
+      width: '20px',
+      height: '20px',
+      borderRadius: '50%',
+      background: 'linear-gradient(135deg, rgba(0,229,255,0.6), rgba(139,92,246,0.5))',
+      flexShrink: 0,
+      marginTop: '2px',
+    }} />
+  );
+}
+
+function UserMessage({ text }: { text: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'flex-end',
+      animation: 'ptFadeIn 0.3s ease both',
+    }}>
+      <div style={{
+        background: 'rgba(129,140,248,0.08)',
+        borderRadius: '20px',
+        padding: '8px 20px',
+        fontFamily: "'Noto Sans KR', sans-serif",
+        fontSize: '15px',
+        fontWeight: 500,
+        color: 'rgba(167,139,250,0.9)',
+        lineHeight: 1.7,
+        maxWidth: '80%',
+      }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping, inputRef }: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  readOnly: boolean;
+  isTyping: boolean;
+  inputRef: React.RefObject<HTMLInputElement>;
+}) {
+  return (
+    <div style={{
+      animation: 'ptFadeIn 0.4s ease both',
+      marginLeft: '30px',
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+      }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder="만들고 싶은 게임을 말해주세요..."
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          readOnly={readOnly}
+          autoFocus
+          style={{
+            flex: 1,
+            background: 'rgba(255,255,255,0.03)',
+            border: 'none',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 0,
+            outline: 'none',
+            color: isTyping ? '#00E5FF' : 'rgba(255,255,255,0.85)',
+            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: '15px',
+            fontWeight: 400,
+            lineHeight: '24px',
+            padding: '10px 0',
+            transition: 'border-bottom-color 0.3s',
+            caretColor: '#00E5FF',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderBottomColor = '#00E5FF';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.1)';
+          }}
+        />
+        {value.trim() && !isTyping && (
+          <button
+            onClick={onSubmit}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#00E5FF',
+              fontSize: '18px',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              opacity: 0.7,
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
+          >
+            ↵
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChipsWidget({ chips, onSelect }: {
+  chips: typeof CHIPS;
+  onSelect: (chip: typeof CHIPS[0]) => void;
+}) {
+  return (
+    <div style={{
+      marginLeft: '30px',
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '10px',
+      animation: 'ptFadeIn 0.4s ease both',
+    }}>
+      {chips.map((chip, i) => (
+        <button
+          key={chip.label}
+          onClick={() => onSelect(chip)}
+          style={{
+            padding: '14px 20px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.03)',
+            color: 'rgba(255,255,255,0.7)',
+            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: '14px',
+            fontWeight: 400,
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            textAlign: 'left',
+            animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.borderColor = 'rgba(0,229,255,0.2)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+          }}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
+  options: ModOption[];
+  slotId: string;
+  onSelect: (slotId: string, opt: ModOption) => void;
+  onSkip?: (slotId: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div style={{
+      marginLeft: '30px',
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '10px',
+      animation: 'ptFadeIn 0.4s ease both',
+    }}>
+      {options.map((opt, i) => (
+        <button
+          key={opt.value}
+          onClick={() => !disabled && onSelect(slotId, opt)}
+          style={{
+            padding: '14px 20px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.03)',
+            color: 'rgba(255,255,255,0.7)',
+            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: '14px',
+            fontWeight: 400,
+            cursor: disabled ? 'default' : 'pointer',
+            transition: 'all 0.3s ease',
+            textAlign: 'left',
+            animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
+            opacity: disabled ? 0.3 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (disabled) return;
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.borderColor = 'rgba(0,229,255,0.2)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+          }}
+          onMouseLeave={(e) => {
+            if (disabled) return;
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+      {onSkip && !disabled && (
+        <button
+          onClick={() => onSkip(slotId)}
+          style={{
+            gridColumn: '1 / -1',
+            padding: '10px 20px',
+            borderRadius: '16px',
+            border: 'none',
+            background: 'transparent',
+            color: 'rgba(255,255,255,0.3)',
+            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: '13px',
+            fontWeight: 400,
+            cursor: 'pointer',
+            transition: 'color 0.3s ease',
+            textAlign: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'rgba(255,255,255,0.3)';
+          }}
+        >
+          건너뛰기
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ProgressBar({ width }: { width: number }) {
+  return (
+    <div style={{
+      marginLeft: '30px',
+      marginTop: '4px',
+      animation: 'ptFadeIn 0.4s ease both',
+    }}>
+      <div style={{
+        height: '2px',
+        background: 'rgba(255,255,255,0.06)',
+        borderRadius: '1px',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          width: `${width}%`,
+          background: 'linear-gradient(90deg, #00E5FF, #8b5cf6)',
+          borderRadius: '1px',
+          transition: 'width 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+/* ═══ Utility ═══ */
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
