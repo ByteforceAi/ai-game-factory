@@ -65,7 +65,7 @@ const burgerRemixes: RemixPreset[] = [
 ];
 
 // --- Temple Runner Game Remixes ---
-// Actual vars: baseSpeed=18, maxSpeed=55, scene.background=0x1a0a2e, scene.fog=0x1a0a2e
+// Actual vars: baseSpeed=16, maxSpeed=50, scene.background=0x1a0a2e, scene.fog=0x1a0a2e
 // laneX=[-2.4,0,2.4], lanes=[0,1,2], wallMat color:0xcc3300, coinMat color:0xffcc00
 const runnerRemixes: RemixPreset[] = [
   {
@@ -75,8 +75,8 @@ const runnerRemixes: RemixPreset[] = [
     description: '시작 속도 2배, 더 빠른 가속',
     apply: (html) =>
       html
-        .replace(/baseSpeed=18/, 'baseSpeed=36')
-        .replace(/maxSpeed=55/, 'maxSpeed=80'),
+        .replace(/baseSpeed=16/, 'baseSpeed=32')
+        .replace(/maxSpeed=50/, 'maxSpeed=80'),
   },
   {
     id: 'runner-night',
@@ -102,10 +102,10 @@ const runnerRemixes: RemixPreset[] = [
     apply: (html) =>
       html
         .replace(
-          /new THREE\.OctahedronGeometry\(0\.4\)/,
-          'new THREE.OctahedronGeometry(0.8)'
+          /new THREE\.OctahedronGeometry\(0\.35,0\)/,
+          'new THREE.OctahedronGeometry(0.7,0)'
         )
-        .replace(/score\+=10/g, 'score+=20'),
+        .replace(/coinScore\+=10/g, 'coinScore+=20'),
   },
   {
     id: 'runner-wide',
@@ -213,7 +213,7 @@ const dodgeRemixes: RemixPreset[] = [
 ];
 
 // --- Neon Shooter Remixes ---
-// Actual vars: sc.fireRate = 180, sc.lives = 3, bossHp = 20 + sc.wave * 5
+// Actual vars: sc.fireRate = 200, sc.lives = 3, bossHp = 15 + sc.wave * 4
 const shooterRemixes: RemixPreset[] = [
   {
     id: 'shooter-rapid',
@@ -221,7 +221,7 @@ const shooterRemixes: RemixPreset[] = [
     icon: '⚡',
     description: '발사 속도 3배 증가',
     apply: (html) =>
-      html.replace(/sc\.fireRate = 180/, 'sc.fireRate = 60'),
+      html.replace(/sc\.fireRate = 200/, 'sc.fireRate = 70'),
   },
   {
     id: 'shooter-tank',
@@ -229,8 +229,7 @@ const shooterRemixes: RemixPreset[] = [
     icon: '🛡️',
     description: '목숨 5개로 시작',
     apply: (html) =>
-      html.replace(/sc\.lives = 3/, 'sc.lives = 5')
-           .replace(/LIVES: 3/, 'LIVES: 5'),
+      html.replace(/sc\.lives = 3/, 'sc.lives = 5'),
   },
   {
     id: 'shooter-boss',
@@ -238,7 +237,7 @@ const shooterRemixes: RemixPreset[] = [
     icon: '👹',
     description: '보스 체력 절반, 더 자주 출현',
     apply: (html) =>
-      html.replace(/var bossHp = 20 \+ sc\.wave \* 5/, 'var bossHp = 10 + sc.wave * 2'),
+      html.replace(/var bossHp = 15 \+ sc\.wave \* 4/, 'var bossHp = 7 + sc.wave * 2'),
   },
 ];
 
@@ -261,7 +260,7 @@ const platformerRemixes: RemixPreset[] = [
     description: '이동속도 2배, 스크롤 빨라짐',
     apply: (html) =>
       html.replace(/const PLAYER_SPEED = 260/, 'const PLAYER_SPEED = 500')
-           .replace(/const PLATFORM_SCROLL_SPEED = 160/, 'const PLATFORM_SCROLL_SPEED = 280'),
+           .replace(/const PLATFORM_SCROLL_SPEED = 150/, 'const PLATFORM_SCROLL_SPEED = 280'),
   },
   {
     id: 'plat-super',
