@@ -50,6 +50,13 @@ const GAME_KEYWORDS: Record<string, {
     artStyle: 'Emoji Pop',
     systems: 'Physics Drop + Combo + Speed Ramp',
   },
+  'dot-rpg': {
+    keywords: ['rpg', 'RPG', '알피지', '도트', '픽셀', '마을', '일랜시아', '바람의나라', '던전', '몬스터', '퀘스트', '용사', '모험', '탐험', '전투', '턴제', '레벨', '경험치', 'npc', '대화', '슬라임', '검', '방패', '기사', '캐릭터', '성장'],
+    genre: 'Pixel Dot RPG',
+    engine: 'Phaser.js 3.80 — Canvas2D Pixel Art',
+    artStyle: 'Classic Korean Dot RPG',
+    systems: 'Tile Map + NPC Dialog + Turn Battle + Level Up',
+  },
 };
 
 const FALLBACK_ORDER = ['neon-shooter', 'temple-runner', 'neon-platformer', 'tetris', 'emoji-burger'];

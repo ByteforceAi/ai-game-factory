@@ -273,11 +273,59 @@ const platformerRemixes: RemixPreset[] = [
   },
 ];
 
+// --- Dot RPG Game Remixes ---
+// Actual vars: playerHP = 10, playerMaxHP = 10, playerATK = 3, player.speed = 120
+// Monster HP: greenSlime 5, blueSlime 8, skeleton 15
+const dotRpgRemixes: RemixPreset[] = [
+  {
+    id: 'rpg-warrior',
+    label: '전사 모드',
+    icon: '⚔️',
+    description: 'ATK 8 + HP 15 — 강력한 전사로 시작',
+    apply: (html) =>
+      html.replace(/playerATK = 3/, 'playerATK = 8')
+           .replace(/playerHP = 10/, 'playerHP = 15')
+           .replace(/playerMaxHP = 10/, 'playerMaxHP = 15'),
+  },
+  {
+    id: 'rpg-nightmare',
+    label: '나이트메어',
+    icon: '💀',
+    description: '몬스터 HP/ATK 2배, 경험치도 2배',
+    apply: (html) =>
+      html.replace(/maxHp:5, atk:1, exp:3/, 'maxHp:10, atk:2, exp:6')
+           .replace(/maxHp:8, atk:2, exp:5/, 'maxHp:16, atk:4, exp:10')
+           .replace(/maxHp:15, atk:4, exp:10/, 'maxHp:30, atk:8, exp:20'),
+  },
+  {
+    id: 'rpg-speed',
+    label: '스피드 런',
+    icon: '💨',
+    description: '이동속도 3배, 빠르게 클리어',
+    apply: (html) =>
+      html.replace(/speed: 120/, 'speed: 360')
+           .replace(/stepTimer = 150/, 'stepTimer = 60'),
+  },
+  {
+    id: 'rpg-dark',
+    label: '다크 던전',
+    icon: '🌑',
+    description: '어둠의 던전 분위기, 보라 안개',
+    apply: (html) =>
+      html.replace(/background:#1a0e2e/, 'background:#0a0515')
+           .replace(/#2d5a1e/g, '#1a2a1a')
+           .replace(/#1a3d12/g, '#0e1a0e')
+           .replace(/#3d7a2e/g, '#2a4a2a')
+           .replace(/#4a8a3a/g, '#3a5a3a'),
+  },
+];
+
 export const GAME_REMIX_CONFIGS: GameRemixConfig[] = [
   { gameId: 'neon-shooter', presets: shooterRemixes },
   { gameId: 'neon-platformer', presets: platformerRemixes },
   { gameId: 'temple-runner', presets: runnerRemixes },
   { gameId: 'tetris', presets: tetrisRemixes },
+  { gameId: 'dot-rpg', presets: dotRpgRemixes },
 ];
 
 export function getRemixPresets(gameId: string): RemixPreset[] {

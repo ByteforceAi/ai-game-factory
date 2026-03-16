@@ -128,6 +128,7 @@ function sfxClear(numLines){
 
 function sfxGameOver(){
   if(!actx) return;
+  stopBgm();
   try{
     var t=actx.currentTime;
     var notes=[330,277,233,196];
@@ -143,6 +144,83 @@ function sfxGameOver(){
       osc.start(st);osc.stop(st+0.26);
     }
   }catch(e){}
+}
+
+/* ───────── PROCEDURAL BGM — Lo-fi Electronic ───────── */
+var bgmInterval = null;
+var bgmBeatIdx = 0;
+
+function startBgm(){
+  if(!actx || bgmInterval) return;
+  var bpm = 90; // lo-fi tempo
+  var msPerBeat = 60000/bpm/2; // 8th notes
+  // Pentatonic bass line for lo-fi vibe
+  var bassLine = [65,65,73,65, 82,82,73,65, 55,55,65,55, 73,73,65,55];
+
+  bgmInterval = setInterval(function(){
+    if(!actx) return;
+    try{
+      var t = actx.currentTime;
+      var beat = bgmBeatIdx % 16;
+
+      // Soft bass (sine — warm lo-fi)
+      if(beat % 4 === 0){
+        var bass = actx.createOscillator();
+        var lpf = actx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.frequency.setValueAtTime(200, t);
+        var bg = actx.createGain();
+        bass.type = 'sine';
+        bass.frequency.setValueAtTime(bassLine[beat], t);
+        bg.gain.setValueAtTime(0.05, t);
+        bg.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+        bass.connect(lpf); lpf.connect(bg); bg.connect(actx.destination);
+        bass.start(t); bass.stop(t+0.22);
+      }
+
+      // Soft hi-hat (very quiet, lo-fi texture)
+      if(beat % 2 === 1){
+        var bufSize = Math.floor(actx.sampleRate * 0.015);
+        var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+        var data = buf.getChannelData(0);
+        for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,8);
+        var src = actx.createBufferSource(); src.buffer = buf;
+        var hpf = actx.createBiquadFilter();
+        hpf.type='highpass'; hpf.frequency.setValueAtTime(7000, t);
+        var hg = actx.createGain();
+        hg.gain.setValueAtTime(0.018, t);
+        hg.gain.exponentialRampToValueAtTime(0.001, t+0.015);
+        src.connect(hpf); hpf.connect(hg); hg.connect(actx.destination);
+        src.start(t);
+      }
+
+      // Gentle pad chord every 8 beats (lo-fi atmosphere)
+      if(beat % 8 === 0){
+        var padNotes = beat < 8 ? [261, 329] : [220, 277];
+        for(var p=0;p<padNotes.length;p++){
+          var pad = actx.createOscillator();
+          var pGain = actx.createGain();
+          var pFilter = actx.createBiquadFilter();
+          pad.type = 'triangle';
+          pad.frequency.setValueAtTime(padNotes[p], t);
+          pFilter.type = 'lowpass';
+          pFilter.frequency.setValueAtTime(400, t);
+          pFilter.frequency.exponentialRampToValueAtTime(200, t+0.5);
+          pGain.gain.setValueAtTime(0.02, t);
+          pGain.gain.linearRampToValueAtTime(0.025, t+0.1);
+          pGain.gain.exponentialRampToValueAtTime(0.001, t+0.5);
+          pad.connect(pFilter); pFilter.connect(pGain); pGain.connect(actx.destination);
+          pad.start(t); pad.stop(t+0.52);
+        }
+      }
+
+      bgmBeatIdx++;
+    }catch(e){}
+  }, msPerBeat);
+}
+
+function stopBgm(){
+  if(bgmInterval){ clearInterval(bgmInterval); bgmInterval=null; bgmBeatIdx=0; }
 }
 
 /* ═══════════ GAME LOGIC ═══════════ */
@@ -327,9 +405,11 @@ function render(){
 
 /* ═══════════ CONTROLS ═══════════ */
 function mL(){
+  ensureAudio(); if(!bgmInterval && !gameOver) startBgm();
   if(cur&&fits(cur.cells,cur.x-1,cur.y)){cur.x--;lockTimer=0;sfxMove();}
 }
 function mR(){
+  ensureAudio(); if(!bgmInterval && !gameOver) startBgm();
   if(cur&&fits(cur.cells,cur.x+1,cur.y)){cur.x++;lockTimer=0;sfxMove();}
 }
 function rot(){
@@ -420,6 +500,7 @@ function loop(ts){
 
 document.addEventListener('keydown',function(e){
   ensureAudio();
+  if(!bgmInterval && !gameOver) startBgm();
   if(gameOver)return;
   keys[e.key]=true;
   if(e.key==='ArrowUp'){rot();e.preventDefault()}
@@ -433,6 +514,7 @@ document.addEventListener('keyup',function(e){keys[e.key]=false;if(e.key==='Arro
 function restart(){
   score=0;lines=0;level=1;gameOver=false;gameOverSent=false;
   dropInterval=1000;softDrop=false;lockTimer=0;clearing=[];clearAnim=0;lastDrop=0;lastTime=0;pBag=[];
+  startBgm();
   document.getElementById('sc').textContent='0';
   document.getElementById('lv').textContent='1';
   document.getElementById('ln').textContent='0';

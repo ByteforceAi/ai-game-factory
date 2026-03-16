@@ -165,6 +165,69 @@ function sfxDeath(){
   }catch(e){}
 }
 
+/* ───────── PROCEDURAL BGM — 8bit Chiptune Arpeggio ───────── */
+var bgmInterval = null;
+var bgmBeatIdx = 0;
+function startBgm(){
+  if(!actx || bgmInterval) return;
+  var bpm = 140;
+  var msPerStep = 60000/bpm/4; // 16th notes
+  // C major arpeggio patterns for chiptune feel
+  var arpNotes = [523,659,784,1047, 784,659,523,392, 440,554,659,880, 659,554,440,330];
+  var bassNotes = [131,131,131,131, 131,131,131,131, 110,110,110,110, 110,110,110,110];
+  bgmInterval = setInterval(function(){
+    if(!actx) return;
+    try{
+      var t = actx.currentTime;
+      var idx = bgmBeatIdx % arpNotes.length;
+      // arp lead (square wave — classic chiptune)
+      var osc = actx.createOscillator();
+      var gain = actx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(arpNotes[idx], t);
+      gain.gain.setValueAtTime(0.035, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + msPerStep/1200);
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.start(t); osc.stop(t + msPerStep/1100);
+
+      // bass (triangle — warm 8bit bass)
+      if(bgmBeatIdx % 4 === 0){
+        var bass = actx.createOscillator();
+        var bg = actx.createGain();
+        bass.type = 'triangle';
+        bass.frequency.setValueAtTime(bassNotes[idx], t);
+        bg.gain.setValueAtTime(0.05, t);
+        bg.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+        bass.connect(bg); bg.connect(actx.destination);
+        bass.start(t); bass.stop(t+0.13);
+      }
+
+      // hi-hat on every other step
+      if(bgmBeatIdx % 2 === 1){
+        var bufSize = Math.floor(actx.sampleRate * 0.02);
+        var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+        var data = buf.getChannelData(0);
+        for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,6);
+        var src = actx.createBufferSource();
+        src.buffer = buf;
+        var hpf = actx.createBiquadFilter();
+        hpf.type='highpass'; hpf.frequency.setValueAtTime(9000, t);
+        var hg = actx.createGain();
+        hg.gain.setValueAtTime(0.025, t);
+        hg.gain.exponentialRampToValueAtTime(0.001, t+0.02);
+        src.connect(hpf); hpf.connect(hg); hg.connect(actx.destination);
+        src.start(t);
+      }
+
+      bgmBeatIdx++;
+    }catch(e){}
+  }, msPerStep);
+}
+
+function stopBgm(){
+  if(bgmInterval){ clearInterval(bgmInterval); bgmInterval=null; bgmBeatIdx=0; }
+}
+
 /* ───────── constants ───────── */
 let W = window.innerWidth;
 let H = window.innerHeight;
@@ -587,6 +650,7 @@ class GameScene extends Phaser.Scene {
     this.gameStarted = true;
     if (this.startText) this.startText.destroy();
     if (this.controlsText) this.controlsText.destroy();
+    startBgm();
   }
 
   flashScreen(color, intensity, duration){
@@ -755,6 +819,7 @@ class GameScene extends Phaser.Scene {
     this.deathTriggered = true;
     this.alive = false;
 
+    stopBgm();
     sfxDeath();
 
     // Multi-layer death explosion

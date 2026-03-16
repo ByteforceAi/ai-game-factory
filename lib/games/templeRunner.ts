@@ -111,6 +111,155 @@ function sfxDeath(){
   }catch(e){}
 }
 
+function sfxSlide(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var bufSize = Math.floor(actx.sampleRate * 0.12);
+    var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,3)*0.5;
+    var src = actx.createBufferSource(); src.buffer = buf;
+    var filter = actx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(2000, t);
+    filter.frequency.exponentialRampToValueAtTime(500, t+0.12);
+    filter.Q.value = 2;
+    var gain = actx.createGain();
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+    src.connect(filter); filter.connect(gain); gain.connect(actx.destination);
+    src.start(t);
+  }catch(e){}
+}
+
+function sfxHit(){
+  if(!actx) return;
+  try{
+    var t = actx.currentTime;
+    var osc = actx.createOscillator();
+    var gain = actx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(250, t);
+    osc.frequency.exponentialRampToValueAtTime(80, t+0.15);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+0.18);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t+0.19);
+    // impact noise
+    var bufSize = Math.floor(actx.sampleRate * 0.1);
+    var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+    var data = buf.getChannelData(0);
+    for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,2);
+    var src = actx.createBufferSource(); src.buffer = buf;
+    var filt = actx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(600, t);
+    var g2 = actx.createGain();
+    g2.gain.setValueAtTime(0.08, t);
+    g2.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+    src.connect(filt); filt.connect(g2); g2.connect(actx.destination);
+    src.start(t);
+  }catch(e){}
+}
+
+/* ───────── PROCEDURAL BGM — Tense Percussion Loop ───────── */
+var bgmInterval = null;
+var bgmBeatIdx = 0;
+var bgmBPM = 130;
+
+function startBgm(){
+  if(!actx || bgmInterval) return;
+  scheduleBgm();
+}
+
+function scheduleBgm(){
+  if(bgmInterval) clearInterval(bgmInterval);
+  var msPerBeat = 60000/bgmBPM/2; // 8th notes
+  bgmInterval = setInterval(function(){
+    if(!actx) return;
+    try{
+      var t = actx.currentTime;
+      var beat = bgmBeatIdx % 8;
+
+      // Kick on beats 0, 4
+      if(beat === 0 || beat === 4){
+        var osc = actx.createOscillator();
+        var gain = actx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t+0.1);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+        osc.connect(gain); gain.connect(actx.destination);
+        osc.start(t); osc.stop(t+0.13);
+      }
+
+      // Hi-hat on off-beats
+      if(beat % 2 === 1){
+        var bufSize = Math.floor(actx.sampleRate * 0.025);
+        var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+        var data = buf.getChannelData(0);
+        for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,5);
+        var src = actx.createBufferSource(); src.buffer = buf;
+        var hpf = actx.createBiquadFilter();
+        hpf.type='highpass'; hpf.frequency.setValueAtTime(8000, t);
+        var hg = actx.createGain();
+        hg.gain.setValueAtTime(0.03, t);
+        hg.gain.exponentialRampToValueAtTime(0.001, t+0.025);
+        src.connect(hpf); hpf.connect(hg); hg.connect(actx.destination);
+        src.start(t);
+      }
+
+      // Snare on beat 2, 6
+      if(beat === 2 || beat === 6){
+        var bufSize = Math.floor(actx.sampleRate * 0.08);
+        var buf = actx.createBuffer(1, bufSize, actx.sampleRate);
+        var data = buf.getChannelData(0);
+        for(var i=0;i<bufSize;i++) data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,2.5);
+        var src = actx.createBufferSource(); src.buffer = buf;
+        var bpf = actx.createBiquadFilter();
+        bpf.type='bandpass'; bpf.frequency.setValueAtTime(3000, t); bpf.Q.value = 1;
+        var sg = actx.createGain();
+        sg.gain.setValueAtTime(0.04, t);
+        sg.gain.exponentialRampToValueAtTime(0.001, t+0.08);
+        src.connect(bpf); bpf.connect(sg); sg.connect(actx.destination);
+        src.start(t);
+      }
+
+      // Tension bass drone on every 8 beats
+      if(beat === 0){
+        var bass = actx.createOscillator();
+        var bg = actx.createGain();
+        bass.type = 'sawtooth';
+        bass.frequency.setValueAtTime(55, t);
+        var lpf = actx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.frequency.setValueAtTime(120, t);
+        bg.gain.setValueAtTime(0.04, t);
+        bg.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+        bass.connect(lpf); lpf.connect(bg); bg.connect(actx.destination);
+        bass.start(t); bass.stop(t+0.22);
+      }
+
+      bgmBeatIdx++;
+    }catch(e){}
+  }, msPerBeat);
+}
+
+function updateBgmTempo(spd){
+  // BPM scales from 130 to 180 based on speed
+  var newBPM = Math.min(180, 130 + Math.floor((spd - baseSpeed) / (maxSpeed - baseSpeed) * 50));
+  if(Math.abs(newBPM - bgmBPM) >= 3){
+    bgmBPM = newBPM;
+    if(bgmInterval) scheduleBgm();
+  }
+}
+
+function stopBgm(){
+  if(bgmInterval){ clearInterval(bgmInterval); bgmInterval=null; bgmBeatIdx=0; bgmBPM=130; }
+}
+
 function sfxLaneChange(){
   if(!actx) return;
   try{
@@ -322,6 +471,8 @@ function endGame(){
   gameOver=true;
   deathPhase=true;
   deathAnim=0;
+  stopBgm();
+  sfxHit();
   sfxDeath();
   doFlash(damageFlashEl,400);
 
@@ -345,6 +496,7 @@ function reset(){
   obstacles.forEach(function(o){scene.remove(o)});obstacles=[];
   coins.forEach(function(c){scene.remove(c)});coins=[];
   coinScore=0;distScore=0;gameOver=false;gameOverSent=false;started=true;speed=baseSpeed;
+  startBgm();
   currentLane=1;targetX=0;playerY=0;jumpVel=0;isJumping=false;
   deathPhase=false;deathAnim=0;
   player.position.set(0,0.7,0);
@@ -447,6 +599,7 @@ function animate(){
 
   // Speed ramp (gentler start)
   speed=Math.min(maxSpeed,baseSpeed+distTraveled*0.006);
+  updateBgmTempo(speed);
   var moveZ=speed*dt;
   distTraveled+=moveZ;
   distScore=Math.floor(distTraveled);

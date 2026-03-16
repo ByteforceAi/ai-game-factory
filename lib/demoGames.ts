@@ -1423,6 +1423,7 @@ import { NEON_SHOOTER_HTML } from './games/neonShooter';
 import { NEON_PLATFORMER_HTML } from './games/neonPlatformer';
 import { TEMPLE_RUNNER_HTML as TEMPLE_RUNNER_V2 } from './games/templeRunner';
 import { TETRIS_HTML as TETRIS_V2 } from './games/tetris';
+import { DOT_RPG_HTML } from './games/dotRpg';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1460,5 +1461,14 @@ export const DEMO_GAMES: DemoGame[] = [
     icon: '⊞',
     accentColor: '#B400FF',
     html: TETRIS_V2,
+  },
+  {
+    id: 'dot-rpg',
+    title: '도트 RPG',
+    description: '일랜시아 감성 도트 RPG. NPC 대화 + 턴제 전투 + 레벨업',
+    prompt: 'Phaser 3 도트 픽셀아트 RPG 마을 탐험',
+    icon: '⚔',
+    accentColor: '#FFD700',
+    html: DOT_RPG_HTML,
   },
 ];

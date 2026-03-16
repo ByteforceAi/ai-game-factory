@@ -45,6 +45,22 @@ export default function Home() {
   const [displayScore, setDisplayScore] = useState(0);
   const confettiRef = useRef<HTMLCanvasElement>(null);
 
+  // ── Instructor override ──
+  const [instructorGame, setInstructorGame] = useState<string | null>(null);
+  const [instructorSkip, setInstructorSkip] = useState(false);
+  const [studentName, setStudentName] = useState('');
+
+  useEffect(() => {
+    try {
+      const override = localStorage.getItem('instructor-override');
+      const skip = localStorage.getItem('instructor-skip') === 'true';
+      const name = localStorage.getItem('student-name') || '';
+      if (override) setInstructorGame(override);
+      if (skip) setInstructorSkip(skip);
+      if (name) setStudentName(name);
+    } catch {}
+  }, []);
+
   const changeView = useCallback((newView: AppView) => {
     setTransitioning(true);
     setTimeout(() => {
@@ -184,7 +200,13 @@ export default function Home() {
   };
 
   const handleSelectGame = (game: DemoGame) => {
-    setSelectedGame(game);
+    // Instructor override: force a specific game regardless of user selection
+    let finalGame = game;
+    if (instructorGame) {
+      const override = DEMO_GAMES.find(g => g.id === instructorGame);
+      if (override) finalGame = override;
+    }
+    setSelectedGame(finalGame);
     changeView('generating');
     playAmbient();
   };
@@ -283,8 +305,9 @@ export default function Home() {
       }}>
         <CodeStreamView
           gameHtml={selectedGame.html}
-          gameTitle={selectedGame.title}
+          gameTitle={studentName ? `${studentName}의 ${selectedGame.title}` : selectedGame.title}
           onComplete={handleGenerationComplete}
+          duration={instructorSkip ? 3000 : undefined}
         />
       </div>
     );
@@ -293,7 +316,7 @@ export default function Home() {
   if (view === 'launching' && selectedGame) {
     return (
       <LaunchSequence
-        gameTitle={selectedGame.title}
+        gameTitle={studentName ? `${studentName}의 ${selectedGame.title}` : selectedGame.title}
         onComplete={handleLaunchComplete}
       />
     );
@@ -349,7 +372,7 @@ export default function Home() {
           letterSpacing: '0.08em',
           textShadow: '0 2px 8px rgba(0,0,0,0.8)',
         }}>
-          {selectedGame?.title}
+          {studentName ? `${studentName}의 ${selectedGame?.title}` : selectedGame?.title}
         </span>
         <button onClick={handleRestart} className="btn-hud btn-hud--active">
           ↻ RESTART
