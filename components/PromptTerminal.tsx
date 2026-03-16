@@ -909,81 +909,125 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
   onSkip?: (slotId: string) => void;
   disabled: boolean;
 }) {
+  const [hoveredIdx, setHoveredIdx] = useState(-1);
+  const [selectedIdx, setSelectedIdx] = useState(-1);
+
+  const handleSelect = (opt: ModOption, idx: number) => {
+    if (disabled) return;
+    setSelectedIdx(idx);
+    // Small delay for visual feedback
+    setTimeout(() => onSelect(slotId, opt), 150);
+  };
+
+  // DJ Mixer — Horizontal fader/selector style
   return (
     <div style={{
       marginLeft: '38px',
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '10px',
       animation: 'ptFadeIn 0.4s ease both',
     }}>
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          onClick={() => !disabled && onSelect(slotId, opt)}
-          style={{
-            padding: '14px 16px',
-            borderRadius: '14px',
-            border: '1.5px solid #e2e8f0',
-            background: '#fff',
-            color: '#334155',
-            fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '13px',
-            fontWeight: 500,
-            cursor: disabled ? 'default' : 'pointer',
-            transition: 'all 0.25s ease',
-            textAlign: 'left',
-            animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
-            opacity: disabled ? 0.4 : 1,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          }}
-          onMouseEnter={(e) => {
-            if (disabled) return;
-            e.currentTarget.style.background = '#f5f3ff';
-            e.currentTarget.style.borderColor = '#6366f1';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
-            e.currentTarget.style.color = '#4f46e5';
-          }}
-          onMouseLeave={(e) => {
-            if (disabled) return;
-            e.currentTarget.style.background = '#fff';
-            e.currentTarget.style.borderColor = '#e2e8f0';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-            e.currentTarget.style.color = '#334155';
-          }}
-        >
-          {opt.label}
-        </button>
-      ))}
-      {onSkip && !disabled && (
-        <button
-          onClick={() => onSkip(slotId)}
-          style={{
-            gridColumn: '1 / -1',
-            padding: '10px 20px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'transparent',
-            color: '#94a3b8',
-            fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '13px',
-            fontWeight: 400,
-            cursor: 'pointer',
-            transition: 'color 0.3s ease',
-            textAlign: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#64748b';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#94a3b8';
-          }}
-        >
-          건너뛰기
-        </button>
-      )}
+      {/* Mixer panel */}
+      <div style={{
+        background: 'rgba(15,15,35,0.06)',
+        borderRadius: '16px',
+        padding: '16px',
+        border: '1px solid rgba(0,0,0,0.04)',
+      }}>
+        {/* Channel strip — horizontal fader */}
+        <div style={{
+          display: 'flex',
+          gap: '0',
+          borderRadius: '10px',
+          overflow: 'hidden',
+          background: '#f1f5f9',
+          position: 'relative',
+        }}>
+          {/* Slider track highlight */}
+          {(selectedIdx >= 0 || hoveredIdx >= 0) && (
+            <div style={{
+              position: 'absolute',
+              left: `${((selectedIdx >= 0 ? selectedIdx : hoveredIdx) / options.length) * 100}%`,
+              width: `${100 / options.length}%`,
+              top: 0, bottom: 0,
+              background: selectedIdx >= 0
+                ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                : 'rgba(99,102,241,0.08)',
+              borderRadius: '10px',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              zIndex: 0,
+            }} />
+          )}
+
+          {options.map((opt, i) => {
+            const isSelected = selectedIdx === i;
+            const isHovered = hoveredIdx === i;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => handleSelect(opt, i)}
+                onMouseEnter={() => !disabled && setHoveredIdx(i)}
+                onMouseLeave={() => !disabled && setHoveredIdx(-1)}
+                style={{
+                  flex: 1,
+                  padding: '14px 8px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: isSelected ? '#fff' : isHovered ? '#4f46e5' : '#64748b',
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                  fontSize: '13px',
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: disabled ? 'default' : 'pointer',
+                  transition: 'color 0.2s ease, transform 0.15s ease',
+                  position: 'relative',
+                  zIndex: 1,
+                  transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                  opacity: disabled ? 0.4 : 1,
+                  textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
+                }}
+              >
+                {opt.label}
+                {/* Active dot indicator */}
+                {isSelected && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '4px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '4px', height: '4px',
+                    borderRadius: '50%',
+                    background: '#fff',
+                    boxShadow: '0 0 6px rgba(255,255,255,0.8)',
+                  }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Skip option */}
+        {onSkip && !disabled && (
+          <button
+            onClick={() => onSkip(slotId)}
+            style={{
+              width: '100%',
+              marginTop: '8px',
+              padding: '8px',
+              border: 'none',
+              background: 'transparent',
+              color: '#94a3b8',
+              fontFamily: "'Noto Sans KR', sans-serif",
+              fontSize: '12px',
+              fontWeight: 400,
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+              textAlign: 'center',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#64748b'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
+          >
+            건너뛰기
+          </button>
+        )}
+      </div>
     </div>
   );
 }

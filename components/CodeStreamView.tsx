@@ -12,6 +12,8 @@ interface CodeStreamViewProps {
   duration?: number;
   statusMessages?: string[];
   completionText?: string;
+  accentColor?: string;
+  gameIcon?: string;
 }
 
 /** ═══ Build Pipeline Stages ═══ */
@@ -31,13 +33,14 @@ function BuildPipelineBar({ progress, done, companionLabel }: { progress: number
       alignItems: 'center',
       gap: '2px',
       padding: '8px 16px',
-      background: 'rgba(8,8,26,0.85)',
+      background: 'rgba(8,8,26,0.92)',
       borderBottom: '1px solid rgba(255,255,255,0.03)',
       position: 'relative',
-      zIndex: 2,
+      zIndex: 5,
       overflowX: 'auto',
       overflowY: 'hidden',
       minHeight: '36px',
+      flexShrink: 0,
     }}>
       {PIPELINE_STAGES.map((stage, idx) => {
         const [start, end] = stage.range;
@@ -292,6 +295,8 @@ export default function CodeStreamView({
   duration = 55000,
   statusMessages = GENERATE_STATUS_MESSAGES,
   completionText = 'BUILD COMPLETE',
+  accentColor = '#6366f1',
+  gameIcon = '◆',
 }: CodeStreamViewProps) {
   const [code, setCode] = useState('');
   const [status, setStatus] = useState('Initializing engine...');
@@ -522,7 +527,7 @@ export default function CodeStreamView({
     }}>
       <ParticleBackground />
 
-      {/* ═══ Top Bar ═══ */}
+      {/* ═══ Top Bar — FIXED ═══ */}
       <div style={{
         padding: '14px 24px',
         borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -530,20 +535,28 @@ export default function CodeStreamView({
         alignItems: 'center',
         gap: '14px',
         position: 'relative',
-        zIndex: 2,
-        background: 'rgba(8,8,26,0.9)',
+        zIndex: 5,
+        background: 'rgba(8,8,26,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
+        flexShrink: 0,
       }}>
-        {/* Status indicator */}
+        {/* Game icon + Status indicator */}
+        <span style={{
+          fontSize: '14px',
+          lineHeight: 1,
+          filter: done ? 'none' : 'saturate(1.5)',
+        }}>
+          {gameIcon}
+        </span>
         <div style={{
           width: '8px',
           height: '8px',
           borderRadius: '50%',
-          background: done ? 'var(--ai-emerald)' : 'var(--ai-indigo)',
+          background: done ? 'var(--ai-emerald)' : accentColor,
           boxShadow: done
             ? '0 0 12px rgba(16,185,129,0.6)'
-            : '0 0 12px rgba(99,102,241,0.6)',
+            : `0 0 12px ${accentColor}99`,
           animation: done ? undefined : 'dot-glow 1.5s ease-in-out infinite',
         }} />
 
@@ -553,7 +566,7 @@ export default function CodeStreamView({
           fontWeight: 600,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          color: done ? 'var(--ai-emerald)' : 'rgba(99,102,241,0.8)',
+          color: done ? 'var(--ai-emerald)' : accentColor + 'cc',
         }}>
           {done ? completionText : 'GENERATING'}
         </span>
@@ -758,91 +771,197 @@ export default function CodeStreamView({
         }} />
       </div>
 
-      {/* ═══ AI Companion — Smart Code Line Pointer ═══ */}
+      {/* ═══ Fixed Bottom Bar ═══ */}
+      <div style={{
+        flexShrink: 0,
+        padding: '10px 20px',
+        background: 'rgba(8,8,26,0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        zIndex: 5,
+        position: 'relative',
+      }}>
+        {/* Status message */}
+        <div style={{
+          flex: 1,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '10px',
+          color: done ? 'rgba(16,185,129,0.8)' : 'rgba(255,255,255,0.4)',
+          letterSpacing: '0.04em',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {done ? '✓ Build complete' : `⟳ ${status}`}
+        </div>
+
+        {/* Progress mini bar */}
+        <div style={{
+          width: '80px',
+          height: '4px',
+          borderRadius: '2px',
+          background: 'rgba(255,255,255,0.06)',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          <div style={{
+            width: `${progress}%`,
+            height: '100%',
+            borderRadius: '2px',
+            background: done
+              ? 'rgba(16,185,129,0.8)'
+              : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            boxShadow: done ? '0 0 8px rgba(16,185,129,0.4)' : '0 0 8px rgba(99,102,241,0.4)',
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+
+        {/* Percent */}
+        <span style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '10px',
+          fontWeight: 600,
+          color: done ? 'rgba(16,185,129,0.8)' : 'rgba(99,102,241,0.7)',
+          minWidth: '32px',
+          textAlign: 'right',
+          flexShrink: 0,
+        }}>
+          {progress}%
+        </span>
+
+        {/* Elapsed time */}
+        <span style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '9px',
+          color: 'rgba(255,255,255,0.2)',
+          flexShrink: 0,
+        }}>
+          {elapsed}s
+        </span>
+
+        {/* Skip button */}
+        {!done && (
+          <button
+            onClick={handleSkip}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'rgba(255,255,255,0.35)',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '9px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              flexShrink: 0,
+              letterSpacing: '0.06em',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+              e.currentTarget.style.color = 'rgba(255,255,255,0.35)';
+            }}
+          >
+            SKIP ▸
+          </button>
+        )}
+      </div>
+
+      {/* ═══ AI Companion — Elegant Toast Notification ═══ */}
       {companionMsg && !done && (
         <div
           key={companionKey}
           style={{
             position: 'absolute',
-            ...(companionLine > 0
-              ? { bottom: '90px' }  // Will use bottom positioning for now
-              : { bottom: '90px' }
-            ),
-            left: '16px',
-            right: '16px',
+            bottom: '70px',
+            left: '20px',
+            right: '20px',
             zIndex: 10,
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'flex-start',
-            animation: 'companionSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
+            animation: 'companionSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
             pointerEvents: 'none',
           }}
         >
-          {/* AI Avatar */}
           <div style={{
-            width: '32px', height: '32px', borderRadius: '10px',
-            background: `linear-gradient(135deg, ${companionColor}, #a855f7)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '12px', fontWeight: 700, color: '#fff', flexShrink: 0,
-            boxShadow: `0 4px 16px ${companionColor}66`,
-            transition: 'background 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            padding: '14px 20px',
+            background: 'rgba(10,10,32,0.92)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderRadius: '16px',
+            border: `1px solid ${companionColor}30`,
+            boxShadow: `
+              0 8px 32px rgba(0,0,0,0.5),
+              0 0 0 1px rgba(255,255,255,0.03),
+              inset 0 1px 0 rgba(255,255,255,0.05),
+              0 0 40px ${companionColor}08
+            `,
           }}>
-            AI
-          </div>
+            {/* AI Avatar with glow ring */}
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '12px',
+              background: `linear-gradient(135deg, ${companionColor}, #a855f7)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '11px', fontWeight: 800, color: '#fff', flexShrink: 0,
+              boxShadow: `0 0 20px ${companionColor}50, 0 4px 12px rgba(0,0,0,0.3)`,
+              letterSpacing: '0.04em',
+            }}>
+              AI
+            </div>
 
-          {/* Message bubble with optional code label */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '85%' }}>
-            {/* Code section label badge */}
-            {companionLabel && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                alignSelf: 'flex-start',
-              }}>
+            {/* Content */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Label + line number */}
+              {companionLabel && (
                 <div style={{
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  background: `${companionColor}20`,
-                  border: `1px solid ${companionColor}40`,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  color: companionColor,
-                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '4px',
                 }}>
-                  {companionLabel}
-                </div>
-                {companionLine > 0 && (
                   <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: `${companionColor}25`,
                     fontFamily: "'JetBrains Mono', monospace",
                     fontSize: '9px',
-                    color: 'rgba(255,255,255,0.25)',
-                    letterSpacing: '0.04em',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    color: companionColor,
+                    textTransform: 'uppercase',
                   }}>
-                    L{companionLine}
+                    {companionLabel}
                   </span>
-                )}
+                  {companionLine > 0 && (
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '9px',
+                      color: 'rgba(255,255,255,0.2)',
+                    }}>
+                      line {companionLine}
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* Message */}
+              <div style={{
+                fontFamily: "'Noto Sans KR', 'JetBrains Mono', monospace",
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'rgba(255,255,255,0.9)',
+                lineHeight: 1.5,
+              }}>
+                {companionMsg}
               </div>
-            )}
-
-            {/* Message text */}
-            <div style={{
-              background: `${companionColor}15`,
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              border: `1px solid ${companionColor}30`,
-              borderRadius: '14px',
-              borderTopLeftRadius: '4px',
-              padding: '10px 16px',
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.85)',
-              lineHeight: 1.5,
-              boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 20px ${companionColor}10`,
-            }}>
-              {companionMsg}
             </div>
           </div>
         </div>

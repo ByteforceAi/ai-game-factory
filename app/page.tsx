@@ -308,6 +308,8 @@ export default function Home() {
           gameTitle={studentName ? `${studentName}의 ${selectedGame.title}` : selectedGame.title}
           onComplete={handleGenerationComplete}
           duration={instructorSkip ? 3000 : undefined}
+          accentColor={selectedGame.accentColor}
+          gameIcon={selectedGame.icon}
         />
       </div>
     );
@@ -701,6 +703,8 @@ export default function Home() {
             duration={3500}
             statusMessages={VIBE_STATUS_MESSAGES}
             completionText="VIBE CODING COMPLETE"
+            accentColor={selectedGame?.accentColor}
+            gameIcon={selectedGame?.icon}
           />
         </div>
       )}
