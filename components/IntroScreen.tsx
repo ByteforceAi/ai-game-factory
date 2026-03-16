@@ -12,31 +12,31 @@ interface IntroScreenProps {
    Boot sequence steps — shown after "시작하기"
    ═══════════════════════════════════════════════ */
 const BOOT_STEPS = [
-  { label: 'Neural Engine', status: 'connecting' },
-  { label: 'Phaser.js Runtime', status: 'loading' },
-  { label: 'Three.js Renderer', status: 'loading' },
-  { label: 'WebGL 2.0 Pipeline', status: 'initializing' },
-  { label: 'Audio Synthesizer', status: 'calibrating' },
-  { label: 'AI Code Generator', status: 'ready' },
+  { label: 'Neural Engine', status: 'connecting', icon: '🧠' },
+  { label: 'Phaser.js Runtime', status: 'loading', icon: '🎮' },
+  { label: 'Three.js Renderer', status: 'loading', icon: '🎨' },
+  { label: 'WebGL 2.0 Pipeline', status: 'initializing', icon: '⚡' },
+  { label: 'Audio Synthesizer', status: 'calibrating', icon: '🔊' },
+  { label: 'AI Code Generator', status: 'ready', icon: '✨' },
 ];
 
 type Phase = 'idle' | 'booting' | 'done';
 
 /* ═══════════════════════════════════════════════
-   IntroScreen — "이건 진짜 프로덕트다" 첫인상
+   IntroScreen — GitHub Education bright theme
    ═══════════════════════════════════════════════ */
 export default function IntroScreen({ onComplete }: IntroScreenProps) {
   const [mounted, setMounted] = useState(false);
   const [reveal, setReveal] = useState(0);
   const [phase, setPhase] = useState<Phase>('idle');
   const [bootStep, setBootStep] = useState(-1);
-  const [bootDone, setBbootDone] = useState(false);
+  const [bootDone, setBootDone] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     setMounted(true);
-    const delays = [500, 1300, 1700, 2200, 2600, 3100];
+    const delays = [400, 900, 1300, 1700, 2100, 2500];
     const timers = delays.map((ms, i) =>
       setTimeout(() => setReveal(i + 1), ms)
     );
@@ -54,7 +54,6 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Each step reveals after a staggered delay
     BOOT_STEPS.forEach((_, i) => {
       timers.push(setTimeout(() => {
         setBootStep(i);
@@ -62,14 +61,12 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
       }, 400 + i * 450));
     });
 
-    // All done
     const totalTime = 400 + BOOT_STEPS.length * 450 + 600;
     timers.push(setTimeout(() => {
-      setBbootDone(true);
+      setBootDone(true);
       playWhoosh();
     }, totalTime));
 
-    // Fade out and transition
     timers.push(setTimeout(() => {
       setFadeOut(true);
     }, totalTime + 600));
@@ -86,7 +83,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
     if (phase !== 'booting') return;
     timersRef.current.forEach(clearTimeout);
     setBootStep(BOOT_STEPS.length - 1);
-    setBbootDone(true);
+    setBootDone(true);
     playWhoosh();
     setTimeout(() => setFadeOut(true), 400);
     setTimeout(() => onComplete(), 1000);
@@ -103,7 +100,6 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
       justifyContent: 'center',
       position: 'relative',
       overflow: 'hidden',
-      background: '#050510',
       opacity: fadeOut ? 0 : 1,
       transition: 'opacity 0.8s ease-out',
     }}>
@@ -120,13 +116,13 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
         <div
           onClick={phase === 'booting' ? handleSkip : undefined}
           style={{
-            background: 'rgba(10,10,20,0.6)',
-            backdropFilter: 'blur(48px) saturate(1.2)',
-            WebkitBackdropFilter: 'blur(48px) saturate(1.2)',
-            borderRadius: '24px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            padding: '48px 40px',
-            boxShadow: '0 0 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+            background: 'rgba(255,255,255,0.82)',
+            backdropFilter: 'blur(40px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(40px) saturate(1.4)',
+            borderRadius: '28px',
+            border: '1px solid rgba(255,255,255,0.6)',
+            padding: '52px 44px',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -143,17 +139,18 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 opacity: shown(2) ? 1 : 0,
                 transform: shown(2) ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
-                marginBottom: '32px',
+                marginBottom: '28px',
               }}>
                 <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: '11px',
-                  fontWeight: 400,
-                  letterSpacing: '0.08em',
-                  padding: '4px 14px',
-                  borderRadius: '20px',
-                  background: 'rgba(255,255,255,0.06)',
-                  color: 'rgba(255,255,255,0.4)',
+                  fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  padding: '5px 14px',
+                  borderRadius: '100px',
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1))',
+                  border: '1px solid rgba(99,102,241,0.15)',
+                  color: '#6366f1',
                 }}>
                   CLOSED BETA · BUILD 2026.03
                 </span>
@@ -165,27 +162,26 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 opacity: shown(3) ? 1 : 0,
                 transform: shown(3) ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-                marginBottom: '32px',
+                marginBottom: '28px',
               }}>
                 <h1 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 'clamp(28px, 6vw, 44px)',
-                  fontWeight: 700,
-                  letterSpacing: '0.15em',
-                  lineHeight: 1.2,
-                  color: '#f0f0f5',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 'clamp(30px, 6vw, 46px)',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
+                  color: '#1e293b',
                   margin: 0,
-                  textShadow: '0 0 40px rgba(99,102,241,0.15)',
                 }}>
                   VIBE CODING
                 </h1>
                 <div style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '14px',
-                  fontWeight: 400,
-                  letterSpacing: '8px',
-                  color: 'rgba(0,229,255,0.6)',
-                  marginTop: '10px',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  letterSpacing: '0.35em',
+                  color: '#6366f1',
+                  marginTop: '8px',
                 }}>
                   WORKSHOP
                 </div>
@@ -194,10 +190,11 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               {/* Divider */}
               <div style={{
                 width: shown(4) ? '48px' : '0px',
-                height: '1px',
-                background: 'linear-gradient(90deg, transparent, rgba(0,229,255,0.3), transparent)',
+                height: '2px',
+                background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                borderRadius: '1px',
                 transition: 'width 0.4s ease-out',
-                marginBottom: '32px',
+                marginBottom: '28px',
               }} />
 
               {/* Description */}
@@ -206,13 +203,13 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 opacity: shown(5) ? 1 : 0,
                 transform: shown(5) ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-                marginBottom: '40px',
+                marginBottom: '36px',
               }}>
                 <p style={{
                   fontFamily: "'Noto Sans KR', sans-serif",
-                  fontSize: '15px',
-                  fontWeight: 300,
-                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: '16px',
+                  fontWeight: 400,
+                  color: '#475569',
                   lineHeight: 1.8,
                   margin: 0,
                 }}>
@@ -227,31 +224,34 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 onClick={handleStart}
                 style={{
                   width: '100%',
-                  height: '52px',
-                  background: shown(6) ? 'rgba(0,229,255,0.1)' : 'transparent',
-                  border: `1px solid ${shown(6) ? 'rgba(0,229,255,0.25)' : 'transparent'}`,
-                  borderRadius: '14px',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  letterSpacing: '4px',
-                  color: '#00E5FF',
+                  height: '56px',
+                  background: shown(6)
+                    ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
+                    : 'transparent',
+                  border: 'none',
+                  borderRadius: '16px',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  letterSpacing: '0.15em',
+                  color: '#fff',
                   cursor: shown(6) ? 'pointer' : 'default',
                   opacity: shown(6) ? 1 : 0,
                   transform: shown(6) ? 'translateY(0)' : 'translateY(6px)',
                   transition: 'all 0.5s ease-out',
                   pointerEvents: shown(6) ? 'auto' : 'none',
+                  boxShadow: shown(6) ? '0 4px 20px rgba(99,102,241,0.35)' : 'none',
+                  position: 'relative',
+                  overflow: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   if (!shown(6)) return;
-                  e.currentTarget.style.background = 'rgba(0,229,255,0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(0,229,255,0.4)';
-                  e.currentTarget.style.boxShadow = '0 0 24px rgba(0,229,255,0.1)';
+                  e.currentTarget.style.boxShadow = '0 6px 28px rgba(99,102,241,0.45)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,229,255,0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(0,229,255,0.25)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(99,102,241,0.35)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
                 onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)'; }}
                 onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
@@ -270,11 +270,11 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               {/* Mini title */}
               <div style={{ textAlign: 'center', marginBottom: '36px' }}>
                 <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '11px',
-                  fontWeight: 400,
-                  letterSpacing: '0.15em',
-                  color: 'rgba(255,255,255,0.35)',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  letterSpacing: '0.12em',
+                  color: '#94a3b8',
                 }}>
                   SYSTEM INITIALIZATION
                 </span>
@@ -284,7 +284,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
+                gap: '14px',
               }}>
                 {BOOT_STEPS.map((step, i) => {
                   const isActive = i <= bootStep;
@@ -298,7 +298,14 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        opacity: isActive ? 1 : 0.15,
+                        padding: '8px 12px',
+                        borderRadius: '12px',
+                        background: isComplete
+                          ? 'rgba(99,102,241,0.06)'
+                          : isCurrent
+                            ? 'rgba(99,102,241,0.04)'
+                            : 'transparent',
+                        opacity: isActive ? 1 : 0.25,
                         transform: isActive ? 'translateX(0)' : 'translateX(-6px)',
                         transition: 'all 0.4s ease-out',
                       }}
@@ -310,28 +317,28 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                       }}>
                         {/* Status indicator */}
                         <div style={{
-                          width: '6px',
-                          height: '6px',
+                          width: '8px',
+                          height: '8px',
                           borderRadius: '50%',
                           background: isComplete
-                            ? '#00E5FF'
+                            ? '#10b981'
                             : isCurrent
-                              ? '#00E5FF'
-                              : 'rgba(255,255,255,0.15)',
+                              ? '#6366f1'
+                              : '#e2e8f0',
                           boxShadow: isComplete
-                            ? '0 0 8px rgba(0,229,255,0.4)'
+                            ? '0 0 8px rgba(16,185,129,0.4)'
                             : isCurrent
-                              ? '0 0 12px rgba(0,229,255,0.6)'
+                              ? '0 0 10px rgba(99,102,241,0.4)'
                               : 'none',
                           transition: 'all 0.3s ease',
                           animation: isCurrent ? 'introPulse 1.5s ease-in-out infinite' : 'none',
                         }} />
 
                         <span style={{
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: '13px',
-                          fontWeight: 400,
-                          color: isActive ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.2)',
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: isActive ? '#1e293b' : '#cbd5e1',
                           transition: 'color 0.3s ease',
                         }}>
                           {step.label}
@@ -341,16 +348,16 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                       <span style={{
                         fontFamily: "'JetBrains Mono', monospace",
                         fontSize: '10px',
-                        fontWeight: 400,
+                        fontWeight: 500,
                         letterSpacing: '0.05em',
                         color: isComplete
-                          ? 'rgba(0,229,255,0.7)'
+                          ? '#10b981'
                           : isCurrent
-                            ? 'rgba(255,255,255,0.4)'
-                            : 'rgba(255,255,255,0.1)',
+                            ? '#6366f1'
+                            : '#e2e8f0',
                         transition: 'color 0.3s ease',
                       }}>
-                        {isComplete ? 'ready' : isCurrent ? step.status : '—'}
+                        {isComplete ? '✓ ready' : isCurrent ? step.status : '—'}
                       </span>
                     </div>
                   );
@@ -359,10 +366,10 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
 
               {/* Progress bar */}
               <div style={{
-                marginTop: '32px',
-                height: '2px',
-                background: 'rgba(255,255,255,0.06)',
-                borderRadius: '1px',
+                marginTop: '28px',
+                height: '4px',
+                background: '#f1f5f9',
+                borderRadius: '2px',
                 overflow: 'hidden',
               }}>
                 <div style={{
@@ -372,8 +379,8 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                     : bootStep >= 0
                       ? `${Math.min(100, ((bootStep + 1) / BOOT_STEPS.length) * 100)}%`
                       : '0%',
-                  background: 'linear-gradient(90deg, #00E5FF, #8b5cf6)',
-                  borderRadius: '1px',
+                  background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                  borderRadius: '2px',
                   transition: 'width 0.4s ease-out',
                 }} />
               </div>
@@ -386,14 +393,13 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                   animation: 'introFadeIn 0.4s ease both',
                 }}>
                   <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    letterSpacing: '0.12em',
-                    color: '#00E5FF',
-                    textShadow: '0 0 16px rgba(0,229,255,0.3)',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    color: '#10b981',
                   }}>
-                    ALL SYSTEMS READY
+                    ✨ ALL SYSTEMS READY
                   </span>
                 </div>
               )}
@@ -405,12 +411,12 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                   marginTop: '20px',
                 }}>
                   <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '9px',
-                    color: 'rgba(255,255,255,0.15)',
-                    letterSpacing: '0.08em',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '11px',
+                    color: '#94a3b8',
+                    letterSpacing: '0.05em',
                   }}>
-                    TAP TO SKIP
+                    탭하여 건너뛰기
                   </span>
                 </div>
               )}
@@ -426,7 +432,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
             gap: '8px',
             flexWrap: 'wrap',
             marginTop: '24px',
-            opacity: shown(6) ? 0.2 : 0,
+            opacity: shown(6) ? 0.5 : 0,
             transition: 'opacity 0.5s ease-out 0.2s',
           }}>
             {['ONLINE', 'PHASER.JS', 'THREE.JS', 'WEBGL 2.0'].map((label, i) => (
@@ -434,20 +440,21 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '2px 8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                padding: '3px 10px',
+                background: 'rgba(255,255,255,0.7)',
+                border: '1px solid rgba(0,0,0,0.06)',
                 borderRadius: '100px',
               }}>
                 {i === 0 && <span style={{
-                  width: 4, height: 4, borderRadius: '50%',
-                  background: '#22c55e',
+                  width: 5, height: 5, borderRadius: '50%',
+                  background: '#10b981',
                 }} />}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '7px',
-                  color: i === 0 ? '#22c55e' : 'rgba(255,255,255,0.5)',
-                  letterSpacing: '0.1em',
+                  fontSize: '9px',
+                  fontWeight: 500,
+                  color: i === 0 ? '#10b981' : '#64748b',
+                  letterSpacing: '0.08em',
                 }}>{label}</span>
               </div>
             ))}
@@ -459,14 +466,14 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
           <div style={{
             textAlign: 'center',
             marginTop: '12px',
-            opacity: shown(6) ? 0.15 : 0,
+            opacity: shown(6) ? 0.35 : 0,
             transition: 'opacity 0.5s ease-out 0.3s',
           }}>
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '7px',
-              color: 'rgba(255,255,255,0.6)',
-              letterSpacing: '0.1em',
+              fontSize: '9px',
+              color: '#64748b',
+              letterSpacing: '0.08em',
             }}>
               AI GAME FACTORY — PROTOTYPE v0.4.0
             </span>
@@ -481,8 +488,8 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes introPulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,229,255,0.4); }
-          50%      { opacity: 0.5; box-shadow: 0 0 16px rgba(0,229,255,0.7); }
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(99,102,241,0.3); }
+          50%      { opacity: 0.5; box-shadow: 0 0 14px rgba(99,102,241,0.5); }
         }
       `}</style>
     </div>

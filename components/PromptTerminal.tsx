@@ -10,12 +10,12 @@ import ParticleBackground from './ParticleBackground';
    Data — chips, modifiers, reactions
    ═══════════════════════════════════════════════ */
 const CHIPS = [
-  { label: '우주 슈팅게임', prompt: '우주에서 적을 쏘는 네온 슈팅게임' },
-  { label: '네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임' },
-  { label: '3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
-  { label: '테트리스', prompt: '클래식 테트리스 게임' },
-  { label: '이모지 캐치', prompt: '떨어지는 이모지 받기 게임' },
-  { label: '도트 RPG', prompt: '일랜시아 감성 도트 RPG 마을 탐험' },
+  { label: '🚀 우주 슈팅게임', prompt: '우주에서 적을 쏘는 네온 슈팅게임' },
+  { label: '🏃 네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임' },
+  { label: '🎮 3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
+  { label: '🧱 테트리스', prompt: '클래식 테트리스 게임' },
+  { label: '😄 이모지 캐치', prompt: '떨어지는 이모지 받기 게임' },
+  { label: '⚔️ 도트 RPG', prompt: '일랜시아 감성 도트 RPG 마을 탐험' },
 ];
 
 interface ModOption { value: string; label: string }
@@ -25,30 +25,30 @@ const MODIFIER_SLOTS = [
     id: 'difficulty',
     question: '난이도를 선택해주세요.',
     options: [
-      { value: 'easy', label: '이지' },
-      { value: 'normal', label: '노멀' },
-      { value: 'hard', label: '하드' },
-      { value: 'nightmare', label: '나이트메어' },
+      { value: 'easy', label: '😊 이지' },
+      { value: 'normal', label: '⚡ 노멀' },
+      { value: 'hard', label: '🔥 하드' },
+      { value: 'nightmare', label: '💀 나이트메어' },
     ] as ModOption[],
   },
   {
     id: 'style',
     question: '비주얼 스타일은요?',
     options: [
-      { value: 'neon', label: '네온' },
-      { value: 'retro', label: '레트로' },
-      { value: 'minimal', label: '미니멀' },
-      { value: 'cyber', label: '사이버펑크' },
+      { value: 'neon', label: '💜 네온' },
+      { value: 'retro', label: '🕹️ 레트로' },
+      { value: 'minimal', label: '⬜ 미니멀' },
+      { value: 'cyber', label: '🌃 사이버펑크' },
     ] as ModOption[],
   },
   {
     id: 'effect',
     question: '특수효과를 추가할까요?',
     options: [
-      { value: 'particle', label: '파티클' },
-      { value: 'shake', label: '화면흔들림' },
-      { value: 'combo', label: '콤보 시스템' },
-      { value: 'slowmo', label: '슬로우모션' },
+      { value: 'particle', label: '✨ 파티클' },
+      { value: 'shake', label: '📳 화면흔들림' },
+      { value: 'combo', label: '🎯 콤보 시스템' },
+      { value: 'slowmo', label: '🕐 슬로우모션' },
     ] as ModOption[],
     hasSkip: true,
   },
@@ -94,7 +94,7 @@ interface PromptTerminalProps {
 }
 
 /* ═══════════════════════════════════════════════
-   Main Component
+   Main Component — GitHub Education bright theme
    ═══════════════════════════════════════════════ */
 export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const [items, setItems] = useState<ChatItem[]>([]);
@@ -138,7 +138,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       setTypingText('');
       scrollToBottom();
 
-      const chars = Array.from(text); // handles unicode correctly
+      const chars = Array.from(text);
       let i = 0;
       const iv = setInterval(() => {
         if (i < chars.length) {
@@ -161,14 +161,12 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
 
   /* ── Show typing indicator then type ── */
   const aiSpeak = useCallback(async (text: string, pauseBefore = 800, speed = 60): Promise<string> => {
-    // Show thinking dots
     const thinkId = nid();
     setItems(prev => [...prev, { id: thinkId, type: 'ai', text: '···', visible: true }]);
     scrollToBottom();
 
     await wait(pauseBefore);
 
-    // Remove thinking dots, then type
     setItems(prev => prev.filter(item => item.id !== thinkId));
     const id = await typeAiText(text, speed);
     return id;
@@ -205,7 +203,6 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
 
   /* ═══════ Step Flow ═══════ */
   const runFlow = useCallback(async () => {
-    // Step 1: Ask what game
     await wait(500);
     await aiSpeak('어떤 게임을 만들어볼까요?', 0, 60);
     await wait(800);
@@ -213,21 +210,17 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     const inputId = addWidget('input');
     const chipsId = addWidget('chips');
 
-    // Wait for game selection
     const prompt = await waitForGamePrompt();
 
-    // Fade out input & chips
     fadeOut(inputId);
     fadeOut(chipsId);
     await wait(300);
 
-    // AI reacts to match
     const game = DEMO_GAMES.find(g => g.id === matchRef.current?.gameId);
     const gameName = game?.title || '게임';
     await wait(1200);
     await aiSpeak(`${gameName}, 좋은 선택이에요.`, 800, 60);
 
-    // Steps 2-4: Modifiers
     for (let si = 0; si < MODIFIER_SLOTS.length; si++) {
       const slot = MODIFIER_SLOTS[si];
       await wait(1000);
@@ -253,16 +246,13 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       }
     }
 
-    // Step 5: Generating
     await wait(1500);
     await aiSpeak('완벽해요. 지금 만들어볼게요.', 800, 80);
     await wait(500);
 
-    // Progress bar
     const progId = addWidget('progress');
     playComplete();
 
-    // Animate progress 0 → 100 over 2s
     await animateProgress();
 
     await wait(300);
@@ -350,7 +340,6 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const animateProgress = (): Promise<void> => {
     return new Promise(resolve => {
       setProgressWidth(0);
-      // Use requestAnimationFrame for smooth animation
       requestAnimationFrame(() => {
         setProgressWidth(100);
       });
@@ -369,7 +358,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   }, []);
 
   /* ═══════════════════════════════════════════════
-     Render
+     Render — GitHub Education bright theme
      ═══════════════════════════════════════════════ */
   return (
     <div style={{
@@ -388,7 +377,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         position: 'relative',
         zIndex: 1,
         width: '100%',
-        maxWidth: '520px',
+        maxWidth: '560px',
         opacity: mounted ? 1 : 0,
         transform: mounted ? 'translateY(0)' : 'translateY(8px)',
         transition: 'opacity 1.2s ease, transform 1.2s ease',
@@ -407,65 +396,69 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             marginBottom: '12px',
           }}>
             <span style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '7px',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '10px',
               fontWeight: 600,
-              letterSpacing: '0.15em',
-              padding: '2px 8px',
+              letterSpacing: '0.08em',
+              padding: '3px 10px',
               borderRadius: '100px',
-              background: 'rgba(99,102,241,0.12)',
-              border: '1px solid rgba(99,102,241,0.2)',
-              color: '#a5b4fc',
+              background: 'rgba(255,255,255,0.7)',
+              border: '1px solid rgba(99,102,241,0.15)',
+              color: '#6366f1',
             }}>
               CLOSED BETA
             </span>
             <span style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '8px',
-              color: 'rgba(255,255,255,0.25)',
-              letterSpacing: '0.15em',
+              fontSize: '10px',
+              color: '#94a3b8',
+              letterSpacing: '0.08em',
             }}>
               NEURAL ENGINE v4.0
             </span>
           </div>
           <h1 style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontSize: 'clamp(18px, 4vw, 26px)',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
+            fontWeight: 800,
+            letterSpacing: '-0.01em',
             margin: 0,
             lineHeight: 1.2,
           }}>
-            <span style={{ color: 'rgba(255,255,255,0.9)' }}>VIBE CODING</span>
+            <span style={{ color: '#1e293b' }}>VIBE CODING</span>
             {' '}
             <span style={{
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: '0.55em',
-              letterSpacing: '0.22em',
+              color: '#6366f1',
+              fontSize: '0.6em',
+              letterSpacing: '0.2em',
+              fontWeight: 600,
             }}>
               WORKSHOP
             </span>
           </h1>
           {/* Gradient underline */}
           <div style={{
-            width: '60px',
-            height: '1px',
-            margin: '12px auto 0',
-            background: 'linear-gradient(90deg, transparent, rgba(0,229,255,0.4), rgba(139,92,246,0.4), transparent)',
+            width: '50px',
+            height: '2px',
+            margin: '10px auto 0',
+            background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+            borderRadius: '1px',
           }} />
         </div>
 
-        {/* ═══ Glass container — no frame, no border ═══ */}
+        {/* ═══ Glass container — white card ═══ */}
         <div style={{
-          background: 'rgba(5,5,16,0.4)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          borderRadius: '32px',
+          background: 'rgba(255,255,255,0.78)',
+          backdropFilter: 'blur(40px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(40px) saturate(1.2)',
+          borderRadius: '28px',
+          border: '1px solid rgba(255,255,255,0.7)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
-          padding: '40px 32px',
+          padding: '36px 28px',
           overflow: 'hidden',
         }}>
           {/* Scrollable chat area */}
@@ -476,9 +469,8 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
               overflow: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '20px',
+              gap: '18px',
               scrollBehavior: 'smooth',
-              /* Hide scrollbar for clean look */
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
@@ -489,10 +481,9 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             <div className="pt-scroll" style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '20px',
+              gap: '18px',
             }}>
               {items.map((item) => {
-                // Fade-out items
                 if (!item.visible && (item.type === 'input' || item.type === 'chips' || item.type === 'options')) {
                   return (
                     <div key={item.id} style={{
@@ -561,7 +552,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           </div>
         </div>
 
-        {/* ═══ Footer — very quiet ═══ */}
+        {/* ═══ Footer ═══ */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -569,7 +560,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           gap: '6px',
           marginTop: '16px',
           flexShrink: 0,
-          opacity: 0.3,
+          opacity: 0.5,
         }}>
           <div style={{
             display: 'flex',
@@ -582,29 +573,30 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '2px 8px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                padding: '3px 10px',
+                background: 'rgba(255,255,255,0.6)',
+                border: '1px solid rgba(0,0,0,0.04)',
                 borderRadius: '100px',
               }}>
                 {i === 0 && <span style={{
                   width: 4, height: 4, borderRadius: '50%',
-                  background: '#22c55e',
+                  background: '#10b981',
                 }} />}
                 <span style={{
                   fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '7px',
-                  color: i === 0 ? '#22c55e' : 'rgba(255,255,255,0.5)',
-                  letterSpacing: '0.1em',
+                  fontSize: '8px',
+                  fontWeight: 500,
+                  color: i === 0 ? '#10b981' : '#64748b',
+                  letterSpacing: '0.08em',
                 }}>{label}</span>
               </div>
             ))}
           </div>
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '7px',
-            color: 'rgba(255,255,255,0.2)',
-            letterSpacing: '0.1em',
+            fontSize: '8px',
+            color: '#94a3b8',
+            letterSpacing: '0.08em',
           }}>
             AI GAME FACTORY — PROTOTYPE v0.4.0
           </span>
@@ -622,8 +614,8 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           50%      { opacity: 0; }
         }
         @keyframes ptDotGlow {
-          0%, 100% { opacity: 0.2; }
-          50%      { opacity: 0.8; }
+          0%, 100% { opacity: 0.3; }
+          50%      { opacity: 1; }
         }
       `}</style>
     </div>
@@ -631,7 +623,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
 }
 
 /* ═══════════════════════════════════════════════
-   Sub-components — "quiet confidence" style
+   Sub-components — GitHub Education bright style
    ═══════════════════════════════════════════════ */
 
 function AiMessage({ text, isTyping, isThinking }: {
@@ -647,14 +639,14 @@ function AiMessage({ text, isTyping, isThinking }: {
         gap: '10px',
         animation: 'ptFadeIn 0.4s ease both',
       }}>
-        <AiDot />
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <AiAvatar />
+        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
           {[0, 1, 2].map(i => (
             <span key={i} style={{
-              width: '4px',
-              height: '4px',
+              width: '5px',
+              height: '5px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #00E5FF, #8b5cf6)',
+              background: '#6366f1',
               animation: `ptDotGlow 1.2s ease-in-out ${i * 0.2}s infinite`,
             }} />
           ))}
@@ -670,24 +662,28 @@ function AiMessage({ text, isTyping, isThinking }: {
       gap: '10px',
       animation: 'ptFadeIn 0.4s ease both',
     }}>
-      <AiDot />
+      <AiAvatar />
       <div style={{
+        background: '#f8fafc',
+        borderRadius: '0 18px 18px 18px',
+        padding: '12px 18px',
+        border: '1px solid rgba(0,0,0,0.04)',
         fontFamily: "'Noto Sans KR', sans-serif",
         fontSize: '15px',
         fontWeight: 400,
-        color: 'rgba(255,255,255,0.85)',
+        color: '#1e293b',
         lineHeight: 1.7,
-        maxWidth: '90%',
+        maxWidth: '85%',
       }}>
         {text}
         {isTyping && (
           <span style={{
             display: 'inline-block',
-            width: '1.5px',
+            width: '2px',
             height: '16px',
             marginLeft: '2px',
             verticalAlign: 'text-bottom',
-            background: '#00E5FF',
+            background: '#6366f1',
             animation: 'ptCursorBlink 0.8s ease infinite',
           }} />
         )}
@@ -696,16 +692,22 @@ function AiMessage({ text, isTyping, isThinking }: {
   );
 }
 
-function AiDot() {
+function AiAvatar() {
   return (
     <div style={{
-      width: '20px',
-      height: '20px',
+      width: '28px',
+      height: '28px',
       borderRadius: '50%',
-      background: 'linear-gradient(135deg, rgba(0,229,255,0.6), rgba(139,92,246,0.5))',
+      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
       flexShrink: 0,
       marginTop: '2px',
-    }} />
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+    }}>
+      <span style={{ fontSize: '13px' }}>✨</span>
+    </div>
   );
 }
 
@@ -717,15 +719,16 @@ function UserMessage({ text }: { text: string }) {
       animation: 'ptFadeIn 0.3s ease both',
     }}>
       <div style={{
-        background: 'rgba(129,140,248,0.08)',
-        borderRadius: '20px',
-        padding: '8px 20px',
+        background: 'linear-gradient(135deg, #6366f1, #818cf8)',
+        borderRadius: '18px 0 18px 18px',
+        padding: '10px 18px',
         fontFamily: "'Noto Sans KR', sans-serif",
         fontSize: '15px',
         fontWeight: 500,
-        color: 'rgba(167,139,250,0.9)',
+        color: '#ffffff',
         lineHeight: 1.7,
         maxWidth: '80%',
+        boxShadow: '0 2px 8px rgba(99,102,241,0.2)',
       }}>
         {text}
       </div>
@@ -745,12 +748,17 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
   return (
     <div style={{
       animation: 'ptFadeIn 0.4s ease both',
-      marginLeft: '30px',
+      marginLeft: '38px',
     }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
+        background: '#fff',
+        borderRadius: '16px',
+        border: '1.5px solid #e2e8f0',
+        padding: '4px 4px 4px 16px',
+        transition: 'border-color 0.3s, box-shadow 0.3s',
       }}>
         <input
           ref={inputRef}
@@ -767,42 +775,48 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
           autoFocus
           style={{
             flex: 1,
-            background: 'rgba(255,255,255,0.03)',
+            background: 'transparent',
             border: 'none',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 0,
             outline: 'none',
-            color: isTyping ? '#00E5FF' : 'rgba(255,255,255,0.85)',
+            color: isTyping ? '#6366f1' : '#1e293b',
             fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '15px',
+            fontSize: '14px',
             fontWeight: 400,
             lineHeight: '24px',
             padding: '10px 0',
-            transition: 'border-bottom-color 0.3s',
-            caretColor: '#00E5FF',
+            caretColor: '#6366f1',
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderBottomColor = '#00E5FF';
+            const parent = e.currentTarget.parentElement;
+            if (parent) {
+              parent.style.borderColor = '#6366f1';
+              parent.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.1)';
+            }
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.1)';
+            const parent = e.currentTarget.parentElement;
+            if (parent) {
+              parent.style.borderColor = '#e2e8f0';
+              parent.style.boxShadow = 'none';
+            }
           }}
         />
         {value.trim() && !isTyping && (
           <button
             onClick={onSubmit}
             style={{
-              background: 'transparent',
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
               border: 'none',
-              color: '#00E5FF',
-              fontSize: '18px',
+              color: '#fff',
+              fontSize: '14px',
               cursor: 'pointer',
-              padding: '4px 8px',
-              opacity: 0.7,
-              transition: 'opacity 0.2s',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              transition: 'transform 0.2s',
+              flexShrink: 0,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             ↵
           </button>
@@ -818,7 +832,7 @@ function ChipsWidget({ chips, onSelect }: {
 }) {
   return (
     <div style={{
-      marginLeft: '30px',
+      marginLeft: '38px',
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       gap: '10px',
@@ -829,30 +843,33 @@ function ChipsWidget({ chips, onSelect }: {
           key={chip.label}
           onClick={() => onSelect(chip)}
           style={{
-            padding: '14px 20px',
-            borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(255,255,255,0.03)',
-            color: 'rgba(255,255,255,0.7)',
+            padding: '14px 16px',
+            borderRadius: '14px',
+            border: '1.5px solid #e2e8f0',
+            background: '#fff',
+            color: '#334155',
             fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '14px',
-            fontWeight: 400,
+            fontSize: '13px',
+            fontWeight: 500,
             cursor: 'pointer',
-            transition: 'all 0.3s ease',
+            transition: 'all 0.25s ease',
             textAlign: 'left',
             animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.borderColor = 'rgba(0,229,255,0.2)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+            e.currentTarget.style.background = '#f5f3ff';
+            e.currentTarget.style.borderColor = '#6366f1';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
+            e.currentTarget.style.color = '#4f46e5';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+            e.currentTarget.style.color = '#334155';
           }}
         >
           {chip.label}
@@ -871,7 +888,7 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
 }) {
   return (
     <div style={{
-      marginLeft: '30px',
+      marginLeft: '38px',
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       gap: '10px',
@@ -882,33 +899,36 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
           key={opt.value}
           onClick={() => !disabled && onSelect(slotId, opt)}
           style={{
-            padding: '14px 20px',
-            borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(255,255,255,0.03)',
-            color: 'rgba(255,255,255,0.7)',
+            padding: '14px 16px',
+            borderRadius: '14px',
+            border: '1.5px solid #e2e8f0',
+            background: '#fff',
+            color: '#334155',
             fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '14px',
-            fontWeight: 400,
+            fontSize: '13px',
+            fontWeight: 500,
             cursor: disabled ? 'default' : 'pointer',
-            transition: 'all 0.3s ease',
+            transition: 'all 0.25s ease',
             textAlign: 'left',
             animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
-            opacity: disabled ? 0.3 : 1,
+            opacity: disabled ? 0.4 : 1,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}
           onMouseEnter={(e) => {
             if (disabled) return;
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.borderColor = 'rgba(0,229,255,0.2)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
+            e.currentTarget.style.background = '#f5f3ff';
+            e.currentTarget.style.borderColor = '#6366f1';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
+            e.currentTarget.style.color = '#4f46e5';
           }}
           onMouseLeave={(e) => {
             if (disabled) return;
-            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+            e.currentTarget.style.color = '#334155';
           }}
         >
           {opt.label}
@@ -920,10 +940,10 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
           style={{
             gridColumn: '1 / -1',
             padding: '10px 20px',
-            borderRadius: '16px',
+            borderRadius: '14px',
             border: 'none',
             background: 'transparent',
-            color: 'rgba(255,255,255,0.3)',
+            color: '#94a3b8',
             fontFamily: "'Noto Sans KR', sans-serif",
             fontSize: '13px',
             fontWeight: 400,
@@ -932,10 +952,10 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
             textAlign: 'center',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+            e.currentTarget.style.color = '#64748b';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'rgba(255,255,255,0.3)';
+            e.currentTarget.style.color = '#94a3b8';
           }}
         >
           건너뛰기
@@ -948,21 +968,21 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
 function ProgressBar({ width }: { width: number }) {
   return (
     <div style={{
-      marginLeft: '30px',
+      marginLeft: '38px',
       marginTop: '4px',
       animation: 'ptFadeIn 0.4s ease both',
     }}>
       <div style={{
-        height: '2px',
-        background: 'rgba(255,255,255,0.06)',
-        borderRadius: '1px',
+        height: '4px',
+        background: '#f1f5f9',
+        borderRadius: '2px',
         overflow: 'hidden',
       }}>
         <div style={{
           height: '100%',
           width: `${width}%`,
-          background: 'linear-gradient(90deg, #00E5FF, #8b5cf6)',
-          borderRadius: '1px',
+          background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+          borderRadius: '2px',
           transition: 'width 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         }} />
       </div>
