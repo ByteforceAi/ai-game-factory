@@ -14,6 +14,145 @@ interface CodeStreamViewProps {
   completionText?: string;
 }
 
+/** ═══ Build Pipeline Stages ═══ */
+const PIPELINE_STAGES = [
+  { id: 'structure', label: 'Structure', icon: '📐', range: [0, 18] as const, color: '#ff79c6' },
+  { id: 'render',    label: 'Renderer',  icon: '🎨', range: [15, 38] as const, color: '#bd93f9' },
+  { id: 'engine',    label: 'Engine',    icon: '⚙️', range: [32, 58] as const, color: '#f1fa8c' },
+  { id: 'physics',   label: 'Physics',   icon: '💫', range: [50, 72] as const, color: '#ffb86c' },
+  { id: 'input',     label: 'Input',     icon: '🎮', range: [65, 85] as const, color: '#50fa7b' },
+  { id: 'polish',    label: 'Polish',    icon: '✨', range: [78, 100] as const, color: '#8be9fd' },
+];
+
+function BuildPipelineBar({ progress, done, companionLabel }: { progress: number; done: boolean; companionLabel: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2px',
+      padding: '8px 16px',
+      background: 'rgba(8,8,26,0.85)',
+      borderBottom: '1px solid rgba(255,255,255,0.03)',
+      position: 'relative',
+      zIndex: 2,
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      minHeight: '36px',
+    }}>
+      {PIPELINE_STAGES.map((stage, idx) => {
+        const [start, end] = stage.range;
+        const stageProgress = progress <= start ? 0
+          : progress >= end ? 1
+          : (progress - start) / (end - start);
+        const isActive = stageProgress > 0 && stageProgress < 1;
+        const isDone = stageProgress >= 1;
+        // Check if current AI companion insight matches this stage
+        const isHighlighted = companionLabel && (
+          (stage.id === 'structure' && ['HTML', 'CSS'].includes(companionLabel)) ||
+          (stage.id === 'render' && ['Canvas', 'Render'].includes(companionLabel)) ||
+          (stage.id === 'engine' && ['Engine', 'Loop'].includes(companionLabel)) ||
+          (stage.id === 'physics' && ['Physics', 'Collision'].includes(companionLabel)) ||
+          (stage.id === 'input' && ['Input', 'Audio'].includes(companionLabel)) ||
+          (stage.id === 'polish' && ['Score', 'VFX', 'GameOver'].includes(companionLabel))
+        );
+
+        return (
+          <div key={stage.id} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            {/* Stage pill */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              borderRadius: '6px',
+              background: done
+                ? 'rgba(16,185,129,0.1)'
+                : isDone
+                  ? `${stage.color}15`
+                  : isActive
+                    ? `${stage.color}12`
+                    : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${
+                done
+                  ? 'rgba(16,185,129,0.3)'
+                  : isDone
+                    ? `${stage.color}30`
+                    : isActive
+                      ? `${stage.color}25`
+                      : 'rgba(255,255,255,0.04)'
+              }`,
+              boxShadow: isHighlighted && isActive
+                ? `0 0 12px ${stage.color}30`
+                : 'none',
+              transition: 'all 0.5s ease',
+              flexShrink: 0,
+            }}>
+              {/* Status icon */}
+              <span style={{ fontSize: '10px', lineHeight: 1 }}>
+                {done ? '✅' : isDone ? '✅' : isActive ? stage.icon : '○'}
+              </span>
+
+              {/* Label */}
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                color: done
+                  ? 'rgba(16,185,129,0.8)'
+                  : isDone
+                    ? `${stage.color}cc`
+                    : isActive
+                      ? stage.color
+                      : 'rgba(255,255,255,0.15)',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                transition: 'color 0.5s ease',
+              }}>
+                {stage.label}
+              </span>
+
+              {/* Mini progress bar inside active stage */}
+              {isActive && !done && (
+                <div style={{
+                  width: '24px',
+                  height: '3px',
+                  borderRadius: '2px',
+                  background: 'rgba(255,255,255,0.06)',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}>
+                  <div style={{
+                    width: `${stageProgress * 100}%`,
+                    height: '100%',
+                    borderRadius: '2px',
+                    background: stage.color,
+                    boxShadow: `0 0 6px ${stage.color}60`,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              )}
+            </div>
+
+            {/* Arrow connector */}
+            {idx < PIPELINE_STAGES.length - 1 && (
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                color: isDone ? `${stage.color}40` : 'rgba(255,255,255,0.06)',
+                transition: 'color 0.5s ease',
+                flexShrink: 0,
+              }}>
+                →
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Lightweight Dracula-inspired syntax highlighter */
 function highlightCode(code: string): React.ReactNode[] {
   const lines = code.split('\n');
@@ -150,7 +289,7 @@ export default function CodeStreamView({
   gameHtml,
   gameTitle,
   onComplete,
-  duration = 20000,
+  duration = 55000,
   statusMessages = GENERATE_STATUS_MESSAGES,
   completionText = 'BUILD COMPLETE',
 }: CodeStreamViewProps) {
@@ -315,7 +454,8 @@ export default function CodeStreamView({
   }, [code]);
 
   const lineCount = code.split('\n').length;
-  const tokPerSec = elapsed > 0 ? Math.round(lineCount * 8.5 / elapsed) : 0;
+  // Opus 4.6 speed: ~30-60 tok/s with variance
+  const tokPerSec = elapsed > 0 ? Math.round(lineCount * 3.8 / elapsed) : 0;
   const currentLineNum = lineCount;
 
   // Fake system metrics
@@ -475,6 +615,9 @@ export default function CodeStreamView({
           </span>
         </div>
       </div>
+
+      {/* ═══ Build Pipeline Bar ═══ */}
+      <BuildPipelineBar progress={progress} done={done} companionLabel={companionLabel} />
 
       {/* ═══ Code Area ═══ */}
       <div

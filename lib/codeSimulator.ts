@@ -168,20 +168,22 @@ interface BurstSegment {
 
 function generateBurstSchedule(totalTokens: number, totalDuration: number): BurstSegment[] {
   const segments: BurstSegment[] = [];
-  const avgBurstSize = Math.floor(totalTokens / 20); // ~20 bursts
+  const avgBurstSize = Math.floor(totalTokens / 30); // ~30 bursts (more granular)
   let tokenPos = 0;
 
-  // Reserve ~25% of total time for pauses
-  const activeDuration = totalDuration * 0.72;
-  const pauseBudget = totalDuration * 0.28;
+  // Reserve ~38% of total time for pauses (Opus thinks A LOT)
+  const activeDuration = totalDuration * 0.62;
+  const pauseBudget = totalDuration * 0.38;
 
-  // Generate bursts with varying sizes
+  // Generate bursts with varying sizes — more variation than before
   const bursts: number[] = [];
   while (tokenPos < totalTokens) {
-    // Vary burst size: small (0.4x) to large (2x)
-    const variance = 0.4 + Math.random() * 1.6;
+    const progress = tokenPos / totalTokens;
+    // Early code (HTML boilerplate) = bigger bursts, later code (logic) = smaller, more careful
+    const phaseMultiplier = progress < 0.2 ? 1.4 : progress < 0.7 ? 0.8 : 1.1;
+    const variance = (0.3 + Math.random() * 1.5) * phaseMultiplier;
     const size = Math.min(
-      Math.floor(avgBurstSize * variance),
+      Math.max(2, Math.floor(avgBurstSize * variance)),
       totalTokens - tokenPos
     );
     bursts.push(size);
@@ -192,7 +194,7 @@ function generateBurstSchedule(totalTokens: number, totalDuration: number): Burs
   const totalBurstTokens = bursts.reduce((a, b) => a + b, 0);
   tokenPos = 0;
 
-  // Create pause distribution — some long (thinking), some short (buffering)
+  // Create pause distribution — Opus-level thinking pauses
   const numPauses = bursts.length;
   const pauses: number[] = [];
   let pauseUsed = 0;
@@ -201,20 +203,29 @@ function generateBurstSchedule(totalTokens: number, totalDuration: number): Burs
     const progress = i / numPauses;
     let pause: number;
 
-    // Major thinking pauses at ~15%, ~40%, ~65%, ~85%
-    if (Math.abs(progress - 0.15) < 0.04 ||
-        Math.abs(progress - 0.40) < 0.04 ||
-        Math.abs(progress - 0.65) < 0.04 ||
-        Math.abs(progress - 0.85) < 0.04) {
-      pause = 800 + Math.random() * 1200; // 0.8-2s thinking pause
+    // MAJOR thinking pauses — Opus stops to think deeply
+    // At ~10%, ~25%, ~45%, ~60%, ~80% progress
+    if (Math.abs(progress - 0.10) < 0.03 ||
+        Math.abs(progress - 0.25) < 0.03 ||
+        Math.abs(progress - 0.45) < 0.03 ||
+        Math.abs(progress - 0.60) < 0.03 ||
+        Math.abs(progress - 0.80) < 0.03) {
+      pause = 2000 + Math.random() * 3500; // 2-5.5s deep thinking (like real Opus)
     }
-    // Minor buffer pauses
-    else if (Math.random() < 0.35) {
-      pause = 200 + Math.random() * 500; // 0.2-0.7s buffer
+    // Medium "hmm let me think" pauses
+    else if (Math.abs(progress - 0.35) < 0.03 ||
+             Math.abs(progress - 0.55) < 0.03 ||
+             Math.abs(progress - 0.70) < 0.03 ||
+             Math.abs(progress - 0.90) < 0.03) {
+      pause = 1000 + Math.random() * 2000; // 1-3s thinking
     }
-    // Tiny micro-pauses
+    // Minor buffer/stutter pauses (40% chance)
+    else if (Math.random() < 0.40) {
+      pause = 300 + Math.random() * 900; // 0.3-1.2s buffer stutter
+    }
+    // Micro-pauses between tokens — the "typing rhythm"
     else {
-      pause = 30 + Math.random() * 120; // 30-150ms
+      pause = 50 + Math.random() * 200; // 50-250ms
     }
 
     pauses.push(pause);
@@ -224,7 +235,7 @@ function generateBurstSchedule(totalTokens: number, totalDuration: number): Burs
   // Scale pauses to fit budget
   const pauseScale = pauseBudget / (pauseUsed || 1);
   for (let i = 0; i < pauses.length; i++) {
-    pauses[i] = Math.max(20, pauses[i] * pauseScale);
+    pauses[i] = Math.max(30, pauses[i] * pauseScale);
   }
 
   // Last burst has no pause after
@@ -238,7 +249,7 @@ function generateBurstSchedule(totalTokens: number, totalDuration: number): Burs
     segments.push({
       startToken: tokenPos,
       endToken: tokenPos + burstTokens,
-      duration: Math.max(100, burstDuration),
+      duration: Math.max(150, burstDuration), // min 150ms per burst (slower)
       pauseAfter: pauses[i] || 0,
     });
 
@@ -258,7 +269,7 @@ function generateBurstSchedule(totalTokens: number, totalDuration: number): Burs
 export function simulateCodeGeneration(
   gameHtml: string,
   callbacks: SimulationCallbacks,
-  durationMs: number = 20000,
+  durationMs: number = 55000,
   statusMessages: string[] = GENERATE_STATUS_MESSAGES
 ): { cancel: () => void } {
   const tokens = tokenize(gameHtml);
@@ -275,14 +286,14 @@ export function simulateCodeGeneration(
   let inPause = false;
   let pauseEndTime = 0;
 
-  // Status message rotation (variable interval for realism)
-  let nextStatusTime = 1200 + Math.random() * 800;
+  // Status message rotation — slower for Opus pace
+  let nextStatusTime = 2500 + Math.random() * 1500;
   let totalElapsed = 0;
 
   callbacks.onStatusChange(statusMessages[0]);
 
-  // Initial delay — simulates "thinking before coding"
-  const initialDelay = 600 + Math.random() * 400;
+  // Initial delay — Opus takes 2-4 seconds to "plan" before outputting
+  const initialDelay = 2000 + Math.random() * 2000;
   let started = false;
   let globalStartTime = 0;
 
@@ -307,7 +318,7 @@ export function simulateCodeGeneration(
     if (elapsed > nextStatusTime) {
       statusIndex = (statusIndex + 1) % statusMessages.length;
       callbacks.onStatusChange(statusMessages[statusIndex]);
-      nextStatusTime = elapsed + 1200 + Math.random() * 1500;
+      nextStatusTime = elapsed + 2500 + Math.random() * 2500;
     }
 
     // Handle pause between bursts
@@ -339,10 +350,11 @@ export function simulateCodeGeneration(
     const segElapsed = timestamp - segmentStartTime;
     const segProgress = Math.min(segElapsed / seg.duration, 1);
 
-    // Ease: slow start, fast middle, slow end within each burst
+    // Ease: very slow ramp-up, fast middle burst, decelerate at end
+    // Cubic ease-in-out for more pronounced slow start (like Opus warming up)
     const easedProgress = segProgress < 0.5
-      ? 2 * segProgress * segProgress
-      : 1 - Math.pow(-2 * segProgress + 2, 2) / 2;
+      ? 4 * segProgress * segProgress * segProgress
+      : 1 - Math.pow(-2 * segProgress + 2, 3) / 2;
 
     const targetToken = seg.startToken + Math.floor(easedProgress * (seg.endToken - seg.startToken));
 
