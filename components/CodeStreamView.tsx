@@ -128,7 +128,7 @@ export default function CodeStreamView({
   gameHtml,
   gameTitle,
   onComplete,
-  duration = 6000,
+  duration = 20000,
   statusMessages = GENERATE_STATUS_MESSAGES,
   completionText = 'BUILD COMPLETE',
 }: CodeStreamViewProps) {
