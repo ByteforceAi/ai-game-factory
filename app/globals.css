@@ -572,6 +572,23 @@ body {
   }
 }
 
+/* ═══ Live Mini Preview Animations ═══ */
+@keyframes previewSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes scanlineMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 200px; }
+}
+
 /* Safe area for notched phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .overlay-game-over {

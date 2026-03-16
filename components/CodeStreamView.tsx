@@ -139,11 +139,14 @@ export default function CodeStreamView({
   const [elapsed, setElapsed] = useState(0);
   const [companionMsg, setCompanionMsg] = useState('');
   const [companionKey, setCompanionKey] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [previewSrcdoc, setPreviewSrcdoc] = useState('');
   const shownMsgsRef = useRef(new Set<number>());
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(Date.now());
   const cancelRef = useRef<(() => void) | null>(null);
+  const lastPreviewUpdateRef = useRef(0);
 
   const handleSkip = useCallback(() => {
     if (done) return;
@@ -220,6 +223,34 @@ export default function CodeStreamView({
       }
     }
   }, [progress, done]);
+
+  // ═══ Live Mini Preview — debounced srcdoc update ═══
+  // Update preview every 8% progress or 600ms, whichever comes first
+  useEffect(() => {
+    if (done) return;
+    const now = Date.now();
+    const timeSinceLast = now - lastPreviewUpdateRef.current;
+    const progressThreshold = progress >= 20; // Only start preview after 20%
+
+    if (progressThreshold && (timeSinceLast > 600 || progress % 8 < 1.5)) {
+      // Extract raw HTML (skip the comment header)
+      const htmlStart = code.indexOf('<!');
+      const rawHtml = htmlStart >= 0 ? code.slice(htmlStart) : code;
+
+      // Only update if we have meaningful HTML content
+      if (rawHtml.length > 100) {
+        lastPreviewUpdateRef.current = now;
+        setPreviewSrcdoc(rawHtml);
+      }
+    }
+  }, [progress, code, done]);
+
+  // Final preview with complete code
+  useEffect(() => {
+    if (done) {
+      setPreviewSrcdoc(gameHtml);
+    }
+  }, [done, gameHtml]);
 
   // Auto-scroll: use sentinel div at bottom
   useEffect(() => {
@@ -544,6 +575,201 @@ export default function CodeStreamView({
             {companionMsg}
           </div>
         </div>
+      )}
+
+      {/* ═══ Live Mini Preview — PIP Window ═══ */}
+      {previewOpen && previewSrcdoc && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '64px',
+            right: '16px',
+            width: '180px',
+            zIndex: 20,
+            animation: 'previewSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}
+        >
+          {/* Preview header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 10px',
+            background: 'rgba(99,102,241,0.15)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '10px 10px 0 0',
+            border: '1px solid rgba(99,102,241,0.25)',
+            borderBottom: 'none',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              <div style={{
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: done ? '#10b981' : '#6366f1',
+                boxShadow: done
+                  ? '0 0 8px rgba(16,185,129,0.6)'
+                  : '0 0 8px rgba(99,102,241,0.6)',
+                animation: done ? undefined : 'dot-glow 1.5s ease-in-out infinite',
+              }} />
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '8px',
+                fontWeight: 600,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.5)',
+              }}>
+                {done ? 'PREVIEW' : 'LIVE'}
+              </span>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setPreviewOpen(false); }}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: 'none',
+                borderRadius: '4px',
+                width: '18px', height: '18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '10px',
+                lineHeight: 1,
+                padding: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Preview iframe container */}
+          <div style={{
+            position: 'relative',
+            width: '180px',
+            height: '280px',
+            borderRadius: '0 0 10px 10px',
+            overflow: 'hidden',
+            border: '1px solid rgba(99,102,241,0.25)',
+            borderTop: 'none',
+            background: '#000',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(99,102,241,0.15)',
+          }}>
+            {/* Phone-like aspect ratio frame */}
+            <iframe
+              srcDoc={previewSrcdoc}
+              title="Game Preview"
+              sandbox="allow-scripts"
+              style={{
+                width: '375px',
+                height: '667px',
+                transform: 'scale(0.48)',
+                transformOrigin: 'top left',
+                border: 'none',
+                pointerEvents: 'none',
+                background: '#000',
+              }}
+            />
+
+            {/* Scanline overlay for "building" feel */}
+            {!done && (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: `repeating-linear-gradient(
+                  0deg,
+                  transparent,
+                  transparent 2px,
+                  rgba(99,102,241,0.03) 2px,
+                  rgba(99,102,241,0.03) 4px
+                )`,
+                pointerEvents: 'none',
+                animation: 'scanlineMove 3s linear infinite',
+              }} />
+            )}
+
+            {/* Progress ring overlay when building */}
+            {!done && progress < 95 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                width: '28px', height: '28px',
+                borderRadius: '50%',
+                background: 'rgba(0,0,0,0.6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
+                  <circle
+                    cx="10" cy="10" r="8" fill="none"
+                    stroke="#6366f1"
+                    strokeWidth="2"
+                    strokeDasharray={`${progress * 0.5} 50`}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dasharray 0.3s ease' }}
+                  />
+                </svg>
+                <span style={{
+                  position: 'absolute',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '6px',
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.6)',
+                }}>
+                  {progress}%
+                </span>
+              </div>
+            )}
+
+            {/* Completion checkmark */}
+            {done && (
+              <div style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                width: '28px', height: '28px',
+                borderRadius: '50%',
+                background: 'rgba(16,185,129,0.2)',
+                border: '1px solid rgba(16,185,129,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px',
+                animation: 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}>
+                ✓
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mini preview toggle — show when preview is closed */}
+      {!previewOpen && previewSrcdoc && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
+          style={{
+            position: 'absolute',
+            top: '64px',
+            right: '16px',
+            zIndex: 20,
+            width: '36px', height: '36px',
+            borderRadius: '10px',
+            background: 'rgba(99,102,241,0.15)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(99,102,241,0.25)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '14px',
+            color: 'rgba(255,255,255,0.6)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            animation: 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        >
+          👁
+        </button>
       )}
 
       {/* Skip hint — delayed reveal for visibility */}
