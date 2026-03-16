@@ -427,29 +427,57 @@ body {
 /* ============================================
    START BUTTON (IntroScreen CTA)
    ============================================ */
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1); transform: scale(1); }
+  50% { box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2); transform: scale(1.03); }
+}
+@keyframes btnShimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
 .btn-start {
-  background: transparent;
-  border: 1px solid rgba(99,102,241,0.3);
-  color: rgba(255,255,255,0.7);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #6366f1);
+  background-size: 200% 200%;
+  animation: btnPulse 2.5s ease-in-out infinite, btnGradient 4s ease infinite;
+  border: none;
+  color: #fff;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0.2em;
-  padding: 14px 48px;
-  border-radius: 12px;
+  padding: 16px 52px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: filter 0.3s, box-shadow 0.3s;
   margin-top: 20px;
+  position: relative;
+  overflow: hidden;
+}
+@keyframes btnGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* Shimmer sweep overlay */
+.btn-start::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: btnShimmer 3s ease-in-out infinite;
+  pointer-events: none;
 }
 .btn-start:hover {
-  border-color: rgba(99,102,241,0.6);
-  color: rgba(255,255,255,0.95);
-  box-shadow: 0 0 30px rgba(99,102,241,0.15), 0 0 60px rgba(99,102,241,0.05);
-  transform: translateY(-1px);
+  filter: brightness(1.15);
+  box-shadow: 0 0 40px rgba(99,102,241,0.6), 0 0 100px rgba(139,92,246,0.25);
 }
 .btn-start:active {
   transform: scale(0.97);
   transition-duration: 0.1s;
+  animation: none;
 }
 
 /* ============================================

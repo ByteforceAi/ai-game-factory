@@ -147,6 +147,7 @@ function sfxGameOver(){
 
 /* ═══════════ GAME LOGIC ═══════════ */
 var score=0,gameOver=false,keys={};
+var dasDirection=0,dasTimer=0,DAS_INITIAL=170,DAS_REPEAT=50;
 var COLS=10,ROWS=20,BS,grid=[],cur,nx,lockTimer=0,LOCK_DELAY=500;
 var lines=0,level=1,dropInterval=1000,lastDrop=0,softDrop=false;
 var shakeX=0,shakeY=0,clearing=[],clearAnim=0;
@@ -405,8 +406,13 @@ function loop(ts){
     }catch(e){}
   }
 
-  if(keys['ArrowLeft']){mL();keys['ArrowLeft']=false}
-  if(keys['ArrowRight']){mR();keys['ArrowRight']=false}
+  if(dasDirection!==0){
+    dasTimer+=dt;
+    if(dasTimer>=DAS_INITIAL){
+      if(dasDirection===-1)mL();else if(dasDirection===1)mR();
+      dasTimer=DAS_INITIAL-DAS_REPEAT;
+    }
+  }
   render();
   if(!gameOver) requestAnimationFrame(loop);
   else{render();}  // final render
@@ -419,9 +425,10 @@ document.addEventListener('keydown',function(e){
   if(e.key==='ArrowUp'){rot();e.preventDefault()}
   if(e.key===' '){hD();e.preventDefault()}
   if(e.key==='ArrowDown'){softDrop=true;e.preventDefault()}
-  if(e.key==='ArrowLeft'||e.key==='ArrowRight')e.preventDefault();
+  if(e.key==='ArrowLeft'){dasDirection=-1;dasTimer=0;mL();e.preventDefault()}
+  if(e.key==='ArrowRight'){dasDirection=1;dasTimer=0;mR();e.preventDefault()}
 });
-document.addEventListener('keyup',function(e){keys[e.key]=false;if(e.key==='ArrowDown')softDrop=false});
+document.addEventListener('keyup',function(e){keys[e.key]=false;if(e.key==='ArrowDown')softDrop=false;if(e.key==='ArrowLeft'&&dasDirection===-1){dasDirection=0;dasTimer=0}if(e.key==='ArrowRight'&&dasDirection===1){dasDirection=0;dasTimer=0}});
 
 function restart(){
   score=0;lines=0;level=1;gameOver=false;gameOverSent=false;

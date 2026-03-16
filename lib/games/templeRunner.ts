@@ -202,6 +202,7 @@ barGeo.rotateZ(Math.PI/2);
 var barMat=new THREE.MeshPhongMaterial({color:0xddcc00,emissive:0x665500,shininess:60});
 var coinGeo=new THREE.OctahedronGeometry(0.35,0);
 var coinMat=new THREE.MeshPhongMaterial({color:0xffcc00,emissive:0x886600,shininess:100});
+var coinMatPool=[];for(var ci=0;ci<12;ci++)coinMatPool.push(coinMat.clone());var coinMatIdx=0;
 
 // Floating particles
 var particleGeo=new THREE.BufferGeometry();
@@ -236,7 +237,7 @@ function spawnObstacle(){
     var lanes=[0,1,2];
     for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*lanes.length);blocked.push(lanes.splice(idx,1)[0])}
     blocked.forEach(function(l){
-      var m=new THREE.Mesh(wallGeo,wallMat.clone());
+      var m=new THREE.Mesh(wallGeo,wallMat);
       m.position.set(laneX[l],1.25,player.position.z-100);
       m.userData={type:'wall'};
       scene.add(m);obstacles.push(m);
@@ -245,7 +246,7 @@ function spawnObstacle(){
     var safeLane=Math.floor(Math.random()*3);
     for(var l=0;l<3;l++){
       if(l===safeLane)continue;
-      var m=new THREE.Mesh(barGeo,barMat.clone());
+      var m=new THREE.Mesh(barGeo,barMat);
       m.position.set(laneX[l],0.8,player.position.z-100);
       m.userData={type:'bar'};
       scene.add(m);obstacles.push(m);
@@ -256,7 +257,7 @@ function spawnObstacle(){
 function spawnCoins(){
   var lane=Math.floor(Math.random()*3);
   for(var i=0;i<3;i++){
-    var c=new THREE.Mesh(coinGeo,coinMat.clone());
+    var c=new THREE.Mesh(coinGeo,coinMatPool[coinMatIdx++%coinMatPool.length]);
     c.position.set(laneX[lane],1.2,player.position.z-80-i*3);
     c.userData={type:'coin',collected:false};
     scene.add(c);coins.push(c);

@@ -166,8 +166,8 @@ function sfxDeath(){
 }
 
 /* ───────── constants ───────── */
-const W = window.innerWidth;
-const H = window.innerHeight;
+let W = window.innerWidth;
+let H = window.innerHeight;
 const GRAVITY = 720;
 const PLAYER_SPEED = 260;
 const JUMP_VEL = -420;
@@ -524,7 +524,7 @@ class GameScene extends Phaser.Scene {
       duration: 800, yoyo: true, repeat: -1,
     });
 
-    this.controlsText = this.add.text(W/2, H * 0.45, 'ARROWS/WASD or TOUCH\\nDOUBLE JUMP + WALL JUMP', {
+    this.controlsText = this.add.text(W/2, H * 0.45, 'ARROWS/WASD or TOUCH\nDOUBLE JUMP + WALL JUMP', {
       fontFamily: '"Courier New", monospace',
       fontSize: '12px',
       color: '#666688',
@@ -1109,6 +1109,8 @@ const config = {
 const game = new Phaser.Game(config);
 
 window.addEventListener('resize', () => {
+  W = window.innerWidth;
+  H = window.innerHeight;
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
 

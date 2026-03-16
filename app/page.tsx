@@ -11,6 +11,7 @@ import ShareModal from '@/components/ShareModal';
 import VibeOverlay from '@/components/VibeOverlay';
 import LaunchSequence from '@/components/LaunchSequence';
 import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
+import { playAmbient, stopAmbient } from '@/lib/sounds';
 
 interface LeaderboardEntry {
   name: string;
@@ -40,6 +41,17 @@ export default function Home() {
   const [vibePresetLabel, setVibePresetLabel] = useState('');
   const [vibeMode, setVibeMode] = useState<'full' | 'overlay'>('full');
   const [vibeCodeSnippet, setVibeCodeSnippet] = useState('');
+  const [transitioning, setTransitioning] = useState(false);
+  const [displayScore, setDisplayScore] = useState(0);
+  const confettiRef = useRef<HTMLCanvasElement>(null);
+
+  const changeView = useCallback((newView: AppView) => {
+    setTransitioning(true);
+    setTimeout(() => {
+      setView(newView);
+      setTimeout(() => setTransitioning(false), 50);
+    }, 350);
+  }, []);
 
   const writeGameToIframe = useCallback((html: string) => {
     if (!iframeRef.current) return;
@@ -86,6 +98,73 @@ export default function Home() {
     return () => window.removeEventListener('message', handleMessage);
   }, [selectedGame, fetchLeaderboard]);
 
+  // Score count-up animation
+  useEffect(() => {
+    if (showLeaderboard && gameScore > 0) {
+      setDisplayScore(0);
+      const duration = 1500;
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayScore(Math.floor(eased * gameScore));
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }
+  }, [showLeaderboard, gameScore]);
+
+  // Confetti particle burst on game over
+  useEffect(() => {
+    if (showLeaderboard && confettiRef.current) {
+      const canvas = confettiRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      const particles: Array<{x:number;y:number;vx:number;vy:number;color:string;size:number;rotation:number;rotSpeed:number}> = [];
+      const colors = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
+
+      for (let i = 0; i < 80; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height * 0.3,
+          vx: (Math.random() - 0.5) * 12,
+          vy: Math.random() * -10 - 3,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 6 + 3,
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.2,
+        });
+      }
+
+      let frame = 0;
+      const animateConfetti = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.15;
+          p.vx *= 0.99;
+          p.rotation += p.rotSpeed;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = Math.max(0, 1 - frame / 120);
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        });
+        frame++;
+        if (frame < 120) requestAnimationFrame(animateConfetti);
+      };
+      requestAnimationFrame(animateConfetti);
+    }
+  }, [showLeaderboard]);
+
   const handleSubmitScore = async () => {
     if (!selectedGame || !playerName.trim() || submittingScore) return;
     setSubmittingScore(true);
@@ -106,11 +185,13 @@ export default function Home() {
 
   const handleSelectGame = (game: DemoGame) => {
     setSelectedGame(game);
-    setView('generating');
+    changeView('generating');
+    playAmbient();
   };
 
   const handleGenerationComplete = useCallback((html: string) => {
     setGameCode(html);
+    stopAmbient();
     setView('launching');
   }, []);
 
@@ -130,7 +211,7 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    setView('intro');
+    changeView('intro');
     setSelectedGame(null);
     setGameCode('');
     setShowRemix(false);
@@ -170,20 +251,42 @@ export default function Home() {
   }, [writeGameToIframe]);
 
   if (view === 'intro') {
-    return <IntroScreen onComplete={() => setView('select')} />;
+    return (
+      <div style={{
+        opacity: transitioning ? 0 : 1,
+        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
+        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <IntroScreen onComplete={() => changeView('select')} />
+      </div>
+    );
   }
 
   if (view === 'select') {
-    return <PromptTerminal onComplete={handleSelectGame} />;
+    return (
+      <div style={{
+        opacity: transitioning ? 0 : 1,
+        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
+        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <PromptTerminal onComplete={handleSelectGame} />
+      </div>
+    );
   }
 
   if (view === 'generating' && selectedGame) {
     return (
-      <CodeStreamView
-        gameHtml={selectedGame.html}
-        gameTitle={selectedGame.title}
-        onComplete={handleGenerationComplete}
-      />
+      <div style={{
+        opacity: transitioning ? 0 : 1,
+        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
+        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <CodeStreamView
+          gameHtml={selectedGame.html}
+          gameTitle={selectedGame.title}
+          onComplete={handleGenerationComplete}
+        />
+      </div>
     );
   }
 
@@ -255,8 +358,9 @@ export default function Home() {
 
       {/* Game Over Overlay */}
       {showLeaderboard && (
-        <div className="overlay-game-over">
-            <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)' }}>
+        <div className="overlay-game-over" style={{ position: 'absolute' }}>
+            <canvas ref={confettiRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }} />
+            <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)', position: 'relative', zIndex: 2 }}>
               FINAL SCORE
             </span>
             <div style={{
@@ -266,8 +370,10 @@ export default function Home() {
               lineHeight: 1,
               color: 'var(--text-bright)',
               textShadow: '0 0 30px rgba(99,102,241,0.4), 0 0 60px rgba(99,102,241,0.15)',
+              position: 'relative',
+              zIndex: 2,
             }}>
-              {gameScore}
+              {displayScore}
             </div>
 
             {/* Name input */}
@@ -441,7 +547,7 @@ export default function Home() {
               <button
                 onClick={() => {
                   setShowLeaderboard(false);
-                  setView('select');
+                  changeView('select');
                   setSelectedGame(null);
                   setGameCode('');
                   setShowRemix(false);
