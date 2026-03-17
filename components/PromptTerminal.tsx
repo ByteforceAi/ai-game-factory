@@ -9,7 +9,20 @@ import ParticleBackground from './ParticleBackground';
 /* ═══════════════════════════════════════════════
    Data — chips, modifiers, reactions
    ═══════════════════════════════════════════════ */
-const CHIPS = [
+interface ChipItem {
+  label: string;
+  prompt: string;
+  category?: undefined;
+}
+interface ChipCategory {
+  category: string;
+  label?: undefined;
+  prompt?: undefined;
+}
+type ChipEntry = ChipItem | ChipCategory;
+
+const CHIPS: ChipEntry[] = [
+  { category: '🎮 게임' },
   { label: '🚀 우주 슈팅게임', prompt: '우주에서 적을 쏘는 네온 슈팅게임' },
   { label: '🏃 네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임' },
   { label: '🎮 3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
@@ -19,11 +32,21 @@ const CHIPS = [
   { label: '🐱 고양이 점프', prompt: '귀여운 고양이 점프 게임' },
   { label: '🎈 풍선 팝', prompt: '풍선 터뜨리기 타이머 게임' },
   { label: '⭐ 별 모으기', prompt: '밤하늘 별 모으기 게임' },
+  { category: '🔬 시뮬레이션' },
+  { label: '🌙 달의 공전', prompt: '달의 공전 궤도 시뮬레이션' },
 ];
 
 interface ModOption { value: string; label: string }
 
-const MODIFIER_SLOTS = [
+interface ModSlot {
+  id: string;
+  question: string;
+  options: ModOption[];
+  hasSkip?: boolean;
+}
+
+/* ── Game modifiers ── */
+const GAME_MODIFIER_SLOTS: ModSlot[] = [
   {
     id: 'difficulty',
     question: '난이도를 선택해주세요.',
@@ -32,7 +55,7 @@ const MODIFIER_SLOTS = [
       { value: 'normal', label: '⚡ 노멀' },
       { value: 'hard', label: '🔥 하드' },
       { value: 'nightmare', label: '💀 나이트메어' },
-    ] as ModOption[],
+    ],
   },
   {
     id: 'style',
@@ -42,7 +65,7 @@ const MODIFIER_SLOTS = [
       { value: 'retro', label: '🕹️ 레트로' },
       { value: 'minimal', label: '⬜ 미니멀' },
       { value: 'cyber', label: '🌃 사이버펑크' },
-    ] as ModOption[],
+    ],
   },
   {
     id: 'effect',
@@ -52,12 +75,55 @@ const MODIFIER_SLOTS = [
       { value: 'shake', label: '📳 화면흔들림' },
       { value: 'combo', label: '🎯 콤보 시스템' },
       { value: 'slowmo', label: '🕐 슬로우모션' },
-    ] as ModOption[],
+    ],
     hasSkip: true,
   },
 ];
 
+/* ── Simulation modifiers ── */
+const SIM_MODIFIER_SLOTS: ModSlot[] = [
+  {
+    id: 'simSpeed',
+    question: '시뮬레이션 속도는요?',
+    options: [
+      { value: 'realtime', label: '🕐 실시간' },
+      { value: 'fast', label: '⚡ 고속 (×10)' },
+      { value: 'ultra', label: '🚀 초고속 (×100)' },
+      { value: 'cinematic', label: '🎬 시네마틱' },
+    ],
+  },
+  {
+    id: 'detail',
+    question: '디테일 수준을 골라주세요.',
+    options: [
+      { value: 'minimal', label: '🔵 미니멀' },
+      { value: 'standard', label: '🌍 표준' },
+      { value: 'rich', label: '✨ 고퀄리티' },
+      { value: 'scientific', label: '🔬 과학 모드' },
+    ],
+  },
+  {
+    id: 'overlay',
+    question: '정보 오버레이를 추가할까요?',
+    options: [
+      { value: 'hud', label: '📊 데이터 HUD' },
+      { value: 'labels', label: '🏷️ 라벨 표시' },
+      { value: 'trail', label: '🌀 궤적 표시' },
+      { value: 'clean', label: '🖼️ 클린 뷰' },
+    ],
+    hasSkip: true,
+  },
+];
+
+/* ── Category detection ── */
+const SIMULATION_IDS = new Set(['moon-orbit']);
+
+function getModifierSlots(gameId: string): ModSlot[] {
+  return SIMULATION_IDS.has(gameId) ? SIM_MODIFIER_SLOTS : GAME_MODIFIER_SLOTS;
+}
+
 const AI_REACTIONS: Record<string, Record<string, string>> = {
+  // Game reactions
   difficulty: {
     easy: '좋아요, 편하게 즐기는 걸로.',
     normal: '적당한 도전. 좋은 선택이에요.',
@@ -76,6 +142,26 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
     combo: '연속 히트의 쾌감을 드릴게요.',
     slowmo: '시간이 느려지는 순간을 만들게요.',
     skip: '깔끔하게 기본으로 갈게요.',
+  },
+  // Simulation reactions
+  simSpeed: {
+    realtime: '실제 시간 흐름 그대로 보여드릴게요.',
+    fast: '빠르게 감아서 변화를 한눈에.',
+    ultra: '시간을 압축해서 보여드릴게요.',
+    cinematic: '영화 같은 연출로 가볼게요.',
+  },
+  detail: {
+    minimal: '깔끔하게 핵심만 보여드릴게요.',
+    standard: '적당한 디테일, 좋은 선택이에요.',
+    rich: '풍부한 비주얼, 눈이 즐거울 거예요.',
+    scientific: '과학 데이터 중심으로 세팅할게요.',
+  },
+  overlay: {
+    hud: '실시간 데이터를 오버레이 할게요.',
+    labels: '주요 요소에 이름표를 달아줄게요.',
+    trail: '궤적을 따라가는 라인을 그릴게요.',
+    clean: '화면을 깨끗하게. 몰입 모드로.',
+    skip: '기본 세팅 그대로 갈게요.',
   },
 };
 
@@ -207,7 +293,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   /* ═══════ Step Flow ═══════ */
   const runFlow = useCallback(async () => {
     await wait(500);
-    await aiSpeak('어떤 게임을 만들어볼까요?', 0, 60);
+    await aiSpeak('무엇을 바이브 코딩해볼까요?', 0, 60);
     await wait(800);
 
     const inputId = addWidget('input');
@@ -220,12 +306,18 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     await wait(300);
 
     const game = DEMO_GAMES.find(g => g.id === matchRef.current?.gameId);
-    const gameName = game?.title || '게임';
+    const gameName = game?.title || '프로젝트';
+    const gameId = matchRef.current?.gameId || '';
+    const isSim = SIMULATION_IDS.has(gameId);
     await wait(1200);
-    await aiSpeak(`${gameName}, 좋은 선택이에요.`, 800, 60);
+    await aiSpeak(
+      isSim ? `${gameName} 시뮬레이션, 흥미로운 선택이에요.` : `${gameName}, 좋은 선택이에요.`,
+      800, 60
+    );
 
-    for (let si = 0; si < MODIFIER_SLOTS.length; si++) {
-      const slot = MODIFIER_SLOTS[si];
+    const slots = getModifierSlots(gameId);
+    for (let si = 0; si < slots.length; si++) {
+      const slot = slots[si];
       await wait(1000);
       await aiSpeak(slot.question, 800, 60);
       await wait(600);
@@ -308,7 +400,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     }
   }, [addUser]);
 
-  const handleChipClick = useCallback((chip: typeof CHIPS[0]) => {
+  const handleChipClick = useCallback((chip: ChipItem) => {
     if (inputTyping) return;
     setInputTyping(true);
     setInputValue('');
@@ -621,7 +713,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             color: 'rgba(255,255,255,0.2)',
             letterSpacing: '0.08em',
           }}>
-            AI GAME FACTORY — PROTOTYPE v0.4.0
+            VIBE CODING WORKSHOP — v0.5.0
           </span>
         </div>
       </div>
@@ -789,7 +881,7 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="만들고 싶은 게임을 말해주세요..."
+          placeholder="만들고 싶은 것을 말해주세요..."
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
@@ -850,53 +942,96 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
 }
 
 function ChipsWidget({ chips, onSelect }: {
-  chips: typeof CHIPS;
-  onSelect: (chip: typeof CHIPS[0]) => void;
+  chips: ChipEntry[];
+  onSelect: (chip: ChipItem) => void;
 }) {
+  // Build sections from flat array with category markers
+  const sections: { category: string; items: ChipItem[] }[] = [];
+  let current: typeof sections[0] | null = null;
+
+  for (const entry of chips) {
+    if (entry.category) {
+      current = { category: entry.category, items: [] };
+      sections.push(current);
+    } else {
+      if (!current) {
+        current = { category: '', items: [] };
+        sections.push(current);
+      }
+      current.items.push(entry as ChipItem);
+    }
+  }
+
+  let globalIdx = 0;
   return (
     <div style={{
       marginLeft: '38px',
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: '10px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
       animation: 'ptFadeIn 0.4s ease both',
     }}>
-      {chips.map((chip, i) => (
-        <button
-          key={chip.label}
-          onClick={() => onSelect(chip)}
-          style={{
-            padding: '14px 16px',
-            borderRadius: '14px',
-            border: '1.5px solid #e2e8f0',
-            background: '#fff',
-            color: '#334155',
-            fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '13px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.25s ease',
-            textAlign: 'left',
-            animation: `ptFadeIn 0.4s ease ${i * 0.05}s both`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#f5f3ff';
-            e.currentTarget.style.borderColor = '#6366f1';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
-            e.currentTarget.style.color = '#4f46e5';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#fff';
-            e.currentTarget.style.borderColor = '#e2e8f0';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-            e.currentTarget.style.color = '#334155';
-          }}
-        >
-          {chip.label}
-        </button>
+      {sections.map((section, si) => (
+        <div key={si}>
+          {section.category && (
+            <div style={{
+              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              fontSize: '10px',
+              fontWeight: 700,
+              color: '#94a3b8',
+              letterSpacing: '0.12em',
+              padding: si > 0 ? '10px 4px 6px' : '0 4px 6px',
+            }}>
+              {section.category}
+            </div>
+          )}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '10px',
+          }}>
+            {section.items.map((chip) => {
+              const idx = globalIdx++;
+              return (
+                <button
+                  key={chip.label}
+                  onClick={() => onSelect(chip)}
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e2e8f0',
+                    background: '#fff',
+                    color: '#334155',
+                    fontFamily: "'Noto Sans KR', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    textAlign: 'left',
+                    animation: `ptFadeIn 0.4s ease ${idx * 0.05}s both`,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f5f3ff';
+                    e.currentTarget.style.borderColor = '#6366f1';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
+                    e.currentTarget.style.color = '#4f46e5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+                    e.currentTarget.style.color = '#334155';
+                  }}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       ))}
     </div>
   );

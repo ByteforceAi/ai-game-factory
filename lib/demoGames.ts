@@ -1427,6 +1427,7 @@ import { DOT_RPG_HTML } from './games/dotRpg';
 import { CAT_JUMP_HTML } from './games/catJump';
 import { BALLOON_POP_HTML } from './games/balloonPop';
 import { STAR_CATCH_HTML } from './games/starCatch';
+import { MOON_ORBIT_HTML } from './games/moonOrbit';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1500,5 +1501,14 @@ export const DEMO_GAMES: DemoGame[] = [
     icon: '⭐',
     accentColor: '#ffd700',
     html: STAR_CATCH_HTML,
+  },
+  {
+    id: 'moon-orbit',
+    title: '달의 공전',
+    description: 'Three.js 3D 달 공전 시뮬레이션. 타원 궤도 + 조석 고정 + 월령 표시',
+    prompt: 'Three.js WebGL 달의 공전 궤도 시뮬레이션',
+    icon: '🌙',
+    accentColor: '#4488ff',
+    html: MOON_ORBIT_HTML,
   },
 ];

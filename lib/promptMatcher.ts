@@ -72,11 +72,18 @@ const GAME_KEYWORDS: Record<string, {
     systems: 'Tap Pop + Combo + Timer + Bombs',
   },
   'star-catch': {
-    keywords: ['별', '모으기', 'star', '밤하늘', '하늘', '달', '구름', '캐치', '받기', '모아', '떨어지는별', '소원'],
+    keywords: ['별', '모으기', 'star', '밤하늘', '하늘', '구름', '캐치', '받기', '모아', '떨어지는별', '소원'],
     genre: 'Catch & Collect',
     engine: 'Canvas 2D — Night Sky',
     artStyle: 'Dreamy Night',
     systems: 'Mouse Follow + Item Types + Level Scaling',
+  },
+  'moon-orbit': {
+    keywords: ['달', '공전', '궤도', '시뮬레이션', '천문', '우주', 'moon', 'orbit', 'simulation', '지구', '태양', '월령', '조석', '위성', '행성', '태양계', '과학', '물리', '천체'],
+    genre: '3D Orbital Simulation',
+    engine: 'Three.js r128 — WebGL',
+    artStyle: 'Space Dark',
+    systems: 'Elliptical Orbit + Tidal Lock + Moon Phase + Camera Control',
   },
 };
 
@@ -100,7 +107,8 @@ export function matchPromptToGame(input: string): MatchResult {
 
   // Heuristics for zero-match
   if (bestScore === 0) {
-    if (lower.includes('3d')) bestId = 'temple-runner';
+    if (lower.includes('시뮬') || lower.includes('simulation')) bestId = 'moon-orbit';
+    else if (lower.includes('3d')) bestId = 'temple-runner';
     else if (lower.includes('고전') || lower.includes('레트로')) bestId = 'tetris';
     else if (lower.includes('귀여') || lower.includes('쉬운')) bestId = 'emoji-burger';
     else bestId = FALLBACK_ORDER[Math.floor(Math.random() * 3)];
