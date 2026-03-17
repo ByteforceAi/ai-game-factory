@@ -46,8 +46,399 @@ interface ModSlot {
   hasSkip?: boolean;
 }
 
-/* ── Game modifiers ── */
-const GAME_MODIFIER_SLOTS: ModSlot[] = [
+/* ══════════════════════════════════════════════════
+   Per-game modifier system — each game gets unique questions
+   ══════════════════════════════════════════════════ */
+
+const GAME_MODIFIERS: Record<string, ModSlot[]> = {
+  /* ── 슈팅 게임 ── */
+  'neon-shooter': [
+    {
+      id: 'bulletPattern',
+      question: '탄막 패턴을 골라주세요.',
+      options: [
+        { value: 'single', label: '🔫 싱글샷' },
+        { value: 'spread', label: '🌀 확산탄' },
+        { value: 'laser', label: '⚡ 레이저빔' },
+        { value: 'homing', label: '🎯 유도탄' },
+      ],
+    },
+    {
+      id: 'bossType',
+      question: '보스 스타일은요?',
+      options: [
+        { value: 'mecha', label: '🤖 메카닉' },
+        { value: 'alien', label: '👾 외계 생물' },
+        { value: 'warship', label: '🚀 거대 전함' },
+        { value: 'swarm', label: '🐝 군집형' },
+      ],
+    },
+    {
+      id: 'powerup',
+      question: '파워업을 추가할까요?',
+      options: [
+        { value: 'shield', label: '🛡️ 쉴드' },
+        { value: 'bomb', label: '💣 스크린 폭탄' },
+        { value: 'speed', label: '⚡ 이동속도' },
+        { value: 'multi', label: '✨ 멀티샷' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 플랫포머 ── */
+  'neon-platformer': [
+    {
+      id: 'movement',
+      question: '이동 스타일을 골라주세요.',
+      options: [
+        { value: 'double', label: '🦘 더블점프' },
+        { value: 'dash', label: '💨 대시' },
+        { value: 'wall', label: '🧗 벽타기' },
+        { value: 'glide', label: '🪂 글라이드' },
+      ],
+    },
+    {
+      id: 'mapStyle',
+      question: '맵 분위기는요?',
+      options: [
+        { value: 'neon', label: '💜 네온 시티' },
+        { value: 'forest', label: '🌳 신비의 숲' },
+        { value: 'space', label: '🌌 우주 정거장' },
+        { value: 'lava', label: '🌋 용암 동굴' },
+      ],
+    },
+    {
+      id: 'hazard',
+      question: '장애물 타입은?',
+      options: [
+        { value: 'spike', label: '🔺 가시' },
+        { value: 'laser', label: '🔴 레이저' },
+        { value: 'enemy', label: '👾 적 몬스터' },
+        { value: 'puzzle', label: '🧩 퍼즐 블록' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 3D 러너 ── */
+  'temple-runner': [
+    {
+      id: 'theme',
+      question: '러너 배경을 골라주세요.',
+      options: [
+        { value: 'temple', label: '🏛️ 고대 신전' },
+        { value: 'cyber', label: '🌃 사이버 도시' },
+        { value: 'snow', label: '🏔️ 설산' },
+        { value: 'underwater', label: '🌊 해저' },
+      ],
+    },
+    {
+      id: 'speed',
+      question: '시작 속도는요?',
+      options: [
+        { value: 'chill', label: '🐢 여유롭게' },
+        { value: 'normal', label: '🏃 보통' },
+        { value: 'fast', label: '⚡ 빠르게' },
+        { value: 'sonic', label: '🚀 소닉 모드' },
+      ],
+    },
+    {
+      id: 'obstacle',
+      question: '장애물 유형을 추가할까요?',
+      options: [
+        { value: 'walls', label: '🧱 벽' },
+        { value: 'gaps', label: '🕳️ 구멍' },
+        { value: 'moving', label: '🔄 움직이는 벽' },
+        { value: 'combo', label: '💥 전부 다!' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 테트리스 ── */
+  'tetris': [
+    {
+      id: 'speed',
+      question: '시작 속도를 골라주세요.',
+      options: [
+        { value: 'slow', label: '🐌 느리게' },
+        { value: 'normal', label: '⏱️ 보통' },
+        { value: 'fast', label: '⚡ 빠르게' },
+        { value: 'insane', label: '💀 미친 속도' },
+      ],
+    },
+    {
+      id: 'visual',
+      question: '비주얼 테마는요?',
+      options: [
+        { value: 'classic', label: '🕹️ 클래식' },
+        { value: 'neon', label: '💜 네온' },
+        { value: 'retro', label: '📺 레트로 TV' },
+        { value: 'minimal', label: '⬜ 미니멀' },
+      ],
+    },
+    {
+      id: 'rule',
+      question: '특수 규칙을 넣을까요?',
+      options: [
+        { value: 'ghost', label: '👻 고스트 피스' },
+        { value: 'hold', label: '📦 홀드' },
+        { value: 'bomb', label: '💣 폭탄 블록' },
+        { value: 'gravity', label: '🌀 중력 변환' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 도트 RPG ── */
+  'dot-rpg': [
+    {
+      id: 'class',
+      question: '시작 직업을 골라주세요.',
+      options: [
+        { value: 'warrior', label: '⚔️ 전사' },
+        { value: 'mage', label: '🔮 마법사' },
+        { value: 'archer', label: '🏹 궁수' },
+        { value: 'thief', label: '🗡️ 도적' },
+      ],
+    },
+    {
+      id: 'world',
+      question: '월드 분위기는요?',
+      options: [
+        { value: 'medieval', label: '🏰 중세 판타지' },
+        { value: 'dark', label: '🌑 다크 판타지' },
+        { value: 'cute', label: '🌸 아기자기' },
+        { value: 'scifi', label: '🛸 SF 판타지' },
+      ],
+    },
+    {
+      id: 'battle',
+      question: '전투 시스템은?',
+      options: [
+        { value: 'turn', label: '⏳ 턴제' },
+        { value: 'action', label: '⚡ 액션' },
+        { value: 'auto', label: '🤖 오토 배틀' },
+        { value: 'card', label: '🃏 카드 배틀' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 고양이 점프 ── */
+  'cat-jump': [
+    {
+      id: 'catSkin',
+      question: '고양이를 골라주세요.',
+      options: [
+        { value: 'orange', label: '🐱 치즈냥' },
+        { value: 'black', label: '🐈‍⬛ 검은냥' },
+        { value: 'calico', label: '🐈 삼색냥' },
+        { value: 'space', label: '🌟 우주냥' },
+      ],
+    },
+    {
+      id: 'world',
+      question: '배경 월드는요?',
+      options: [
+        { value: 'sky', label: '☁️ 하늘 위' },
+        { value: 'forest', label: '🌿 고양이 숲' },
+        { value: 'candy', label: '🍭 사탕 나라' },
+        { value: 'night', label: '🌙 별빛 밤' },
+      ],
+    },
+    {
+      id: 'ability',
+      question: '특수 능력을 줄까요?',
+      options: [
+        { value: 'float', label: '🎈 공중 부양' },
+        { value: 'magnet', label: '🧲 아이템 자석' },
+        { value: 'shield', label: '💖 하트 보호막' },
+        { value: 'dash', label: '💨 냥냥 대시' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 풍선 팝 ── */
+  'balloon-pop': [
+    {
+      id: 'timeLimit',
+      question: '제한 시간을 정해주세요.',
+      options: [
+        { value: '30', label: '⚡ 30초 스프린트' },
+        { value: '60', label: '⏱️ 1분' },
+        { value: '120', label: '🕐 2분' },
+        { value: 'endless', label: '♾️ 무한모드' },
+      ],
+    },
+    {
+      id: 'balloonType',
+      question: '풍선 타입은요?',
+      options: [
+        { value: 'normal', label: '🎈 일반 풍선' },
+        { value: 'water', label: '💧 물풍선' },
+        { value: 'gold', label: '✨ 황금 풍선' },
+        { value: 'mix', label: '🌈 레인보우 믹스' },
+      ],
+    },
+    {
+      id: 'hazard',
+      question: '방해 요소를 넣을까요?',
+      options: [
+        { value: 'bomb', label: '💣 폭탄' },
+        { value: 'ice', label: '🧊 빙결 풍선' },
+        { value: 'shrink', label: '🔍 미니 풍선' },
+        { value: 'wind', label: '💨 바람' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 별 모으기 ── */
+  'star-catch': [
+    {
+      id: 'sky',
+      question: '밤하늘 테마를 골라주세요.',
+      options: [
+        { value: 'normal', label: '🌌 기본 밤하늘' },
+        { value: 'aurora', label: '🟢 오로라' },
+        { value: 'galaxy', label: '🌀 은하수' },
+        { value: 'nebula', label: '💜 성운' },
+      ],
+    },
+    {
+      id: 'starType',
+      question: '별 종류는요?',
+      options: [
+        { value: 'normal', label: '⭐ 기본 별' },
+        { value: 'constellation', label: '✨ 별자리' },
+        { value: 'shooting', label: '🌠 유성' },
+        { value: 'planet', label: '🪐 행성 믹스' },
+      ],
+    },
+    {
+      id: 'weather',
+      question: '하늘 날씨는?',
+      options: [
+        { value: 'clear', label: '🌙 맑은 밤' },
+        { value: 'cloud', label: '☁️ 구름 많음' },
+        { value: 'snow', label: '❄️ 눈 내리는 밤' },
+        { value: 'storm', label: '⚡ 천둥 번개' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 이모지 캐치 ── */
+  'emoji-burger': [
+    {
+      id: 'emojiTheme',
+      question: '이모지 테마를 골라주세요.',
+      options: [
+        { value: 'food', label: '🍔 음식' },
+        { value: 'animal', label: '🐶 동물' },
+        { value: 'sport', label: '⚽ 스포츠' },
+        { value: 'random', label: '🎲 랜덤 믹스' },
+      ],
+    },
+    {
+      id: 'speed',
+      question: '떨어지는 속도는요?',
+      options: [
+        { value: 'slow', label: '🐢 느긋하게' },
+        { value: 'normal', label: '🏃 보통' },
+        { value: 'fast', label: '⚡ 빠르게' },
+        { value: 'chaos', label: '🌪️ 카오스' },
+      ],
+    },
+    {
+      id: 'bonus',
+      question: '보너스 시스템은?',
+      options: [
+        { value: 'combo', label: '🔥 콤보' },
+        { value: 'fever', label: '🌟 피버 타임' },
+        { value: 'magnet', label: '🧲 자석 모드' },
+        { value: 'multi', label: '✖️ 점수 배율' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 마음의 텃밭 ── */
+  'farm-garden': [
+    {
+      id: 'season',
+      question: '시작 계절을 골라주세요.',
+      options: [
+        { value: 'spring', label: '🌸 봄' },
+        { value: 'summer', label: '☀️ 여름' },
+        { value: 'autumn', label: '🍂 가을' },
+        { value: 'winter', label: '❄️ 겨울' },
+      ],
+    },
+    {
+      id: 'farmSize',
+      question: '밭 크기는 어떻게 할까요?',
+      options: [
+        { value: 'cozy', label: '🏡 아담한 3×3' },
+        { value: 'normal', label: '🌾 보통 5×5' },
+        { value: 'large', label: '🚜 넓은 7×7' },
+        { value: 'ranch', label: '🏞️ 목장 사이즈' },
+      ],
+    },
+    {
+      id: 'weather',
+      question: '날씨 빈도를 정할까요?',
+      options: [
+        { value: 'sunny', label: '☀️ 맑은 날 위주' },
+        { value: 'rainy', label: '🌧️ 비 자주' },
+        { value: 'random', label: '🎲 랜덤' },
+        { value: 'extreme', label: '🌪️ 극한 날씨' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
+  /* ── 달의 공전 (시뮬레이션) ── */
+  'moon-orbit': [
+    {
+      id: 'simSpeed',
+      question: '시뮬레이션 속도는요?',
+      options: [
+        { value: 'realtime', label: '🕐 실시간' },
+        { value: 'fast', label: '⚡ 고속 (×10)' },
+        { value: 'ultra', label: '🚀 초고속 (×100)' },
+        { value: 'cinematic', label: '🎬 시네마틱' },
+      ],
+    },
+    {
+      id: 'detail',
+      question: '디테일 수준을 골라주세요.',
+      options: [
+        { value: 'minimal', label: '🔵 미니멀' },
+        { value: 'standard', label: '🌍 표준' },
+        { value: 'rich', label: '✨ 고퀄리티' },
+        { value: 'scientific', label: '🔬 과학 모드' },
+      ],
+    },
+    {
+      id: 'overlay',
+      question: '정보 오버레이를 추가할까요?',
+      options: [
+        { value: 'hud', label: '📊 데이터 HUD' },
+        { value: 'labels', label: '🏷️ 라벨 표시' },
+        { value: 'trail', label: '🌀 궤적 표시' },
+        { value: 'clean', label: '🖼️ 클린 뷰' },
+      ],
+      hasSkip: true,
+    },
+  ],
+};
+
+/* ── Default fallback (for unknown games) ── */
+const DEFAULT_MODIFIER_SLOTS: ModSlot[] = [
   {
     id: 'difficulty',
     question: '난이도를 선택해주세요.',
@@ -81,70 +472,181 @@ const GAME_MODIFIER_SLOTS: ModSlot[] = [
   },
 ];
 
-/* ── Simulation modifiers ── */
-const SIM_MODIFIER_SLOTS: ModSlot[] = [
-  {
-    id: 'simSpeed',
-    question: '시뮬레이션 속도는요?',
-    options: [
-      { value: 'realtime', label: '🕐 실시간' },
-      { value: 'fast', label: '⚡ 고속 (×10)' },
-      { value: 'ultra', label: '🚀 초고속 (×100)' },
-      { value: 'cinematic', label: '🎬 시네마틱' },
-    ],
-  },
-  {
-    id: 'detail',
-    question: '디테일 수준을 골라주세요.',
-    options: [
-      { value: 'minimal', label: '🔵 미니멀' },
-      { value: 'standard', label: '🌍 표준' },
-      { value: 'rich', label: '✨ 고퀄리티' },
-      { value: 'scientific', label: '🔬 과학 모드' },
-    ],
-  },
-  {
-    id: 'overlay',
-    question: '정보 오버레이를 추가할까요?',
-    options: [
-      { value: 'hud', label: '📊 데이터 HUD' },
-      { value: 'labels', label: '🏷️ 라벨 표시' },
-      { value: 'trail', label: '🌀 궤적 표시' },
-      { value: 'clean', label: '🖼️ 클린 뷰' },
-    ],
-    hasSkip: true,
-  },
-];
-
-/* ── Category detection ── */
-const SIMULATION_IDS = new Set(['moon-orbit']);
-
 function getModifierSlots(gameId: string): ModSlot[] {
-  return SIMULATION_IDS.has(gameId) ? SIM_MODIFIER_SLOTS : GAME_MODIFIER_SLOTS;
+  return GAME_MODIFIERS[gameId] || DEFAULT_MODIFIER_SLOTS;
 }
 
+/* ── Per-game AI reactions ── */
 const AI_REACTIONS: Record<string, Record<string, string>> = {
-  // Game reactions
-  difficulty: {
-    easy: '좋아요, 편하게 즐기는 걸로.',
-    normal: '적당한 도전. 좋은 선택이에요.',
-    hard: '도전적이네요. 멋져요.',
-    nightmare: '진심이군요. 존경합니다.',
+  // Shooter
+  bulletPattern: {
+    single: '정확한 한 발, 스나이퍼 스타일이네요.',
+    spread: '넓게 퍼지는 탄막, 시원하겠네요.',
+    laser: '관통하는 레이저빔, 강력해요.',
+    homing: '유도탄이면 빗나갈 일 없죠.',
   },
-  style: {
-    neon: '사이버 시티 분위기로 갈게요.',
-    retro: '90년대 감성, 알겠어요.',
-    minimal: '깔끔하게. 좋은 취향이에요.',
-    cyber: '미래 도시 느낌으로 만들어볼게요.',
+  bossType: {
+    mecha: '거대 로봇 보스, 멋지겠네요.',
+    alien: '외계 생물체 보스, 기괴한 패턴이겠죠.',
+    warship: '거대 전함, 박진감 넘치겠어요.',
+    swarm: '수천 마리가 몰려오는 군집형, 소름.',
   },
-  effect: {
-    particle: '화면 가득 파티클을 뿌릴게요.',
-    shake: '타격감 있는 흔들림, 넣을게요.',
-    combo: '연속 히트의 쾌감을 드릴게요.',
-    slowmo: '시간이 느려지는 순간을 만들게요.',
-    skip: '깔끔하게 기본으로 갈게요.',
+  powerup: {
+    shield: '든든한 보호막, 생존에 유리해요.',
+    bomb: '스크린 폭탄으로 한방 정리!',
+    speed: '빠른 이동으로 탄막을 회피해요.',
+    multi: '멀티샷으로 화력을 높여볼게요.',
+    skip: '기본 세팅으로 갈게요.',
   },
-  // Simulation reactions
+  // Platformer
+  movement: {
+    double: '더블점프! 기본 중의 기본이죠.',
+    dash: '순간 대시, 짜릿한 속도감!',
+    wall: '벽을 타고 오르는 닌자 스타일.',
+    glide: '하늘을 나는 듯한 글라이딩.',
+  },
+  mapStyle: {
+    neon: '네온 불빛이 반짝이는 밤거리.',
+    forest: '신비로운 숲속을 달려볼게요.',
+    space: '무중력 우주 정거장, 신선하네요.',
+    lava: '용암 위를 뛰어다니는 긴장감!',
+  },
+  hazard: {
+    spike: '뾰족한 가시, 클래식한 위험요소.',
+    laser: '레이저 빔 피하기, 타이밍이 핵심.',
+    enemy: '몬스터를 피하면서 달려볼게요.',
+    puzzle: '퍼즐 블록으로 머리도 써야 해요.',
+    skip: '기본 장애물로 갈게요.',
+  },
+  // 3D Runner
+  theme: {
+    temple: '고대 유적의 신비로운 분위기.',
+    cyber: '사이버펑크 도시를 달려요.',
+    snow: '설산을 가로지르는 모험!',
+    underwater: '해저 터널, 환상적이겠네요.',
+  },
+  speed: {
+    chill: '편하게 경치 감상하면서.',
+    normal: '적당한 속도감, 좋아요.',
+    fast: '빠르게! 반응 속도가 중요해요.',
+    sonic: '초고속 모드, 눈이 바빠지겠네요.',
+  },
+  obstacle: {
+    walls: '벽을 피하는 클래식한 스타일.',
+    gaps: '틈새를 뛰어넘는 스릴!',
+    moving: '움직이는 장애물, 긴장감 UP.',
+    combo: '전부 다! 하드코어 가보죠.',
+    skip: '기본 장애물로 시작할게요.',
+  },
+  // Tetris
+  visual: {
+    classic: '클래식 테트리스 감성, 최고.',
+    neon: '형형색색 네온, 화려하게.',
+    retro: '브라운관 TV 느낌, 향수가.',
+    minimal: '깔끔한 미니멀, 집중하기 좋아요.',
+  },
+  rule: {
+    ghost: '고스트 피스로 착지점을 미리 보여줄게요.',
+    hold: '홀드 기능으로 전략적 플레이!',
+    bomb: '폭탄 블록, 한방에 줄을 날려요.',
+    gravity: '중력이 바뀌면 멘탈도 바뀌어요.',
+    skip: '클래식 룰로 갈게요.',
+  },
+  // RPG
+  class: {
+    warrior: '튼튼한 전사, 근접 전투의 왕.',
+    mage: '강력한 마법사, 화력이 최고.',
+    archer: '날렵한 궁수, 원거리 딜러.',
+    thief: '은밀한 도적, 크리티컬 한 방.',
+  },
+  world: {
+    medieval: '검과 마법의 클래식 판타지.',
+    dark: '어둡고 무거운 세계관.',
+    cute: '아기자기한 세상, 힐링되겠네요.',
+    scifi: 'SF와 판타지의 만남, 독특해요.',
+  },
+  battle: {
+    turn: '전략적 턴제, 생각하며 싸워요.',
+    action: '실시간 액션, 손맛이 최고.',
+    auto: '편하게 오토 배틀, 구경하세요.',
+    card: '카드 배틀, 덱 빌딩의 재미.',
+    skip: '기본 전투 시스템으로.',
+  },
+  // Cat Jump
+  catSkin: {
+    orange: '귀여운 치즈냥이 출발!',
+    black: '시크한 검은 고양이, 멋져요.',
+    calico: '삼색냥 아기자기 매력.',
+    space: '우주 고양이, 반짝반짝!',
+  },
+  ability: {
+    float: '공중 부양으로 떨어질 걱정 없어요.',
+    magnet: '아이템 자석, 자동으로 쏙쏙.',
+    shield: '하트 보호막으로 안전하게.',
+    dash: '냥냥 대시로 빠르게 이동!',
+    skip: '기본 능력으로 시작할게요.',
+  },
+  // Balloon Pop
+  timeLimit: {
+    '30': '30초 스프린트! 집중력 테스트.',
+    '60': '1분, 적당한 긴장감.',
+    '120': '2분, 여유롭게 즐겨요.',
+    endless: '무한모드, 끝없는 도전!',
+  },
+  balloonType: {
+    normal: '알록달록 기본 풍선.',
+    water: '물풍선 터지면 스플래시!',
+    gold: '황금 풍선, 고득점 찬스.',
+    mix: '레인보우 믹스, 전부 섞어요.',
+  },
+  // Star Catch
+  sky: {
+    normal: '고요한 밤하늘, 별이 쏟아져요.',
+    aurora: '초록빛 오로라 아래서.',
+    galaxy: '은하수를 배경으로.',
+    nebula: '몽환적인 성운 속에서.',
+  },
+  starType: {
+    normal: '반짝이는 기본 별들.',
+    constellation: '별자리를 모아보세요.',
+    shooting: '유성을 잡아요, 소원 빌기!',
+    planet: '행성과 별이 섞여있어요.',
+  },
+  // Emoji Catch
+  emojiTheme: {
+    food: '맛있는 음식 이모지, 냠냠.',
+    animal: '귀여운 동물 이모지들.',
+    sport: '스포츠 이모지, 활기차게.',
+    random: '뭐가 나올지 모르는 재미!',
+  },
+  bonus: {
+    combo: '연속 콤보로 점수 폭발!',
+    fever: '피버 타임, 이모지가 쏟아져요.',
+    magnet: '자석으로 이모지 흡수!',
+    multi: '점수 배율로 고득점 노려요.',
+    skip: '기본 모드로 시작!',
+  },
+  // Farm Garden
+  season: {
+    spring: '벚꽃 날리는 봄, 파종의 계절.',
+    summer: '뜨거운 여름, 작물이 무럭무럭.',
+    autumn: '풍성한 가을, 수확의 기쁨.',
+    winter: '겨울 농장, 도전적이네요.',
+  },
+  farmSize: {
+    cozy: '아담한 텃밭, 소확행.',
+    normal: '적당한 크기, 좋은 선택.',
+    large: '넓은 밭, 본격 농부 모드.',
+    ranch: '대형 목장, 야심찬데요?',
+  },
+  weather: {
+    sunny: '맑은 날씨로 안정적 농사.',
+    rainy: '비 자주 오면 물 주기 절약!',
+    random: '예측불가 날씨, 리얼리즘.',
+    extreme: '극한 날씨, 서바이벌 농장.',
+    skip: '랜덤 날씨로 갈게요.',
+  },
+  // Moon Orbit (Simulation)
   simSpeed: {
     realtime: '실제 시간 흐름 그대로 보여드릴게요.',
     fast: '빠르게 감아서 변화를 한눈에.',
@@ -163,6 +665,26 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
     trail: '궤적을 따라가는 라인을 그릴게요.',
     clean: '화면을 깨끗하게. 몰입 모드로.',
     skip: '기본 세팅 그대로 갈게요.',
+  },
+  // Default fallback
+  difficulty: {
+    easy: '좋아요, 편하게 즐기는 걸로.',
+    normal: '적당한 도전. 좋은 선택이에요.',
+    hard: '도전적이네요. 멋져요.',
+    nightmare: '진심이군요. 존경합니다.',
+  },
+  style: {
+    neon: '사이버 시티 분위기로 갈게요.',
+    retro: '90년대 감성, 알겠어요.',
+    minimal: '깔끔하게. 좋은 취향이에요.',
+    cyber: '미래 도시 느낌으로 만들어볼게요.',
+  },
+  effect: {
+    particle: '화면 가득 파티클을 뿌릴게요.',
+    shake: '타격감 있는 흔들림, 넣을게요.',
+    combo: '연속 히트의 쾌감을 드릴게요.',
+    slowmo: '시간이 느려지는 순간을 만들게요.',
+    skip: '깔끔하게 기본으로 갈게요.',
   },
 };
 
@@ -309,7 +831,7 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     const game = DEMO_GAMES.find(g => g.id === matchRef.current?.gameId);
     const gameName = game?.title || '프로젝트';
     const gameId = matchRef.current?.gameId || '';
-    const isSim = SIMULATION_IDS.has(gameId);
+    const isSim = gameId === 'moon-orbit';
     await wait(1200);
     await aiSpeak(
       isSim ? `${gameName} 시뮬레이션, 흥미로운 선택이에요.` : `${gameName}, 좋은 선택이에요.`,

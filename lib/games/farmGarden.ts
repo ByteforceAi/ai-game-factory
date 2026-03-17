@@ -204,7 +204,7 @@ canvas{display:block;width:100%;height:100%}
   </p>
   <button onclick="startGame()">시작하기 🌱</button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ====== AUDIO SYSTEM ======
 var AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -995,6 +995,6 @@ function startGame(){
   animate();
 }
 window.startGame = startGame;
-<\\/script>
+</script>
 </body>
 </html>`;
