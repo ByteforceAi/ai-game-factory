@@ -32,6 +32,7 @@ const CHIPS: ChipEntry[] = [
   { label: '🐱 고양이 점프', prompt: '귀여운 고양이 점프 게임' },
   { label: '🎈 풍선 팝', prompt: '풍선 터뜨리기 타이머 게임' },
   { label: '⭐ 별 모으기', prompt: '밤하늘 별 모으기 게임' },
+  { label: '🌿 마음의 텃밭', prompt: '3D 힐링 농장 텃밭 작물 키우기' },
   { category: '🔬 시뮬레이션' },
   { label: '🌙 달의 공전', prompt: '달의 공전 궤도 시뮬레이션' },
 ];

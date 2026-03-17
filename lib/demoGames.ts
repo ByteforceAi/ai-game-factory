@@ -1428,6 +1428,7 @@ import { CAT_JUMP_HTML } from './games/catJump';
 import { BALLOON_POP_HTML } from './games/balloonPop';
 import { STAR_CATCH_HTML } from './games/starCatch';
 import { MOON_ORBIT_HTML } from './games/moonOrbit';
+import { FARM_GARDEN_HTML } from './games/farmGarden';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1510,5 +1511,14 @@ export const DEMO_GAMES: DemoGame[] = [
     icon: '🌙',
     accentColor: '#4488ff',
     html: MOON_ORBIT_HTML,
+  },
+  {
+    id: 'farm-garden',
+    title: '마음의 텃밭',
+    description: 'Three.js 3D 힐링 농장. 작물 재배 + 물주기 + 날씨 + 낮밤 사이클',
+    prompt: 'Three.js WebGL 3D 힐링 농장 텃밭 시뮬레이션',
+    icon: '🌿',
+    accentColor: '#66BB6A',
+    html: FARM_GARDEN_HTML,
   },
 ];

@@ -85,6 +85,13 @@ const GAME_KEYWORDS: Record<string, {
     artStyle: 'Space Dark',
     systems: 'Elliptical Orbit + Tidal Lock + Moon Phase + Camera Control',
   },
+  'farm-garden': {
+    keywords: ['농장', '텃밭', '농사', '심기', '수확', '작물', '키우기', 'farm', 'garden', '재배', '씨앗', '물주기', '밭', '정원', '꽃', '야채', '채소', '감자', '토마토', '호박', '당근', '힐링', '마을'],
+    genre: '3D Farming Sim',
+    engine: 'Three.js r128 — WebGL',
+    artStyle: 'Cozy Pastoral',
+    systems: 'Crop Growth + Watering + Day/Night + Weather + Shop',
+  },
 };
 
 const FALLBACK_ORDER = ['neon-shooter', 'temple-runner', 'neon-platformer', 'tetris', 'emoji-burger', 'cat-jump', 'balloon-pop', 'star-catch'];
@@ -108,6 +115,7 @@ export function matchPromptToGame(input: string): MatchResult {
   // Heuristics for zero-match
   if (bestScore === 0) {
     if (lower.includes('시뮬') || lower.includes('simulation')) bestId = 'moon-orbit';
+    else if (lower.includes('농') || lower.includes('farm') || lower.includes('키우') || lower.includes('힐링')) bestId = 'farm-garden';
     else if (lower.includes('3d')) bestId = 'temple-runner';
     else if (lower.includes('고전') || lower.includes('레트로')) bestId = 'tetris';
     else if (lower.includes('귀여') || lower.includes('쉬운')) bestId = 'emoji-burger';
