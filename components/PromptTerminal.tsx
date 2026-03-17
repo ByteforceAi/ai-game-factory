@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
 import { matchPromptToGame, MatchResult } from '@/lib/promptMatcher';
 import { playSelect, playComplete, playWhoosh, playTick } from '@/lib/sounds';
+import LaunchPortal from './LaunchPortal';
 
 /* ═══════════════════════════════════════════════
    Category Grid Data
@@ -342,6 +343,11 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const [frozen, setFrozen] = useState<Set<string>>(new Set());
   const [progressWidth, setProgressWidth] = useState(0);
 
+  // Launch portal state
+  const [portalData, setPortalData] = useState<{
+    gameName: string; gameIcon: string; choices: SummaryChoice[];
+  } | null>(null);
+
   const matchRef = useRef<MatchResult | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -458,6 +464,11 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     if (createResolver.current) { createResolver.current(); createResolver.current = null; }
   }, []);
 
+  const handlePortalLaunch = useCallback(() => {
+    playComplete();
+    if (createResolver.current) { createResolver.current(); createResolver.current = null; }
+  }, []);
+
   /* ── Start game flow — called after card/input selection ── */
   const startGameFlow = useCallback(async (prompt: string) => {
     const result = matchPromptToGame(prompt);
@@ -497,22 +508,23 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       if (reaction) { await wait(700); await aiSpeak(reaction, 600, 50); }
     }
 
-    // Show summary + 만들기 button
+    // Show launch portal instead of inline button
     await wait(800);
-    await aiSpeak('설정이 완료됐어요! 확인하고 만들어주세요.', 600, 50);
-    await wait(400);
-    addWidget('create-button', {
-      summaryData: { gameName: game.title, gameIcon: game.icon, choices: summaryChoices },
-    });
-    // Extra scroll after animation settles
-    await wait(200);
-    scrollToBottom();
-    await wait(400);
-    scrollToBottom();
+    await aiSpeak('설정 완료! 이제 만들어볼까요?', 600, 50);
+    await wait(600);
 
-    // Wait for user to click "만들기"
+    // Open cinematic launch portal overlay
+    setPortalData({
+      gameName: game.title,
+      gameIcon: game.icon,
+      choices: summaryChoices,
+    });
+
+    // Wait for user to tap launch in portal
     await waitForCreate();
 
+    // Portal closes itself, proceed with generation
+    setPortalData(null);
     await wait(300);
     await aiSpeak('완벽해요. 지금 바로 만들어볼게요!', 400, 60);
     await wait(400);
@@ -1050,6 +1062,16 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ═══ Launch Portal Overlay ═══ */}
+      {portalData && (
+        <LaunchPortal
+          gameName={portalData.gameName}
+          gameIcon={portalData.gameIcon}
+          choices={portalData.choices}
+          onLaunch={handlePortalLaunch}
+        />
       )}
 
       {/* ═══ Keyframes ═══ */}
