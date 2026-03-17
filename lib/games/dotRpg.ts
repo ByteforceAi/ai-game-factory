@@ -575,6 +575,30 @@ setTimeout(function(){
 
 requestAnimationFrame(loop);
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_PLAYER_HP':
+      var hpVal = parseInt(e.data.value)||100;
+      player.hp = hpVal;
+      player.maxHp = Math.max(player.maxHp, hpVal);
+      break;
+    case 'SET_PLAYER_ATK':
+      player.atk = parseInt(e.data.value)||10;
+      break;
+    case 'SET_ENCOUNTER_RATE':
+      window._encounterRate = parseFloat(e.data.value)/100;
+      break;
+    case 'SET_PLAYER_GOLD':
+      player.gold = parseInt(e.data.value)||0;
+      break;
+    case 'SET_GAME_SPEED':
+      // Not directly applicable, but can speed up step timer
+      break;
+  }
+});
+
 })();
 </script>
 </body>

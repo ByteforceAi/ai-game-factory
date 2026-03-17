@@ -679,6 +679,28 @@ function animate(){
 }
 animate();
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_RUN_SPEED':
+      var mult = parseFloat(e.data.value)||1;
+      baseSpeed = 16 * mult;
+      maxSpeed = 50 * mult;
+      break;
+    case 'SET_COIN_MAGNET':
+      window._coinMagnet = !!e.data.value;
+      break;
+    case 'SET_OBSTACLE_FREQ':
+      spawnInterval = Math.max(0.3, 1.2 - parseFloat(e.data.value)*0.09);
+      break;
+    case 'SET_GAME_SPEED':
+      // Adjust speed multiplier
+      baseSpeed = 16 * parseFloat(e.data.value);
+      break;
+  }
+});
+
 })();
 </script>
 </body>

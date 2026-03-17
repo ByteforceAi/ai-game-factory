@@ -448,6 +448,25 @@ function loop(){
 }
 requestAnimationFrame(loop);
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_CAT_LIVES':
+      cat.lives = parseInt(e.data.value)||9;
+      break;
+    case 'SET_JUMP_FORCE':
+      window._jumpForce = parseFloat(e.data.value)||12;
+      break;
+    case 'SET_GRAVITY':
+      window._gravity = parseFloat(e.data.value)||0.5;
+      break;
+    case 'SET_GAME_SPEED':
+      // Adjust scroll speed feel
+      break;
+  }
+});
+
 })();
 </script>
 </body>

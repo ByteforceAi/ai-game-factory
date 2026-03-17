@@ -1606,6 +1606,35 @@ window.addEventListener('resize', function(){
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  var sc = game.scene.scenes[1]; // GameScene
+  if(!sc) return;
+  switch(e.data.type){
+    case 'SET_FIRE_RATE':
+      sc.fireRate = Math.max(50, 1000/parseFloat(e.data.value));
+      break;
+    case 'SET_PLAYER_SPEED':
+      sc.playerSpeed = 280 * parseFloat(e.data.value);
+      break;
+    case 'SET_ENEMY_COUNT':
+      sc.totalEnemiesInWave = parseInt(e.data.value)||5;
+      break;
+    case 'SET_INVINCIBLE':
+      sc.invincible = !!e.data.value;
+      sc.invTimer = e.data.value ? 999999 : 0;
+      if(sc.shieldGfx) sc.shieldGfx.setVisible(!!e.data.value);
+      break;
+    case 'SPAWN_BOSS':
+      if(!sc.bossAlive && sc.spawnBoss) sc.spawnBoss();
+      break;
+    case 'SET_GAME_SPEED':
+      game.loop.targetFps = 60 * (parseFloat(e.data.value)||1);
+      break;
+  }
+});
+
 })();
 </script>
 </body>

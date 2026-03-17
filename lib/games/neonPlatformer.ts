@@ -1179,6 +1179,28 @@ window.addEventListener('resize', () => {
   game.scale.resize(window.innerWidth, window.innerHeight);
 });
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  var sc = game.scene.scenes[1]; // GameScene
+  if(!sc) return;
+  switch(e.data.type){
+    case 'SET_SCROLL_SPEED':
+      sc.scrollSpeed = parseFloat(e.data.value)||2;
+      break;
+    case 'SET_DIFFICULTY':
+      sc.difficultyMult = parseFloat(e.data.value)||1;
+      break;
+    case 'SET_INVINCIBLE':
+      sc.alive = true;
+      sc._vibeInvincible = !!e.data.value;
+      break;
+    case 'SET_GAME_SPEED':
+      game.loop.targetFps = 60 * (parseFloat(e.data.value)||1);
+      break;
+  }
+});
+
 })();
 <\/script>
 </body>

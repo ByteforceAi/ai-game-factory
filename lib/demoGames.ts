@@ -1429,6 +1429,7 @@ import { BALLOON_POP_HTML } from './games/balloonPop';
 import { STAR_CATCH_HTML } from './games/starCatch';
 import { MOON_ORBIT_HTML } from './games/moonOrbit';
 import { FARM_GARDEN_HTML } from './games/farmGarden';
+import { GUGUDAN_HTML } from './games/gugudan';
 
 export const DEMO_GAMES: DemoGame[] = [
   {
@@ -1520,5 +1521,14 @@ export const DEMO_GAMES: DemoGame[] = [
     icon: '🌿',
     accentColor: '#66BB6A',
     html: FARM_GARDEN_HTML,
+  },
+  {
+    id: 'gugudan',
+    title: '구구단',
+    description: 'Three.js 3D 구구단 학습. 탐색 + 세기 + 패턴 + 퀴즈 4단계',
+    prompt: 'Three.js WebGL 3D 구구단 학습 게임',
+    icon: '🔢',
+    accentColor: '#007AFF',
+    html: GUGUDAN_HTML,
   },
 ];

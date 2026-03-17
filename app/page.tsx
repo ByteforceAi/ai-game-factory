@@ -9,6 +9,7 @@ import CodeStreamView from '@/components/CodeStreamView';
 import RemixPanel from '@/components/RemixPanel';
 import ShareModal from '@/components/ShareModal';
 import VibeOverlay from '@/components/VibeOverlay';
+import VibeControlPanel from '@/components/VibeControlPanel';
 import LaunchSequence from '@/components/LaunchSequence';
 import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
 import { playAmbient, stopAmbient } from '@/lib/sounds';
@@ -40,6 +41,7 @@ export default function Home() {
   const [pendingVibeHtml, setPendingVibeHtml] = useState<string | null>(null);
   const [vibePresetLabel, setVibePresetLabel] = useState('');
   const [vibeMode, setVibeMode] = useState<'full' | 'overlay'>('full');
+  const [showVibeControl, setShowVibeControl] = useState(false);
   const [vibeCodeSnippet, setVibeCodeSnippet] = useState('');
   const [transitioning, setTransitioning] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
@@ -107,6 +109,7 @@ export default function Home() {
         setMyRank(null);
         setShowRemix(false);  // close remix panel on game over
         setShowCode(false);   // close code panel on game over
+        setShowVibeControl(false);  // close vibe control on game over
         if (selectedGame) fetchLeaderboard(selectedGame.id);
       }
     };
@@ -238,6 +241,7 @@ export default function Home() {
     setGameCode('');
     setShowRemix(false);
     setShowCode(false);
+    setShowVibeControl(false);
     setShowLeaderboard(false);
     setShowShare(false);
     setGameScore(0);
@@ -622,7 +626,14 @@ export default function Home() {
           {'</>'} CODE
         </button>
         <button
-          onClick={() => { setShowRemix(!showRemix); if (!showRemix) setShowCode(false); }}
+          onClick={() => { setShowVibeControl(!showVibeControl); if (!showVibeControl) { setShowCode(false); setShowRemix(false); } }}
+          className={`btn-hud ${showVibeControl ? 'btn-hud--accent' : ''}`}
+          style={{ flex: 1, minHeight: '44px' }}
+        >
+          🎛️ 라이브
+        </button>
+        <button
+          onClick={() => { setShowRemix(!showRemix); if (!showRemix) { setShowCode(false); setShowVibeControl(false); } }}
           className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
           style={{ flex: 1, minHeight: '44px' }}
         >
@@ -672,6 +683,15 @@ export default function Home() {
             </pre>
           </div>
         </div>
+      )}
+
+      {/* Vibe Control Panel — Live Parameter + AI Chat */}
+      {showVibeControl && selectedGame && (
+        <VibeControlPanel
+          gameId={selectedGame.id}
+          iframeRef={iframeRef}
+          onClose={() => setShowVibeControl(false)}
+        />
       )}
 
       {/* Remix Panel — Overlay */}

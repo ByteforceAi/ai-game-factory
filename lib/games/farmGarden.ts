@@ -995,6 +995,66 @@ function startGame(){
   animate();
 }
 window.startGame = startGame;
+
+// ====== VIBE CODING: postMessage HANDLERS ======
+var timeSpeedMultiplier = 1;
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  var d = e.data;
+  switch(d.type){
+    case 'SET_WEATHER':
+      weather = d.value;
+      weatherTimer = 60;
+      var wEl = document.getElementById('weather-indicator');
+      if(weather==='clear') wEl.textContent='☀️ 맑음';
+      else if(weather==='cloudy') wEl.textContent='⛅ 흐림';
+      else wEl.textContent='🌧️ 비';
+      showMsg(weather==='rain'?'🌧️ 비가 내리기 시작해요!':weather==='cloudy'?'⛅ 구름이 끼었어요':'☀️ 맑은 날씨!');
+      break;
+    case 'SET_TIME_SPEED':
+      timeSpeedMultiplier = parseFloat(d.value)||1;
+      showMsg('⏱️ 시간 속도 '+timeSpeedMultiplier+'x');
+      break;
+    case 'SET_GROW_SPEED':
+      speedBoost = parseFloat(d.value)||1;
+      showMsg('🌱 작물 성장 속도 '+speedBoost+'x');
+      break;
+    case 'SET_GOLD':
+      gold = parseInt(d.value)||0;
+      updateHUD();
+      spawnGoldParticles(playerGroup.position);
+      sfxCoin();
+      showMsg('💰 골드 '+gold+'G!');
+      break;
+    case 'REFILL_WATER':
+      waterCount = maxWater;
+      sfxWater();
+      updateHUD();
+      showMsg('💧 물 충전 완료! ('+maxWater+'/'+maxWater+')');
+      break;
+    case 'SET_DAY_PHASE':
+      var phases={morning:6,day:12,evening:18,night:22};
+      if(phases[d.value]!==undefined){
+        gameTime=phases[d.value];
+        dayPhase=d.value;
+        showMsg(d.value==='morning'?'🌅 아침이 밝았어요!':d.value==='day'?'☀️ 한낮이에요!':d.value==='evening'?'🌇 노을이 물들어요':'🌙 밤이 되었어요...');
+      }
+      break;
+    case 'SET_LEVEL':
+      var lvVal = parseInt(d.value)||1;
+      if(lvVal>=1 && lvVal<=LEVELS.length){
+        xp = LEVELS[lvVal-1]||0;
+        level = lvVal;
+        sfxLevelUp();
+        updateHUD();
+        showMsg('🎊 Lv.'+level+' 달성!');
+      }
+      break;
+  }
+});
+// Override day/night time speed
+var _origUpdateDayNight = updateDayNight;
+updateDayNight = function(dt){ _origUpdateDayNight(dt * timeSpeedMultiplier); };
 </script>
 </body>
 </html>`;

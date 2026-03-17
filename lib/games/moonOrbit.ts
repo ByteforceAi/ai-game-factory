@@ -455,6 +455,29 @@ function animate(time){
 }
 requestAnimationFrame(animate);
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_SIM_SPEED':
+      speedMult = parseFloat(e.data.value)||1;
+      break;
+    case 'SET_MOON_DISTANCE':
+      var newDist = parseFloat(e.data.value)||8;
+      moon.position.set(newDist, 0, 0);
+      break;
+    case 'TOGGLE_ORBITS':
+      if(typeof orbitLine !== 'undefined') orbitLine.visible = !!e.data.value;
+      break;
+    case 'TOGGLE_PAUSE':
+      playing = !playing;
+      break;
+    case 'SET_GAME_SPEED':
+      speedMult = parseFloat(e.data.value)||1;
+      break;
+  }
+});
+
 })();
 </script>
 </body>

@@ -412,6 +412,25 @@ function loop(time){
 }
 requestAnimationFrame(loop);
 
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_LIVES':
+      lives = Math.max(1, parseInt(e.data.value)||5);
+      break;
+    case 'SET_LEVEL':
+      level = Math.max(1, parseInt(e.data.value)||1);
+      break;
+    case 'SET_SPAWN_RATE':
+      window._spawnMult = parseFloat(e.data.value)||1;
+      break;
+    case 'SET_GAME_SPEED':
+      window._gameSpeedMult = parseFloat(e.data.value)||1;
+      break;
+  }
+});
+
 })();
 </script>
 </body>

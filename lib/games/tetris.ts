@@ -525,6 +525,27 @@ function restart(){
 window.restart=restart;
 
 initGrid();spawn();requestAnimationFrame(loop);
+
+// ====== VIBE CODING: postMessage HANDLERS ======
+window.addEventListener('message', function(e){
+  if(!e.data || !e.data.type) return;
+  switch(e.data.type){
+    case 'SET_DROP_SPEED':
+      dropInterval = parseInt(e.data.value)||1000;
+      break;
+    case 'SET_GRID_WIDTH':
+      // Grid width change requires restart
+      COLS = Math.max(6, Math.min(16, parseInt(e.data.value)||10));
+      restart();
+      break;
+    case 'TOGGLE_GHOST':
+      window._showGhost = !!e.data.value;
+      break;
+    case 'SET_GAME_SPEED':
+      dropInterval = Math.max(50, 1000 / parseFloat(e.data.value));
+      break;
+  }
+});
 </script>
 </body>
 </html>`;

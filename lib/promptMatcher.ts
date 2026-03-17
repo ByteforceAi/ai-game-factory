@@ -92,6 +92,13 @@ const GAME_KEYWORDS: Record<string, {
     artStyle: 'Cozy Pastoral',
     systems: 'Crop Growth + Watering + Day/Night + Weather + Shop',
   },
+  'gugudan': {
+    keywords: ['구구단', '곱셈', '곱하기', '수학', '산수', '구구', '단', '2단', '3단', '4단', '5단', '6단', '7단', '8단', '9단', 'multiply', 'math', '학습', '교육', '공부', '퀴즈'],
+    genre: '3D Math Learning',
+    engine: 'Three.js r128 — WebGL',
+    artStyle: 'Apple Minimal',
+    systems: 'Explore + Count + Pattern + Quiz',
+  },
 };
 
 const FALLBACK_ORDER = ['neon-shooter', 'temple-runner', 'neon-platformer', 'tetris', 'emoji-burger', 'cat-jump', 'balloon-pop', 'star-catch'];
@@ -114,7 +121,8 @@ export function matchPromptToGame(input: string): MatchResult {
 
   // Heuristics for zero-match
   if (bestScore === 0) {
-    if (lower.includes('시뮬') || lower.includes('simulation')) bestId = 'moon-orbit';
+    if (lower.includes('구구') || lower.includes('곱셈') || lower.includes('수학') || lower.includes('산수')) bestId = 'gugudan';
+    else if (lower.includes('시뮬') || lower.includes('simulation')) bestId = 'moon-orbit';
     else if (lower.includes('농') || lower.includes('farm') || lower.includes('키우') || lower.includes('힐링')) bestId = 'farm-garden';
     else if (lower.includes('3d')) bestId = 'temple-runner';
     else if (lower.includes('고전') || lower.includes('레트로')) bestId = 'tetris';

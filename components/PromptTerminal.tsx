@@ -33,6 +33,8 @@ const CHIPS: ChipEntry[] = [
   { label: '🎈 풍선 팝', prompt: '풍선 터뜨리기 타이머 게임' },
   { label: '⭐ 별 모으기', prompt: '밤하늘 별 모으기 게임' },
   { label: '🌿 마음의 텃밭', prompt: '3D 힐링 농장 텃밭 작물 키우기' },
+  { category: '📚 교육' },
+  { label: '🔢 구구단', prompt: '3D 구구단 학습 곱셈 퀴즈' },
   { category: '🔬 시뮬레이션' },
   { label: '🌙 달의 공전', prompt: '달의 공전 궤도 시뮬레이션' },
 ];
@@ -401,6 +403,40 @@ const GAME_MODIFIERS: Record<string, ModSlot[]> = {
     },
   ],
 
+  /* ── 구구단 ── */
+  'gugudan': [
+    {
+      id: 'startDan',
+      question: '몇 단부터 시작할까요?',
+      options: [
+        { value: '2', label: '2️⃣ 2단부터' },
+        { value: '5', label: '5️⃣ 5단부터' },
+        { value: '7', label: '7️⃣ 어려운 7단' },
+        { value: 'random', label: '🎲 랜덤' },
+      ],
+    },
+    {
+      id: 'quizMode',
+      question: '학습 방식은요?',
+      options: [
+        { value: 'step', label: '📖 단계별 학습' },
+        { value: 'quiz', label: '⚡ 바로 퀴즈' },
+        { value: 'explore', label: '🔍 탐색만' },
+        { value: 'speed', label: '🏃 스피드런' },
+      ],
+    },
+    {
+      id: 'shape',
+      question: '구슬 모양을 골라주세요.',
+      options: [
+        { value: 'sphere', label: '⚪ 구슬' },
+        { value: 'cube', label: '🟦 큐브' },
+        { value: 'cylinder', label: '🔵 원기둥' },
+      ],
+      hasSkip: true,
+    },
+  ],
+
   /* ── 달의 공전 (시뮬레이션) ── */
   'moon-orbit': [
     {
@@ -645,6 +681,25 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
     random: '예측불가 날씨, 리얼리즘.',
     extreme: '극한 날씨, 서바이벌 농장.',
     skip: '랜덤 날씨로 갈게요.',
+  },
+  // Gugudan
+  startDan: {
+    '2': '기초부터 차근차근! 2단 시작.',
+    '5': '5단은 패턴이 명확해서 재밌어요!',
+    '7': '7단은 가장 어렵다는 소문이... 도전!',
+    random: '랜덤으로 골라볼게요!',
+  },
+  quizMode: {
+    step: '탐색 → 세기 → 패턴 → 퀴즈, 단계별로.',
+    quiz: '바로 퀴즈! 실력을 시험해봐요.',
+    explore: '3D로 곱셈을 눈으로 보며 이해해요.',
+    speed: '빠르게빠르게! 스피드런 모드!',
+  },
+  shape: {
+    sphere: '동글동글 구슬로 세어봐요.',
+    cube: '네모난 큐브 블록! 깔끔하죠?',
+    cylinder: '원기둥으로 색다르게!',
+    skip: '기본 구슬로 갈게요.',
   },
   // Moon Orbit (Simulation)
   simSpeed: {
