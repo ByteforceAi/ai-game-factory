@@ -5,25 +5,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ============================================
-   DARK THEME — preserved for CodeStreamView,
-   LaunchSequence, game-over overlay
+   APPLE INTELLIGENCE DESIGN SYSTEM
    ============================================ */
 :root {
-  --ai-indigo: #6366f1;
-  --ai-violet: #8b5cf6;
-  --ai-cyan: #06b6d4;
-  --ai-emerald: #10b981;
-  --bg-deep: #050510;
-  --bg-surface: rgba(255,255,255,0.04);
-  --bg-surface-hover: rgba(255,255,255,0.08);
-  --border-dim: rgba(255,255,255,0.06);
-  --border-glow: rgba(99,102,241,0.3);
-  --text-bright: #f1f5f9;
-  --text-body: #cbd5e1;
-  --text-dim: #64748b;
-  --text-muted: #475569;
+  /* Core palette */
+  --apple-blue: #007AFF;
+  --apple-blue-light: #5AC8FA;
+  --apple-green: #34C759;
+  --apple-red: #FF3B30;
+  --apple-orange: #FF9500;
+  --apple-yellow: #FFCC00;
 
-  /* ── Light theme (GitHub Education) ── */
+  /* Backgrounds */
+  --bg-deep: #0A0A1A;
+  --bg-primary: #111125;
+  --bg-secondary: #1A1A2E;
+  --bg-surface: rgba(255,255,255,0.06);
+  --bg-surface-hover: rgba(255,255,255,0.10);
+  --bg-glass: rgba(255,255,255,0.06);
+  --bg-glass-heavy: rgba(255,255,255,0.10);
+
+  /* Borders */
+  --border-dim: rgba(255,255,255,0.06);
+  --border-subtle: rgba(255,255,255,0.10);
+  --border-active: rgba(0,122,255,0.4);
+
+  /* Text */
+  --text-primary: #F5F5F7;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #636366;
+  --text-dim: #48484A;
+
+  /* Legacy aliases — keep for CodeStreamView, LaunchSequence, RemixPanel */
+  --ai-indigo: #007AFF;
+  --ai-violet: #5856D6;
+  --ai-cyan: #5AC8FA;
+  --ai-emerald: #34C759;
+  --text-bright: #F5F5F7;
+  --text-body: #A1A1AA;
+  --text-muted: #636366;
+  --border-glow: rgba(0,122,255,0.3);
+
+  /* Light theme (still used by IntroScreen) */
   --light-bg-from: #dbeafe;
   --light-bg-via: #e0e7ff;
   --light-bg-to: #fce7f3;
@@ -34,12 +57,12 @@
   --light-text-primary: #1e293b;
   --light-text-secondary: #475569;
   --light-text-muted: #94a3b8;
-  --light-accent: #6366f1;
-  --light-accent-light: #818cf8;
-  --light-success: #10b981;
+  --light-accent: #007AFF;
+  --light-accent-light: #5AC8FA;
+  --light-success: #34C759;
   --light-chip-bg: rgba(255,255,255,0.9);
   --light-chip-border: rgba(0,0,0,0.08);
-  --light-chip-hover: rgba(99,102,241,0.08);
+  --light-chip-hover: rgba(0,122,255,0.08);
   --light-input-bg: rgba(255,255,255,0.95);
   --light-input-border: rgba(0,0,0,0.12);
   --light-shadow: 0 2px 16px rgba(0,0,0,0.06);
@@ -50,63 +73,70 @@
 
 body {
   background: var(--bg-deep);
-  color: var(--text-bright);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans KR', sans-serif;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Noto Sans KR', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.3px;
 }
 
 /* ============================================
-   MONOSPACE SYSTEM LABELS
+   SCROLLBAR — ultra thin
+   ============================================ */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+::selection { background: rgba(0,122,255,0.3); color: var(--text-primary); }
+*:focus-visible { outline: 2px solid rgba(0,122,255,0.5); outline-offset: 2px; }
+
+/* ============================================
+   MONOSPACE — for code/system labels
    ============================================ */
 .mono-xs {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text-tertiary);
 }
 
 .mono-sm {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-dim);
-}
-
-.mono-md {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 500;
+  color: var(--text-tertiary);
 }
 
 /* ============================================
    GLOW TEXT
    ============================================ */
 .text-glow-indigo {
-  color: var(--ai-indigo);
-  text-shadow: 0 0 20px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.15);
+  color: var(--apple-blue);
+  text-shadow: 0 0 20px rgba(0,122,255,0.4), 0 0 40px rgba(0,122,255,0.15);
 }
 
 .text-glow-cyan {
-  color: var(--ai-cyan);
-  text-shadow: 0 0 20px rgba(6,182,212,0.4), 0 0 40px rgba(6,182,212,0.15);
+  color: var(--apple-blue-light);
+  text-shadow: 0 0 20px rgba(90,200,250,0.4);
 }
 
 .text-glow-emerald {
-  color: var(--ai-emerald);
-  text-shadow: 0 0 20px rgba(16,185,129,0.4);
+  color: var(--apple-green);
+  text-shadow: 0 0 20px rgba(52,199,89,0.4);
 }
 
 /* ============================================
-   CINEMATIC CARD (dark theme — CodeStreamView)
+   CINEMATIC CARD (kept for CodeStreamView etc.)
    ============================================ */
 .card-cinematic {
-  background: var(--bg-surface);
+  background: var(--bg-glass);
   border: 1px solid var(--border-dim);
   border-radius: 16px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -117,65 +147,64 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, transparent 50%, rgba(6,182,212,0.03) 100%);
+  background: linear-gradient(135deg, rgba(0,122,255,0.05) 0%, transparent 50%);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.4s;
 }
 
 .card-cinematic:hover {
-  border-color: var(--border-glow);
-  box-shadow:
-    0 0 30px rgba(99,102,241,0.08),
-    0 8px 32px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+  border-color: var(--border-active);
+  box-shadow: 0 0 30px rgba(0,122,255,0.08), 0 8px 32px rgba(0,0,0,0.3);
   transform: translateY(-2px);
 }
-
-.card-cinematic:hover::before {
-  opacity: 1;
-}
+.card-cinematic:hover::before { opacity: 1; }
 
 /* ============================================
-   CINEMATIC BAR (top/bottom HUD)
+   BAR — top/bottom HUD
    ============================================ */
 .bar-cinematic {
-  background: rgba(5,5,16,0.85);
+  background: rgba(10,10,26,0.85);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   border-color: var(--border-dim);
 }
 
 /* ============================================
-   GLOW BUTTON
+   BUTTONS
    ============================================ */
 .btn-glow {
-  background: linear-gradient(135deg, var(--ai-indigo), var(--ai-violet));
+  background: var(--apple-blue);
   border: none;
   color: white;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
   font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.05em;
+  font-size: 14px;
+  letter-spacing: -0.2px;
   padding: 10px 20px;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 12px rgba(0,122,255,0.3);
 }
 
 .btn-glow:hover {
-  box-shadow: 0 4px 30px rgba(99,102,241,0.5), 0 0 60px rgba(99,102,241,0.15);
+  box-shadow: 0 4px 24px rgba(0,122,255,0.45);
   transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.btn-glow:active {
+  transform: scale(0.97);
 }
 
 /* ============================================
-   CODE TERMINAL
+   CODE TERMINAL (CodeStreamView)
    ============================================ */
 .code-terminal {
-  background: rgba(5,5,16,0.95);
+  background: rgba(10,10,26,0.95);
   color: #e2e8f0;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-size: 11px;
   line-height: 1.6;
 }
@@ -185,15 +214,15 @@ body {
    ============================================ */
 .status-dot-green {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ai-emerald);
-  box-shadow: 0 0 8px rgba(16,185,129,0.6);
+  background: var(--apple-green);
+  box-shadow: 0 0 8px rgba(52,199,89,0.6);
   animation: dot-glow 2s ease-in-out infinite;
 }
 
 .status-dot-indigo {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ai-indigo);
-  box-shadow: 0 0 8px rgba(99,102,241,0.6);
+  background: var(--apple-blue);
+  box-shadow: 0 0 8px rgba(0,122,255,0.6);
   animation: dot-glow 1.5s ease-in-out infinite;
 }
 
@@ -201,40 +230,32 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
-@keyframes companionSlide {
-  0% { opacity: 0; transform: translateY(12px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
 
 /* ============================================
    SHIMMER
    ============================================ */
 .shimmer-line {
-  position: relative;
-  overflow: hidden;
-  height: 1px;
-  background: rgba(99,102,241,0.15);
+  position: relative; overflow: hidden; height: 1px;
+  background: rgba(0,122,255,0.15);
 }
 .shimmer-line::after {
   content: '';
-  position: absolute;
-  top: 0; left: -60%;
+  position: absolute; top: 0; left: -60%;
   width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, var(--ai-indigo), transparent);
+  background: linear-gradient(90deg, transparent, var(--apple-blue), transparent);
   animation: shimmer 3s ease-in-out infinite;
 }
 @keyframes shimmer {
   0% { left: -60%; }
   100% { left: 100%; }
 }
-
 @keyframes shimmer-bar {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
 /* ============================================
-   GLITCH EFFECT
+   KEYFRAMES
    ============================================ */
 @keyframes glitch-complete {
   0% { filter: hue-rotate(0deg); transform: skewX(0); }
@@ -242,65 +263,23 @@ body {
   50% { filter: hue-rotate(-10deg); transform: skewX(-0.5deg); }
   100% { filter: hue-rotate(0deg); transform: skewX(0); }
 }
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes pulse-subtle { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes companionSlide {
+  0% { opacity: 0; transform: translateY(12px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-/* ============================================
-   SCROLLBAR
-   ============================================ */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.4); }
-
-::selection { background: rgba(99,102,241,0.3); color: #f1f5f9; }
-*:focus-visible { outline: 2px solid rgba(99,102,241,0.5); outline-offset: 2px; }
 
 /* ============================================
    VIEW TRANSITIONS
    ============================================ */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
 .anim-fade-in { animation: fadeIn 0.4s ease-out both; }
 .anim-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -308,7 +287,6 @@ body {
 .anim-slide-down { animation: slideDown 0.3s ease-out both; }
 .anim-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-/* Staggered children animation */
 .stagger-children > * { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
 .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
@@ -318,20 +296,21 @@ body {
 .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
 
 /* ============================================
-   HUD BUTTONS
+   HUD BUTTONS (game overlay)
    ============================================ */
 .btn-hud {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.10);
   color: rgba(255,255,255,0.7);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 10px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   min-height: 36px;
@@ -340,34 +319,27 @@ body {
   justify-content: center;
   gap: 4px;
 }
-
 .btn-hud:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.10);
   border-color: rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.95);
   transform: translateY(-1px);
 }
-
-.btn-hud:active {
-  transform: scale(0.97);
-}
+.btn-hud:active { transform: scale(0.97); }
 
 .btn-hud--active {
-  background: rgba(99,102,241,0.25);
-  border-color: rgba(99,102,241,0.4);
-  color: #a5b4fc;
+  background: rgba(0,122,255,0.2);
+  border-color: rgba(0,122,255,0.4);
+  color: var(--apple-blue-light);
 }
-
 .btn-hud--accent {
-  background: rgba(16,185,129,0.2);
-  border-color: rgba(16,185,129,0.35);
-  color: #6ee7b7;
+  background: rgba(52,199,89,0.15);
+  border-color: rgba(52,199,89,0.3);
+  color: var(--apple-green);
 }
-
 .btn-hud--accent:hover {
-  background: rgba(16,185,129,0.3);
-  border-color: rgba(16,185,129,0.5);
-  color: #a7f3d0;
+  background: rgba(52,199,89,0.25);
+  border-color: rgba(52,199,89,0.45);
 }
 
 /* ============================================
@@ -376,9 +348,9 @@ body {
 .overlay-game-over {
   position: absolute;
   inset: 0;
-  background: rgba(5,5,16,0.88);
-  backdrop-filter: blur(30px) saturate(150%);
-  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  background: rgba(10,10,26,0.88);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -396,154 +368,122 @@ body {
 .panel-slide-up {
   position: absolute;
   bottom: 52px;
-  left: 0;
-  right: 0;
+  left: 0; right: 0;
   z-index: 25;
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ============================================
-   MOBILE HELPERS — 44pt touch target minimum
-   ============================================ */
-@media (max-width: 480px) {
-  .btn-hud {
-    padding: 10px 16px;
-    min-height: 44px;
-    font-size: 11px;
-  }
-  .btn-glow {
-    padding: 14px 24px;
-    font-size: 13px;
-    min-height: 44px;
-  }
-  /* Bigger touch targets for game over buttons */
-  .overlay-game-over button {
-    min-height: 44px;
-    font-size: 12px;
-  }
-  /* Wider chips on mobile */
-  .chip-touch {
-    padding: 12px 20px !important;
-    font-size: 13px !important;
-    min-height: 44px;
-  }
-  /* Bottom bar larger on mobile */
-  .panel-slide-up {
-    bottom: 58px;
-  }
-}
-
-/* Active press feedback for touch */
-@media (hover: none) and (pointer: coarse) {
-  .btn-hud:active {
-    transform: scale(0.95);
-    transition-duration: 0.1s;
-  }
-  .btn-glow:active {
-    transform: scale(0.97);
-    filter: brightness(1.15);
-    transition-duration: 0.1s;
-  }
-  .card-cinematic:active {
-    transform: scale(0.98);
-    transition-duration: 0.1s;
-  }
-}
-
-/* ============================================
-   START BUTTON (IntroScreen CTA)
-   ============================================ */
-@keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 0 60px rgba(99,102,241,0.1); transform: scale(1); }
-  50% { box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2); transform: scale(1.03); }
-}
-@keyframes btnShimmer {
-  0% { left: -100%; }
-  100% { left: 200%; }
-}
-.btn-start {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #6366f1);
-  background-size: 200% 200%;
-  animation: btnPulse 2.5s ease-in-out infinite, btnGradient 4s ease infinite;
-  border: none;
-  color: #fff;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  padding: 16px 52px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: filter 0.3s, box-shadow 0.3s;
-  margin-top: 20px;
-  position: relative;
-  overflow: hidden;
-}
-@keyframes btnGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-/* Shimmer sweep overlay */
-.btn-start::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-  animation: btnShimmer 3s ease-in-out infinite;
-  pointer-events: none;
-}
-.btn-start:hover {
-  filter: brightness(1.15);
-  box-shadow: 0 0 40px rgba(99,102,241,0.6), 0 0 100px rgba(139,92,246,0.25);
-}
-.btn-start:active {
-  transform: scale(0.97);
-  transition-duration: 0.1s;
-  animation: none;
-}
-
-/* ============================================
-   CHIP SELECT (PromptTerminal presets)
+   CHIP
    ============================================ */
 .chip-select {
-  background: var(--bg-surface);
+  background: var(--bg-glass);
   border: 1px solid var(--border-dim);
   border-radius: 100px;
   padding: 10px 18px;
-  color: var(--text-body);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
   min-height: 44px;
   display: flex;
   align-items: center;
+  letter-spacing: -0.2px;
 }
 .chip-select:hover {
-  border-color: rgba(99,102,241,0.4);
-  color: var(--text-bright);
-  background: rgba(99,102,241,0.08);
-  box-shadow: 0 0 16px rgba(99,102,241,0.1);
+  border-color: var(--border-active);
+  color: var(--text-primary);
+  background: rgba(0,122,255,0.08);
 }
-.chip-select:active {
-  transform: scale(0.96);
-  transition-duration: 0.1s;
+.chip-select:active { transform: scale(0.96); }
+
+/* ============================================
+   TYPING DOTS
+   ============================================ */
+@keyframes typingDot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+.typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-tertiary);
+  display: inline-block;
+}
+.typing-dot:nth-child(1) { animation: typingDot 1.4s ease-in-out infinite 0s; }
+.typing-dot:nth-child(2) { animation: typingDot 1.4s ease-in-out infinite 0.2s; }
+.typing-dot:nth-child(3) { animation: typingDot 1.4s ease-in-out infinite 0.4s; }
+
+/* ============================================
+   CHAT BUBBLE ANIMATION
+   ============================================ */
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chat-bubble-in {
+  animation: bubbleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ============================================
-   LIGHT THEME ANIMATED GRADIENT BACKGROUND
+   PROGRESS BAR ANIMATION
    ============================================ */
+@keyframes progressIndeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* ============================================
+   MOBILE HELPERS
+   ============================================ */
+@media (max-width: 480px) {
+  .btn-hud { padding: 10px 16px; min-height: 44px; font-size: 12px; }
+  .btn-glow { padding: 14px 24px; font-size: 14px; min-height: 44px; }
+  .overlay-game-over button { min-height: 44px; font-size: 13px; }
+  .panel-slide-up { bottom: 58px; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn-hud:active { transform: scale(0.95); transition-duration: 0.1s; }
+  .btn-glow:active { transform: scale(0.97); filter: brightness(1.15); transition-duration: 0.1s; }
+  .card-cinematic:active { transform: scale(0.98); transition-duration: 0.1s; }
+}
+
+/* ============================================
+   INTRO SCREEN BUTTONS (legacy support)
+   ============================================ */
+@keyframes btnPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,122,255,0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 30px rgba(0,122,255,0.5); transform: scale(1.03); }
+}
+@keyframes btnShimmer { 0% { left: -100%; } 100% { left: 200%; } }
+@keyframes btnGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.btn-start {
+  background: var(--apple-blue);
+  animation: btnPulse 2.5s ease-in-out infinite;
+  border: none; color: #fff;
+  font-family: -apple-system, sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: -0.2px;
+  padding: 16px 52px; border-radius: 14px;
+  cursor: pointer; margin-top: 20px;
+  position: relative; overflow: hidden;
+  transition: filter 0.3s;
+}
+.btn-start::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: btnShimmer 3s ease-in-out infinite; pointer-events: none;
+}
+.btn-start:hover { filter: brightness(1.15); box-shadow: 0 0 40px rgba(0,122,255,0.5); }
+.btn-start:active { transform: scale(0.97); animation: none; }
+
+/* Light theme gradient bg */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-
 @keyframes floatBlob {
   0%, 100% { transform: translate(0, 0) scale(1); }
   25% { transform: translate(30px, -20px) scale(1.05); }
@@ -551,45 +491,17 @@ body {
   75% { transform: translate(15px, 25px) scale(1.03); }
 }
 
-/* ============================================
-   CODE CURSOR (CodeStreamView)
-   ============================================ */
+/* Code cursor */
 @keyframes cursorPulse {
-  0%, 100% {
-    opacity: 1;
-    box-shadow:
-      0 0 8px rgba(99,102,241,1),
-      0 0 20px rgba(99,102,241,0.6),
-      0 0 40px rgba(99,102,241,0.3),
-      0 0 60px rgba(139,92,246,0.15);
-  }
-  50% {
-    opacity: 0.4;
-    box-shadow:
-      0 0 4px rgba(99,102,241,0.6),
-      0 0 12px rgba(99,102,241,0.3),
-      0 0 24px rgba(99,102,241,0.1);
-  }
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,122,255,1), 0 0 20px rgba(0,122,255,0.6); }
+  50% { opacity: 0.4; box-shadow: 0 0 4px rgba(0,122,255,0.6); }
 }
 
-/* ═══ Live Mini Preview Animations ═══ */
 @keyframes previewSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
+  from { opacity: 0; transform: translateX(20px) scale(0.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
 }
-
-@keyframes scanlineMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 200px; }
-}
-
-/* ═══ AI Companion Insight Glow ═══ */
+@keyframes scanlineMove { 0% { background-position: 0 0; } 100% { background-position: 0 200px; } }
 @keyframes insightGlow {
   0% { opacity: 0; transform: scaleY(0.8); }
   15% { opacity: 1; transform: scaleY(1); }
@@ -597,9 +509,18 @@ body {
   100% { opacity: 0; }
 }
 
-/* Safe area for notched phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .overlay-game-over {
-    padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  }
+  .overlay-game-over { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
+
+/* ============================================
+   INTRO SCREEN legacy keyframes
+   ============================================ */
+@keyframes introFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes introPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,122,255,0.3); }
+  50%      { opacity: 0.5; box-shadow: 0 0 14px rgba(0,122,255,0.5); }
 }
