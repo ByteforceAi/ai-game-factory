@@ -718,19 +718,40 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         </div>
       </div>
 
-      {/* ═══ Keyframes ═══ */}
+      {/* ═══ Keyframes — Apple-grade ═══ */}
       <style>{`
         @keyframes ptFadeIn {
-          from { opacity: 0; transform: translateY(6px); }
+          from { opacity: 0; transform: translateY(8px) scale(0.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ptShimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes ptCursorPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(99,102,241,0.6); }
+          50%      { opacity: 0.2; box-shadow: 0 0 2px rgba(99,102,241,0.1); }
+        }
+        @keyframes ptBreathGlow {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50%      { opacity: 1; transform: scale(1.15); }
+        }
+        @keyframes ptSlideUp {
+          from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes ptCursorBlink {
-          0%, 100% { opacity: 0.8; }
-          50%      { opacity: 0; }
+        @keyframes ptChipReveal {
+          from { opacity: 0; transform: translateY(6px) scale(0.95); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes ptDotGlow {
-          0%, 100% { opacity: 0.3; }
-          50%      { opacity: 1; }
+        @keyframes ptInputFocus {
+          0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+          50%  { box-shadow: 0 0 0 4px rgba(99,102,241,0.12); }
+          100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+        }
+        @keyframes ptAvatarFloat {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-2px); }
         }
       `}</style>
     </div>
@@ -751,20 +772,32 @@ function AiMessage({ text, isTyping, isThinking }: {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        animation: 'ptFadeIn 0.4s ease both',
+        gap: '12px',
+        animation: 'ptSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
       }}>
-        <AiAvatar />
-        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-          {[0, 1, 2].map(i => (
-            <span key={i} style={{
-              width: '5px',
-              height: '5px',
-              borderRadius: '50%',
-              background: '#6366f1',
-              animation: `ptDotGlow 1.2s ease-in-out ${i * 0.2}s infinite`,
-            }} />
-          ))}
+        <AiAvatar isThinking />
+        {/* Skeleton shimmer — Apple-style content placeholder */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+        }}>
+          <div style={{
+            width: '140px',
+            height: '10px',
+            borderRadius: '5px',
+            background: 'linear-gradient(90deg, #f1f5f9 25%, #e8edf4 37%, #f1f5f9 63%)',
+            backgroundSize: '200% 100%',
+            animation: 'ptShimmer 1.8s ease infinite',
+          }} />
+          <div style={{
+            width: '90px',
+            height: '10px',
+            borderRadius: '5px',
+            background: 'linear-gradient(90deg, #f1f5f9 25%, #e8edf4 37%, #f1f5f9 63%)',
+            backgroundSize: '200% 100%',
+            animation: 'ptShimmer 1.8s ease 0.15s infinite',
+          }} />
         </div>
       </div>
     );
@@ -774,32 +807,37 @@ function AiMessage({ text, isTyping, isThinking }: {
     <div style={{
       display: 'flex',
       alignItems: 'flex-start',
-      gap: '10px',
-      animation: 'ptFadeIn 0.4s ease both',
+      gap: '12px',
+      animation: 'ptSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
     }}>
       <AiAvatar />
       <div style={{
-        background: '#f8fafc',
-        borderRadius: '0 18px 18px 18px',
-        padding: '12px 18px',
-        border: '1px solid rgba(0,0,0,0.04)',
-        fontFamily: "'Noto Sans KR', sans-serif",
+        background: 'linear-gradient(135deg, rgba(248,250,252,0.95), rgba(241,245,249,0.9))',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        borderRadius: '2px 20px 20px 20px',
+        padding: '14px 20px',
+        border: '1px solid rgba(0,0,0,0.03)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.02)',
+        fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
         fontSize: '15px',
         fontWeight: 400,
         color: '#1e293b',
-        lineHeight: 1.7,
+        lineHeight: 1.75,
         maxWidth: '85%',
+        letterSpacing: '-0.01em',
       }}>
         {text}
         {isTyping && (
           <span style={{
             display: 'inline-block',
-            width: '2px',
-            height: '16px',
-            marginLeft: '2px',
+            width: '2.5px',
+            height: '17px',
+            marginLeft: '1px',
             verticalAlign: 'text-bottom',
-            background: '#6366f1',
-            animation: 'ptCursorBlink 0.8s ease infinite',
+            borderRadius: '2px',
+            background: 'linear-gradient(180deg, #6366f1, #8b5cf6)',
+            animation: 'ptCursorPulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           }} />
         )}
       </div>
@@ -807,21 +845,25 @@ function AiMessage({ text, isTyping, isThinking }: {
   );
 }
 
-function AiAvatar() {
+function AiAvatar({ isThinking }: { isThinking?: boolean } = {}) {
   return (
     <div style={{
-      width: '28px',
-      height: '28px',
+      width: '30px',
+      height: '30px',
       borderRadius: '50%',
-      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+      background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa)',
       flexShrink: 0,
       marginTop: '2px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+      boxShadow: '0 2px 12px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+      animation: isThinking ? 'ptAvatarFloat 2s ease-in-out infinite' : undefined,
     }}>
-      <span style={{ fontSize: '13px' }}>✨</span>
+      <span style={{
+        fontSize: '14px',
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))',
+      }}>✦</span>
     </div>
   );
 }
@@ -831,19 +873,21 @@ function UserMessage({ text }: { text: string }) {
     <div style={{
       display: 'flex',
       justifyContent: 'flex-end',
-      animation: 'ptFadeIn 0.3s ease both',
+      animation: 'ptSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
     }}>
       <div style={{
-        background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-        borderRadius: '18px 0 18px 18px',
-        padding: '10px 18px',
-        fontFamily: "'Noto Sans KR', sans-serif",
+        background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a78bfa 100%)',
+        borderRadius: '20px 4px 20px 20px',
+        padding: '12px 20px',
+        fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
         fontSize: '15px',
         fontWeight: 500,
         color: '#ffffff',
-        lineHeight: 1.7,
+        lineHeight: 1.75,
         maxWidth: '80%',
-        boxShadow: '0 2px 8px rgba(99,102,241,0.2)',
+        letterSpacing: '-0.01em',
+        boxShadow: '0 2px 12px rgba(99,102,241,0.25), 0 1px 2px rgba(99,102,241,0.15)',
+        textShadow: '0 1px 2px rgba(0,0,0,0.06)',
       }}>
         {text}
       </div>
@@ -860,20 +904,25 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
   isTyping: boolean;
   inputRef: React.RefObject<HTMLInputElement>;
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <div style={{
-      animation: 'ptFadeIn 0.4s ease both',
-      marginLeft: '38px',
+      animation: 'ptSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+      marginLeft: '42px',
     }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        background: '#fff',
-        borderRadius: '16px',
-        border: '1.5px solid #e2e8f0',
-        padding: '4px 4px 4px 16px',
-        transition: 'border-color 0.3s, box-shadow 0.3s',
+        background: focused ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.92)',
+        borderRadius: '18px',
+        border: `1.5px solid ${focused ? 'rgba(99,102,241,0.4)' : 'rgba(0,0,0,0.06)'}`,
+        padding: '4px 6px 4px 18px',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        boxShadow: focused
+          ? '0 0 0 4px rgba(99,102,241,0.08), 0 4px 16px rgba(0,0,0,0.06)'
+          : '0 1px 4px rgba(0,0,0,0.03)',
       }}>
         <input
           ref={inputRef}
@@ -881,7 +930,7 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="만들고 싶은 것을 말해주세요..."
+          placeholder="상상하는 걸 자유롭게 적어주세요..."
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
@@ -894,48 +943,58 @@ function InputWidget({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping,
             border: 'none',
             outline: 'none',
             color: isTyping ? '#6366f1' : '#1e293b',
-            fontFamily: "'Noto Sans KR', sans-serif",
-            fontSize: '14px',
+            fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
+            fontSize: '15px',
             fontWeight: 400,
-            lineHeight: '24px',
-            padding: '10px 0',
+            lineHeight: '26px',
+            padding: '12px 0',
             caretColor: '#6366f1',
+            letterSpacing: '-0.01em',
           }}
-          onFocus={(e) => {
-            const parent = e.currentTarget.parentElement;
-            if (parent) {
-              parent.style.borderColor = '#6366f1';
-              parent.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.1)';
-            }
-          }}
-          onBlur={(e) => {
-            const parent = e.currentTarget.parentElement;
-            if (parent) {
-              parent.style.borderColor = '#e2e8f0';
-              parent.style.boxShadow = 'none';
-            }
-          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         />
-        {value.trim() && !isTyping && (
-          <button
-            onClick={onSubmit}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-              border: 'none',
-              color: '#fff',
-              fontSize: '14px',
-              cursor: 'pointer',
-              padding: '8px 14px',
-              borderRadius: '12px',
-              transition: 'transform 0.2s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          >
-            ↵
-          </button>
-        )}
+        <button
+          onClick={onSubmit}
+          style={{
+            background: value.trim() && !isTyping
+              ? 'linear-gradient(135deg, #6366f1, #818cf8)'
+              : 'rgba(0,0,0,0.04)',
+            border: 'none',
+            color: value.trim() && !isTyping ? '#fff' : '#cbd5e1',
+            fontSize: '16px',
+            cursor: value.trim() && !isTyping ? 'pointer' : 'default',
+            width: '36px',
+            height: '36px',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            flexShrink: 0,
+            boxShadow: value.trim() && !isTyping
+              ? '0 2px 8px rgba(99,102,241,0.3)'
+              : 'none',
+          }}
+          onMouseEnter={(e) => {
+            if (value.trim() && !isTyping) {
+              e.currentTarget.style.transform = 'scale(1.08)';
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.4)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = value.trim() && !isTyping
+              ? '0 2px 8px rgba(99,102,241,0.3)' : 'none';
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8.5L7 12.5L13 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ opacity: value.trim() ? 0 : 1, transition: 'opacity 0.2s' }} />
+            <path d="M2 7L14 7M14 7L9 2M14 7L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              style={{ opacity: value.trim() ? 1 : 0, transition: 'opacity 0.2s' }} />
+          </svg>
+        </button>
       </div>
     </div>
   );
@@ -965,65 +1024,90 @@ function ChipsWidget({ chips, onSelect }: {
   let globalIdx = 0;
   return (
     <div style={{
-      marginLeft: '38px',
+      marginLeft: '42px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '6px',
-      animation: 'ptFadeIn 0.4s ease both',
+      gap: '10px',
+      animation: 'ptSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
     }}>
+      {/* Label */}
+      <span style={{
+        fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
+        fontSize: '12px',
+        fontWeight: 500,
+        color: '#94a3b8',
+        letterSpacing: '0.02em',
+      }}>
+        또는 영감을 골라보세요
+      </span>
+
       {sections.map((section, si) => (
         <div key={si}>
           {section.category && (
             <div style={{
-              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
               fontSize: '10px',
-              fontWeight: 700,
-              color: '#94a3b8',
-              letterSpacing: '0.12em',
-              padding: si > 0 ? '10px 4px 6px' : '0 4px 6px',
+              fontWeight: 600,
+              color: '#b0b8c8',
+              letterSpacing: '0.08em',
+              padding: si > 0 ? '6px 0 5px' : '0 0 5px',
             }}>
               {section.category}
             </div>
           )}
+          {/* Horizontal scroll strip */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '10px',
+            display: 'flex',
+            gap: '8px',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            paddingBottom: '4px',
+            marginRight: '-28px',
+            paddingRight: '28px',
+            WebkitOverflowScrolling: 'touch',
           }}>
+            <style>{`.chips-scroll::-webkit-scrollbar { display: none; }`}</style>
             {section.items.map((chip) => {
               const idx = globalIdx++;
               return (
                 <button
                   key={chip.label}
+                  className="chips-scroll"
                   onClick={() => onSelect(chip)}
                   style={{
-                    padding: '14px 16px',
-                    borderRadius: '14px',
-                    border: '1.5px solid #e2e8f0',
-                    background: '#fff',
-                    color: '#334155',
-                    fontFamily: "'Noto Sans KR', sans-serif",
+                    padding: '8px 16px',
+                    borderRadius: '100px',
+                    border: '1px solid rgba(0,0,0,0.06)',
+                    background: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    color: '#475569',
+                    fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
                     fontSize: '13px',
                     fontWeight: 500,
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    textAlign: 'left',
-                    animation: `ptFadeIn 0.4s ease ${idx * 0.05}s both`,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    animation: `ptChipReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${idx * 0.04}s both`,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    letterSpacing: '-0.01em',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f5f3ff';
-                    e.currentTarget.style.borderColor = '#6366f1';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.12)';
+                    e.currentTarget.style.background = 'rgba(99,102,241,0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(99,102,241,0.2)';
                     e.currentTarget.style.color = '#4f46e5';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99,102,241,0.1)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#fff';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.85)';
+                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)';
+                    e.currentTarget.style.color = '#475569';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-                    e.currentTarget.style.color = '#334155';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
                   }}
                 >
                   {chip.label}
@@ -1054,41 +1138,48 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
     setTimeout(() => onSelect(slotId, opt), 150);
   };
 
-  // DJ Mixer — Horizontal fader/selector style
+  // DJ Mixer — Apple-grade horizontal selector
   return (
     <div style={{
-      marginLeft: '38px',
-      animation: 'ptFadeIn 0.4s ease both',
+      marginLeft: '42px',
+      animation: 'ptSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
     }}>
       {/* Mixer panel */}
       <div style={{
-        background: 'rgba(15,15,35,0.06)',
-        borderRadius: '16px',
-        padding: '16px',
+        background: 'rgba(255,255,255,0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: '18px',
+        padding: '6px',
         border: '1px solid rgba(0,0,0,0.04)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.02), 0 4px 16px rgba(0,0,0,0.02)',
       }}>
-        {/* Channel strip — horizontal fader */}
+        {/* Channel strip — Apple segmented control */}
         <div style={{
           display: 'flex',
           gap: '0',
-          borderRadius: '10px',
+          borderRadius: '14px',
           overflow: 'hidden',
-          background: '#f1f5f9',
+          background: 'rgba(0,0,0,0.03)',
           position: 'relative',
+          padding: '2px',
         }}>
-          {/* Slider track highlight */}
+          {/* Slider track highlight — smooth glass pill */}
           {(selectedIdx >= 0 || hoveredIdx >= 0) && (
             <div style={{
               position: 'absolute',
-              left: `${((selectedIdx >= 0 ? selectedIdx : hoveredIdx) / options.length) * 100}%`,
-              width: `${100 / options.length}%`,
-              top: 0, bottom: 0,
+              left: `calc(${((selectedIdx >= 0 ? selectedIdx : hoveredIdx) / options.length) * 100}% + 2px)`,
+              width: `calc(${100 / options.length}% - 4px)`,
+              top: '2px', bottom: '2px',
               background: selectedIdx >= 0
-                ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
-                : 'rgba(99,102,241,0.08)',
-              borderRadius: '10px',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                ? '#fff'
+                : 'rgba(255,255,255,0.5)',
+              borderRadius: '12px',
+              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
               zIndex: 0,
+              boxShadow: selectedIdx >= 0
+                ? '0 1px 3px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)'
+                : 'none',
             }} />
           )}
 
@@ -1103,36 +1194,22 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
                 onMouseLeave={() => !disabled && setHoveredIdx(-1)}
                 style={{
                   flex: 1,
-                  padding: '14px 8px',
+                  padding: '12px 8px',
                   border: 'none',
                   background: 'transparent',
-                  color: isSelected ? '#fff' : isHovered ? '#4f46e5' : '#64748b',
-                  fontFamily: "'Noto Sans KR', sans-serif",
+                  color: isSelected ? '#1e293b' : isHovered ? '#475569' : '#94a3b8',
+                  fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
                   fontSize: '13px',
-                  fontWeight: isSelected ? 700 : 500,
+                  fontWeight: isSelected ? 600 : 500,
                   cursor: disabled ? 'default' : 'pointer',
-                  transition: 'color 0.2s ease, transform 0.15s ease',
+                  transition: 'color 0.25s ease',
                   position: 'relative',
                   zIndex: 1,
-                  transform: isSelected ? 'scale(1.02)' : 'scale(1)',
                   opacity: disabled ? 0.4 : 1,
-                  textShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
+                  letterSpacing: '-0.01em',
                 }}
               >
                 {opt.label}
-                {/* Active dot indicator */}
-                {isSelected && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '4px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '4px', height: '4px',
-                    borderRadius: '50%',
-                    background: '#fff',
-                    boxShadow: '0 0 6px rgba(255,255,255,0.8)',
-                  }} />
-                )}
               </button>
             );
           })}
@@ -1144,20 +1221,21 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
             onClick={() => onSkip(slotId)}
             style={{
               width: '100%',
-              marginTop: '8px',
+              marginTop: '4px',
               padding: '8px',
               border: 'none',
               background: 'transparent',
-              color: '#94a3b8',
-              fontFamily: "'Noto Sans KR', sans-serif",
+              color: '#b0b8c8',
+              fontFamily: "'Noto Sans KR', -apple-system, sans-serif",
               fontSize: '12px',
               fontWeight: 400,
               cursor: 'pointer',
-              transition: 'color 0.2s ease',
+              transition: 'all 0.25s ease',
               textAlign: 'center',
+              letterSpacing: '0.02em',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.color = '#64748b'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#b0b8c8'; }}
           >
             건너뛰기
           </button>
@@ -1170,22 +1248,23 @@ function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
 function ProgressBar({ width }: { width: number }) {
   return (
     <div style={{
-      marginLeft: '38px',
+      marginLeft: '42px',
       marginTop: '4px',
-      animation: 'ptFadeIn 0.4s ease both',
+      animation: 'ptSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
     }}>
       <div style={{
-        height: '4px',
-        background: '#f1f5f9',
+        height: '3px',
+        background: 'rgba(0,0,0,0.04)',
         borderRadius: '2px',
         overflow: 'hidden',
       }}>
         <div style={{
           height: '100%',
           width: `${width}%`,
-          background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+          background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)',
           borderRadius: '2px',
           transition: 'width 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          boxShadow: '0 0 8px rgba(99,102,241,0.3)',
         }} />
       </div>
     </div>
