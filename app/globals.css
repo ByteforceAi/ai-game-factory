@@ -509,6 +509,14 @@ body {
   100% { opacity: 0; }
 }
 
+/* ============================================
+   TOOLBAR EXPAND (Dynamic Island)
+   ============================================ */
+@keyframes toolbarExpand {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .overlay-game-over { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
 }

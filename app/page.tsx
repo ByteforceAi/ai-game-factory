@@ -46,6 +46,9 @@ export default function Home() {
   const [transitioning, setTransitioning] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
   const confettiRef = useRef<HTMLCanvasElement>(null);
+  const [toolbarOpen, setToolbarOpen] = useState(false);
+  const [hudVisible, setHudVisible] = useState(true);
+  const hudTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Instructor override ──
   const [instructorGame, setInstructorGame] = useState<string | null>(null);
@@ -110,6 +113,7 @@ export default function Home() {
         setShowRemix(false);  // close remix panel on game over
         setShowCode(false);   // close code panel on game over
         setShowVibeControl(false);  // close vibe control on game over
+        setToolbarOpen(false);     // close toolbar on game over
         if (selectedGame) fetchLeaderboard(selectedGame.id);
       }
     };
@@ -184,6 +188,40 @@ export default function Home() {
     }
   }, [showLeaderboard]);
 
+  // Auto-hide HUD after 3 seconds of inactivity
+  const resetHudTimer = useCallback(() => {
+    setHudVisible(true);
+    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = setTimeout(() => {
+      // Only hide if no panels are open
+      if (!showCode && !showRemix && !showVibeControl && !showLeaderboard && !toolbarOpen) {
+        setHudVisible(false);
+      }
+    }, 3500);
+  }, [showCode, showRemix, showVibeControl, showLeaderboard, toolbarOpen]);
+
+  // Show HUD on any tap, then auto-hide
+  const handleScreenTap = useCallback(() => {
+    if (showLeaderboard || showCode || showRemix || showVibeControl) return;
+    resetHudTimer();
+  }, [showLeaderboard, showCode, showRemix, showVibeControl, resetHudTimer]);
+
+  // Start auto-hide timer when entering play mode
+  useEffect(() => {
+    if (view === 'playing') {
+      resetHudTimer();
+    }
+    return () => { if (hudTimerRef.current) clearTimeout(hudTimerRef.current); };
+  }, [view, resetHudTimer]);
+
+  // Keep HUD visible when panels are open
+  useEffect(() => {
+    if (showCode || showRemix || showVibeControl || showLeaderboard || toolbarOpen) {
+      setHudVisible(true);
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    }
+  }, [showCode, showRemix, showVibeControl, showLeaderboard, toolbarOpen]);
+
   const handleSubmitScore = async () => {
     if (!selectedGame || !playerName.trim() || submittingScore) return;
     setSubmittingScore(true);
@@ -242,6 +280,7 @@ export default function Home() {
     setShowRemix(false);
     setShowCode(false);
     setShowVibeControl(false);
+    setToolbarOpen(false);
     setShowLeaderboard(false);
     setShowShare(false);
     setGameScore(0);
@@ -343,6 +382,7 @@ export default function Home() {
         ref={iframeRef}
         title="game"
         sandbox="allow-scripts allow-same-origin"
+        onClick={handleScreenTap}
         style={{
           position: 'absolute',
           inset: 0,
@@ -353,8 +393,21 @@ export default function Home() {
         }}
       />
 
-      {/* Top HUD — Overlay */}
-      <div className="anim-slide-down" style={{
+      {/* Tap overlay to detect taps for showing HUD */}
+      {!showLeaderboard && !showCode && !showRemix && !showVibeControl && !hudVisible && (
+        <div
+          onClick={handleScreenTap}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 5,
+            cursor: 'pointer',
+          }}
+        />
+      )}
+
+      {/* Top HUD — Auto-hide overlay */}
+      <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
@@ -364,24 +417,27 @@ export default function Home() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '10px 12px',
-        background: 'linear-gradient(to bottom, rgba(5,5,16,0.75) 0%, transparent 100%)',
+        paddingTop: 'max(10px, env(safe-area-inset-top, 10px))',
+        background: 'linear-gradient(to bottom, rgba(10,10,26,0.75) 0%, transparent 100%)',
         pointerEvents: 'none',
+        opacity: hudVisible ? 1 : 0,
+        transform: hudVisible ? 'translateY(0)' : 'translateY(-10px)',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}>
-        <button onClick={handleReset} className="btn-hud">
-          ← EXIT
+        <button onClick={handleReset} className="btn-hud" style={{ fontSize: '12px' }}>
+          ← 나가기
         </button>
         <span style={{
-          color: 'rgba(255,255,255,0.9)',
-          fontSize: 'clamp(11px, 3vw, 14px)',
+          color: 'rgba(255,255,255,0.85)',
+          fontSize: 'clamp(12px, 3vw, 14px)',
           fontWeight: 600,
-          fontFamily: "'JetBrains Mono', monospace",
-          letterSpacing: '0.08em',
+          letterSpacing: '-0.3px',
           textShadow: '0 2px 8px rgba(0,0,0,0.8)',
         }}>
           {studentName ? `${studentName}의 ${selectedGame?.title}` : selectedGame?.title}
         </span>
-        <button onClick={handleRestart} className="btn-hud btn-hud--active">
-          ↻ RESTART
+        <button onClick={handleRestart} className="btn-hud btn-hud--active" style={{ fontSize: '12px' }}>
+          ↻ 다시
         </button>
       </div>
 
@@ -603,59 +659,154 @@ export default function Home() {
           </div>
         )}
 
-      {/* Bottom Dev Tools Bar — Overlay (44px+ touch targets) */}
-      <div className="anim-fade-in" style={{
+      {/* ═══ Bottom — Dynamic Island Pill + Expandable Toolbar ═══ */}
+      <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 20,
         display: 'flex',
-        gap: '8px',
-        padding: '10px 12px',
-        paddingBottom: 'max(10px, env(safe-area-inset-bottom, 0px))',
-        background: 'linear-gradient(to top, rgba(5,5,16,0.85) 0%, rgba(5,5,16,0.4) 60%, transparent 100%)',
+        flexDirection: 'column',
         alignItems: 'center',
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
         pointerEvents: 'none',
+        opacity: hudVisible || toolbarOpen ? 1 : 0,
+        transform: (hudVisible || toolbarOpen) ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}>
+        {/* Expanded toolbar */}
+        {toolbarOpen && (
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            padding: '8px',
+            marginBottom: '8px',
+            background: 'rgba(10,10,26,0.85)',
+            backdropFilter: 'blur(20px) saturate(150%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            pointerEvents: 'auto',
+            animation: 'toolbarExpand 0.3s cubic-bezier(0.16,1,0.3,1) both',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }}>
+            <button
+              onClick={() => { setShowCode(!showCode); if (!showCode) { setShowRemix(false); setShowVibeControl(false); } setToolbarOpen(false); }}
+              className={`btn-hud ${showCode ? 'btn-hud--active' : ''}`}
+              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
+            >
+              {'</>'} 코드
+            </button>
+            <button
+              onClick={() => { setShowVibeControl(!showVibeControl); if (!showVibeControl) { setShowCode(false); setShowRemix(false); } setToolbarOpen(false); }}
+              className={`btn-hud ${showVibeControl ? 'btn-hud--accent' : ''}`}
+              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
+            >
+              🎛️ 라이브
+            </button>
+            <button
+              onClick={() => { setShowRemix(!showRemix); if (!showRemix) { setShowCode(false); setShowVibeControl(false); } setToolbarOpen(false); }}
+              className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
+              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
+            >
+              ✨ 바이브 코딩
+            </button>
+          </div>
+        )}
+
+        {/* Collapsed pill — Dynamic Island style */}
         <button
-          onClick={() => { setShowCode(!showCode); if (!showCode) setShowRemix(false); }}
-          className={`btn-hud ${showCode ? 'btn-hud--active' : ''}`}
-          style={{ flex: 1, minHeight: '44px' }}
+          onClick={() => {
+            setToolbarOpen(!toolbarOpen);
+            resetHudTimer();
+          }}
+          style={{
+            pointerEvents: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: toolbarOpen ? '8px 20px' : '8px 16px',
+            minHeight: '36px',
+            borderRadius: '20px',
+            background: toolbarOpen
+              ? 'rgba(10,10,26,0.9)'
+              : 'rgba(10,10,26,0.75)',
+            backdropFilter: 'blur(20px) saturate(150%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+            border: `1px solid ${toolbarOpen ? 'rgba(0,122,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
+            cursor: 'pointer',
+            transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+            boxShadow: toolbarOpen
+              ? '0 4px 20px rgba(0,122,255,0.15)'
+              : '0 4px 16px rgba(0,0,0,0.3)',
+          }}
         >
-          {'</>'} CODE
+          {/* Status dot */}
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: (showCode || showVibeControl || showRemix) ? '#007AFF' : '#34C759',
+            boxShadow: (showCode || showVibeControl || showRemix)
+              ? '0 0 6px rgba(0,122,255,0.5)'
+              : '0 0 6px rgba(52,199,89,0.5)',
+            transition: 'all 0.3s',
+          }} />
+
+          {/* Label */}
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.7)',
+            letterSpacing: '-0.2px',
+            whiteSpace: 'nowrap',
+          }}>
+            {toolbarOpen ? '닫기' : (showCode ? '코드 보는 중' : showVibeControl ? '라이브 수정 중' : showRemix ? '바이브 코딩 중' : `${lineCount} LOC`)}
+          </span>
+
+          {/* Chevron */}
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{
+            transform: toolbarOpen ? 'rotate(180deg)' : 'rotate(0)',
+            transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            <path d="M2 6.5L5 3.5L8 6.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
-        <button
-          onClick={() => { setShowVibeControl(!showVibeControl); if (!showVibeControl) { setShowCode(false); setShowRemix(false); } }}
-          className={`btn-hud ${showVibeControl ? 'btn-hud--accent' : ''}`}
-          style={{ flex: 1, minHeight: '44px' }}
-        >
-          🎛️ 라이브
-        </button>
-        <button
-          onClick={() => { setShowRemix(!showRemix); if (!showRemix) { setShowCode(false); setShowVibeControl(false); } }}
-          className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
-          style={{ flex: 1, minHeight: '44px' }}
-        >
-          ✨ 바이브 코딩
-        </button>
-        <span className="mono-xs" style={{
-          fontSize: '9px',
-          whiteSpace: 'nowrap',
-          color: 'rgba(255,255,255,0.4)',
-          pointerEvents: 'auto',
-        }}>
-          {lineCount} LOC
-        </span>
       </div>
+
+      {/* Click outside to close toolbar */}
+      {toolbarOpen && (
+        <div
+          onClick={() => setToolbarOpen(false)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 15,
+          }}
+        />
+      )}
 
       {/* Code Panel — Overlay */}
       {showCode && (
-        <div className="panel-slide-up" style={{
-          maxHeight: '40vh',
+        <div style={{
+          position: 'absolute',
+          bottom: '60px',
+          left: 0,
+          right: 0,
+          zIndex: 25,
+          maxHeight: '45vh',
           overflow: 'auto',
+          animation: 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
         }}>
-          <div className="code-terminal" style={{ padding: '12px 16px', minHeight: '100px', background: 'rgba(5,5,16,0.95)' }}>
+          <div className="code-terminal" style={{
+            padding: '12px 16px',
+            minHeight: '100px',
+            background: 'rgba(10,10,26,0.95)',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -664,21 +815,27 @@ export default function Home() {
               borderBottom: '1px solid var(--border-dim)',
               paddingBottom: '8px',
             }}>
-              <span className="mono-xs" style={{ color: 'var(--text-dim)' }}>
+              <span className="mono-xs" style={{ color: 'var(--text-tertiary)' }}>
                 {selectedGame?.title}.html — {lineCount} lines
               </span>
               <button
                 onClick={() => setShowCode(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace" }}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '4px 12px',
+                  borderRadius: '8px',
+                  letterSpacing: '-0.2px',
+                }}
               >
-                CLOSE
+                닫기
               </button>
             </div>
-            <pre style={{
-              margin: 0,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}>
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               {gameCode}
             </pre>
           </div>
@@ -696,7 +853,14 @@ export default function Home() {
 
       {/* Remix Panel — Overlay */}
       {showRemix && selectedGame && (
-        <div className="panel-slide-up">
+        <div style={{
+          position: 'absolute',
+          bottom: '60px',
+          left: 0,
+          right: 0,
+          zIndex: 25,
+          animation: 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+        }}>
           <RemixPanel
             gameId={selectedGame.id}
             gameHtml={gameCode}
