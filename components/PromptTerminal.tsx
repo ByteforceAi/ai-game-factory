@@ -6,23 +6,64 @@ import { matchPromptToGame, MatchResult } from '@/lib/promptMatcher';
 import { playSelect, playComplete, playWhoosh, playTick } from '@/lib/sounds';
 
 /* ═══════════════════════════════════════════════
-   Inspiration Chips — flat list, no categories
+   Category Grid Data
    ═══════════════════════════════════════════════ */
-interface ChipItem { label: string; prompt: string; }
+interface CardItem {
+  label: string;
+  icon: string;
+  prompt: string;
+  available: boolean;
+}
 
-const CHIPS: ChipItem[] = [
-  { label: '🚀 우주 슈팅', prompt: '우주에서 적을 쏘는 네온 슈팅게임' },
-  { label: '🧮 구구단', prompt: '3D 구구단 학습 곱셈 퀴즈' },
-  { label: '🌙 달의 공전', prompt: '달의 공전 궤도 시뮬레이션' },
-  { label: '🏃 3D 러너', prompt: '3D 장애물 피하는 템플 러너' },
-  { label: '🧱 테트리스', prompt: '클래식 테트리스 게임' },
-  { label: '🐱 고양이 점프', prompt: '귀여운 고양이 점프 게임' },
-  { label: '⚔️ 도트 RPG', prompt: '픽셀 도트 RPG 마을 탐험과 턴제 전투' },
-  { label: '🌿 마음의 텃밭', prompt: '3D 힐링 농장 텃밭 작물 키우기' },
-  { label: '😄 이모지 캐치', prompt: '떨어지는 이모지 받기 게임' },
-  { label: '🎈 풍선 팝', prompt: '풍선 터뜨리기 타이머 게임' },
-  { label: '⭐ 별 모으기', prompt: '밤하늘 별 모으기 게임' },
-  { label: '🏃 네온 플랫포머', prompt: '점프하고 벽타는 네온 러너 게임' },
+interface Category {
+  id: string;
+  label: string;
+  icon: string;
+  cards: CardItem[];
+}
+
+const CATEGORIES: Category[] = [
+  {
+    id: 'game', label: '게임', icon: '🎮',
+    cards: [
+      { label: '우주 슈팅', icon: '🚀', prompt: '우주에서 적을 쏘는 네온 슈팅게임', available: true },
+      { label: '3D 러너', icon: '🏃', prompt: '3D 장애물 피하는 템플 러너', available: true },
+      { label: '테트리스', icon: '🧱', prompt: '클래식 테트리스 게임', available: true },
+      { label: '고양이 점프', icon: '🐱', prompt: '귀여운 고양이 점프 게임', available: true },
+      { label: '네온 플랫포머', icon: '🏃', prompt: '점프하고 벽타는 네온 러너 게임', available: true },
+      { label: '도트 RPG', icon: '⚔️', prompt: '픽셀 도트 RPG 마을 탐험과 턴제 전투', available: true },
+      { label: '이모지 캐치', icon: '😄', prompt: '떨어지는 이모지 받기 게임', available: true },
+      { label: '풍선 팝', icon: '🎈', prompt: '풍선 터뜨리기 타이머 게임', available: true },
+      { label: '별 모으기', icon: '⭐', prompt: '밤하늘 별 모으기 게임', available: true },
+    ],
+  },
+  {
+    id: 'math', label: '수학', icon: '📐',
+    cards: [
+      { label: '구구단', icon: '🧮', prompt: '3D 구구단 학습 곱셈 퀴즈', available: true },
+      { label: '분수 학습', icon: '📊', prompt: '분수 학습 게임', available: false },
+      { label: '도형 탐험', icon: '📐', prompt: '도형 탐험 게임', available: false },
+      { label: '사칙연산', icon: '🔢', prompt: '사칙연산 게임', available: false },
+    ],
+  },
+  {
+    id: 'science', label: '과학', icon: '🔬',
+    cards: [
+      { label: '달의 공전', icon: '🌙', prompt: '달의 공전 궤도 시뮬레이션', available: true },
+      { label: '화학반응', icon: '🧪', prompt: '화학반응 시뮬레이션', available: false },
+      { label: '전기회로', icon: '⚡', prompt: '전기회로 시뮬레이션', available: false },
+      { label: '세포분열', icon: '🧬', prompt: '세포분열 시뮬레이션', available: false },
+    ],
+  },
+  {
+    id: 'sim', label: '시뮬레이션', icon: '🌍',
+    cards: [
+      { label: '마음의 텃밭', icon: '🌿', prompt: '3D 힐링 농장 텃밭 작물 키우기', available: true },
+      { label: '파도', icon: '🌊', prompt: '파도 시뮬레이션', available: false },
+      { label: '생태계', icon: '🌿', prompt: '생태계 시뮬레이션', available: false },
+      { label: '날씨', icon: '☁️', prompt: '날씨 시뮬레이션', available: false },
+    ],
+  },
 ];
 
 /* ═══════════════════════════════════════════════
@@ -222,7 +263,7 @@ function getModifierSlots(gameId: string): ModSlot[] {
 }
 
 /* ═══════════════════════════════════════════════
-   AI Reactions — per slot/value
+   AI Reactions
    ═══════════════════════════════════════════════ */
 const AI_REACTIONS: Record<string, Record<string, string>> = {
   bulletPattern: { single: '정확한 한 발, 스나이퍼 스타일이네요.', spread: '넓게 퍼지는 탄막, 시원하겠네요.', laser: '관통하는 레이저빔, 강력해요.', homing: '유도탄이면 빗나갈 일 없죠.' },
@@ -237,7 +278,7 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
   visual: { classic: '클래식 테트리스 감성, 최고.', neon: '형형색색 네온, 화려하게.', retro: '브라운관 TV 느낌, 향수가.', minimal: '깔끔한 미니멀, 집중하기 좋아요.' },
   rule: { ghost: '고스트 피스로 착지점을 미리 보여줄게요.', hold: '홀드 기능으로 전략적 플레이!', bomb: '폭탄 블록, 한방에 줄을 날려요.', gravity: '중력이 바뀌면 멘탈도 바뀌어요.', skip: '클래식 룰로 갈게요.' },
   class: { warrior: '튼튼한 전사, 근접 전투의 왕.', mage: '강력한 마법사, 화력이 최고.', archer: '날렵한 궁수, 원거리 딜러.', thief: '은밀한 도적, 크리티컬 한 방.' },
-  world: { medieval: '검과 마법의 클래식 판타지.', dark: '어둡고 무거운 세계관.', cute: '아기자기한 세상, 힐링되겠네요.', scifi: 'SF와 판타지의 만남, 독특해요.', sky: '하늘 위 구름 사이를 뛰어다녀요.', forest: '자연 속에서 모험!', candy: '사탕 나라, 달콤한 세계!', night: '별빛 아래 점프!', },
+  world: { medieval: '검과 마법의 클래식 판타지.', dark: '어둡고 무거운 세계관.', cute: '아기자기한 세상, 힐링되겠네요.', scifi: 'SF와 판타지의 만남, 독특해요.', sky: '하늘 위 구름 사이를 뛰어다녀요.', forest: '자연 속에서 모험!', candy: '사탕 나라, 달콤한 세계!', night: '별빛 아래 점프!' },
   battle: { turn: '전략적 턴제, 생각하며 싸워요.', action: '실시간 액션, 손맛이 최고.', auto: '편하게 오토 배틀, 구경하세요.', card: '카드 배틀, 덱 빌딩의 재미.', skip: '기본 전투 시스템으로.' },
   catSkin: { orange: '귀여운 치즈냥이 출발!', black: '시크한 검은 고양이, 멋져요.', calico: '삼색냥 아기자기 매력.', space: '우주 고양이, 반짝반짝!' },
   ability: { float: '공중 부양으로 떨어질 걱정 없어요.', magnet: '아이템 자석, 자동으로 쏙쏙.', shield: '하트 보호막으로 안전하게.', dash: '냥냥 대시로 빠르게 이동!', skip: '기본 능력으로 시작할게요.' },
@@ -261,12 +302,12 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
   effect: { particle: '화면 가득 파티클을 뿌릴게요.', shake: '타격감 있는 흔들림, 넣을게요.', combo: '연속 히트의 쾌감을 드릴게요.', slowmo: '시간이 느려지는 순간을 만들게요.', skip: '깔끔하게 기본으로 갈게요.' },
 };
 
-/* ═══════════════════════════════════════════════
-   Types for chat flow
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════ */
+const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
 interface ChatItem {
   id: string;
-  type: 'ai' | 'user' | 'input' | 'chips' | 'options' | 'progress';
+  type: 'ai' | 'user' | 'options' | 'progress';
   text?: string;
   options?: ModOption[];
   slotId?: string;
@@ -274,843 +315,650 @@ interface ChatItem {
   visible: boolean;
 }
 
-const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
-
-/* ═══════════════════════════════════════════════
-   Main Component — Apple Intelligence Dark Theme
-   ═══════════════════════════════════════════════ */
 interface PromptTerminalProps {
   onComplete: (game: DemoGame) => void;
 }
 
+/* ═══════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════ */
 export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
-  const [items, setItems] = useState<ChatItem[]>([]);
+  // Phase: 'browse' = category grid, 'chat' = modifier questions
+  const [phase, setPhase] = useState<'browse' | 'chat'>('browse');
+  const [activeCategory, setActiveCategory] = useState('game');
+  const [inputValue, setInputValue] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [reveal, setReveal] = useState(0);
+  const [cardKey, setCardKey] = useState(0); // for re-triggering stagger
+
+  // Chat phase state
+  const [chatItems, setChatItems] = useState<ChatItem[]>([]);
   const [typingText, setTypingText] = useState('');
   const [typingId, setTypingId] = useState<string | null>(null);
-  const [inputValue, setInputValue] = useState('');
-  const [inputTyping, setInputTyping] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [frozen, setFrozen] = useState<Set<string>>(new Set());
   const [progressWidth, setProgressWidth] = useState(0);
-  const [showChips, setShowChips] = useState(false);
 
   const matchRef = useRef<MatchResult | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null!); // eslint-disable-line
+  const inputRef = useRef<HTMLInputElement>(null);
   const idCounter = useRef(0);
-  const typingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const nid = () => `i-${++idCounter.current}`;
 
-  /* ── Scroll ── */
+  useEffect(() => {
+    setMounted(true);
+    const t1 = setTimeout(() => setReveal(1), 200);
+    const t2 = setTimeout(() => setReveal(2), 500);
+    const t3 = setTimeout(() => setReveal(3), 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  /* ── Category tab switch ── */
+  const switchCategory = useCallback((catId: string) => {
+    playTick();
+    setActiveCategory(catId);
+    setCardKey(k => k + 1);
+  }, []);
+
+  /* ── Scroll chat ── */
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-        }
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
       });
     });
   }, []);
 
-  /* ── Type AI text character by character ── */
-  const typeAiText = useCallback((text: string, speed = 55): Promise<string> => {
+  /* ── AI speak ── */
+  const typeAiText = useCallback((text: string, speed = 50): Promise<string> => {
     return new Promise((resolve) => {
       const id = nid();
-      setItems(prev => [...prev, { id, type: 'ai', text: '', visible: true }]);
+      setChatItems(prev => [...prev, { id, type: 'ai', text: '', visible: true }]);
       setTypingId(id);
       setTypingText('');
       scrollToBottom();
-
       const chars = Array.from(text);
       let i = 0;
       const iv = setInterval(() => {
-        if (i < chars.length) {
-          setTypingText(text.slice(0, i + 1));
-          i++;
-          scrollToBottom();
-        } else {
+        if (i < chars.length) { setTypingText(text.slice(0, i + 1)); i++; scrollToBottom(); }
+        else {
           clearInterval(iv);
-          setTypingId(null);
-          setTypingText('');
-          setItems(prev => prev.map(item => item.id === id ? { ...item, text } : item));
-          scrollToBottom();
-          resolve(id);
+          setTypingId(null); setTypingText('');
+          setChatItems(prev => prev.map(item => item.id === id ? { ...item, text } : item));
+          scrollToBottom(); resolve(id);
         }
       }, speed);
     });
   }, [scrollToBottom]);
 
-  /* ── Show thinking dots then type ── */
-  const aiSpeak = useCallback(async (text: string, pauseBefore = 700, speed = 55): Promise<string> => {
-    const thinkId = nid();
-    setItems(prev => [...prev, { id: thinkId, type: 'ai', text: '···', visible: true }]);
+  const aiSpeak = useCallback(async (text: string, pause = 600, speed = 50) => {
+    const tid = nid();
+    setChatItems(prev => [...prev, { id: tid, type: 'ai', text: '···', visible: true }]);
     scrollToBottom();
-    await wait(pauseBefore);
-    setItems(prev => prev.filter(item => item.id !== thinkId));
+    await wait(pause);
+    setChatItems(prev => prev.filter(it => it.id !== tid));
     return typeAiText(text, speed);
   }, [typeAiText, scrollToBottom]);
 
-  /* ── Add widget ── */
-  const addWidget = useCallback((type: ChatItem['type'], extra?: Partial<ChatItem>): string => {
-    const id = nid();
-    setItems(prev => [...prev, { id, type, visible: true, ...extra }]);
-    scrollToBottom();
-    return id;
-  }, [scrollToBottom]);
-
-  /* ── Add user message ── */
   const addUser = useCallback((text: string) => {
     playSelect();
     const id = nid();
-    setItems(prev => [...prev, { id, type: 'user', text, visible: true }]);
+    setChatItems(prev => [...prev, { id, type: 'user', text, visible: true }]);
+    scrollToBottom();
+  }, [scrollToBottom]);
+
+  const addWidget = useCallback((type: ChatItem['type'], extra?: Partial<ChatItem>) => {
+    const id = nid();
+    setChatItems(prev => [...prev, { id, type, visible: true, ...extra }]);
     scrollToBottom();
     return id;
   }, [scrollToBottom]);
 
-  const fadeOut = useCallback((id: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, visible: false } : item));
-  }, []);
+  /* ── Modifier flow resolvers ── */
+  const optionResolver = useRef<((v: string) => void) | null>(null);
+  const waitForOption = (): Promise<string> => new Promise(r => { optionResolver.current = r; });
 
-  const freeze = useCallback((id: string) => {
-    setFrozen(prev => new Set(prev).add(id));
-  }, []);
-
-  /* ═══════ Main conversation flow ═══════ */
-  const gamePromptResolver = useRef<((prompt: string) => void) | null>(null);
-  const optionResolver = useRef<((value: string) => void) | null>(null);
-
-  const waitForGamePrompt = (): Promise<string> => new Promise(r => { gamePromptResolver.current = r; });
-  const waitForOption = (_slotId: string): Promise<string> => new Promise(r => { optionResolver.current = r; });
-
-  const runFlow = useCallback(async () => {
-    await wait(600);
-    await aiSpeak('어떤 게임을 상상하고 있나요?', 0, 55);
-    await wait(500);
-    setShowChips(true);
-    addWidget('input');
-
-    const prompt = await waitForGamePrompt();
-    setShowChips(false);
-
-    const game = DEMO_GAMES.find(g => g.id === matchRef.current?.gameId);
-    const gameName = game?.title || '프로젝트';
-    const gameId = matchRef.current?.gameId || '';
-    const isSim = gameId === 'moon-orbit';
-
-    await wait(1000);
-    await aiSpeak(
-      isSim ? `${gameName} 시뮬레이션, 흥미로운 선택이에요.` : `${gameName}, 좋은 선택이에요.`,
-      800, 55
-    );
-
-    const slots = getModifierSlots(gameId);
-    for (let si = 0; si < slots.length; si++) {
-      const slot = slots[si];
-      await wait(800);
-      await aiSpeak(slot.question, 700, 55);
-      await wait(400);
-
-      const optId = addWidget('options', {
-        options: slot.options,
-        slotId: slot.id,
-        hasSkip: slot.hasSkip,
-      });
-
-      const choice = await waitForOption(slot.id);
-      freeze(optId);
-      await wait(200);
-      fadeOut(optId);
-      await wait(200);
-
-      const reaction = AI_REACTIONS[slot.id]?.[choice];
-      if (reaction) {
-        await wait(800);
-        await aiSpeak(reaction, 700, 55);
-      }
-    }
-
-    await wait(1200);
-    await aiSpeak('완벽해요. 지금 바로 만들어볼게요!', 700, 70);
-    await wait(400);
-
-    const progId = addWidget('progress');
-    playComplete();
-    await animateProgress();
-    await wait(300);
-    playWhoosh();
-    if (game) onComplete(game);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* ── Handlers ── */
-  const handlePromptSubmit = useCallback((prompt: string) => {
-    if (!prompt.trim()) return;
-    const result = matchPromptToGame(prompt);
-    matchRef.current = result;
-    addUser(prompt.trim());
-    setInputValue('');
-    if (gamePromptResolver.current) {
-      gamePromptResolver.current(prompt.trim());
-      gamePromptResolver.current = null;
-    }
-  }, [addUser]);
-
-  const handleOptionSelect = useCallback((slotId: string, opt: ModOption) => {
+  const handleOptionSelect = useCallback((_slotId: string, opt: ModOption) => {
     playTick();
     if (navigator.vibrate) navigator.vibrate(10);
     addUser(opt.label);
-    if (optionResolver.current) {
-      optionResolver.current(opt.value);
-      optionResolver.current = null;
-    }
+    if (optionResolver.current) { optionResolver.current(opt.value); optionResolver.current = null; }
   }, [addUser]);
 
   const handleSkip = useCallback((_slotId: string) => {
     playTick();
     addUser('건너뛰기');
-    if (optionResolver.current) {
-      optionResolver.current('skip');
-      optionResolver.current = null;
-    }
+    if (optionResolver.current) { optionResolver.current('skip'); optionResolver.current = null; }
   }, [addUser]);
 
-  const handleChipClick = useCallback((chip: ChipItem) => {
-    if (inputTyping) return;
-    setInputTyping(true);
+  /* ── Start game flow — called after card/input selection ── */
+  const startGameFlow = useCallback(async (prompt: string) => {
+    const result = matchPromptToGame(prompt);
+    matchRef.current = result;
+
+    const game = DEMO_GAMES.find(g => g.id === result.gameId);
+    if (!game) return;
+
+    setPhase('chat');
+    setChatItems([]);
+    await wait(400);
+
+    const gameName = game.title;
+    await aiSpeak(`${gameName}, 좋은 선택이에요!`, 500, 50);
+
+    const slots = getModifierSlots(result.gameId);
+    for (const slot of slots) {
+      await wait(700);
+      await aiSpeak(slot.question, 600, 50);
+      await wait(300);
+      const optId = addWidget('options', { options: slot.options, slotId: slot.id, hasSkip: slot.hasSkip });
+      const choice = await waitForOption();
+      setFrozen(prev => new Set(prev).add(optId));
+      await wait(200);
+      setChatItems(prev => prev.map(it => it.id === optId ? { ...it, visible: false } : it));
+      await wait(200);
+      const reaction = AI_REACTIONS[slot.id]?.[choice];
+      if (reaction) { await wait(700); await aiSpeak(reaction, 600, 50); }
+    }
+
+    await wait(1000);
+    await aiSpeak('완벽해요. 지금 바로 만들어볼게요!', 600, 60);
+    await wait(400);
+    addWidget('progress');
+    playComplete();
+    setProgressWidth(0);
+    requestAnimationFrame(() => setProgressWidth(100));
+    await wait(2200);
+    playWhoosh();
+    onComplete(game);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiSpeak, addUser, addWidget, onComplete]);
+
+  /* ── Card click ── */
+  const handleCardClick = useCallback((card: CardItem) => {
+    if (!card.available) return;
+    playSelect();
+    startGameFlow(card.prompt);
+  }, [startGameFlow]);
+
+  /* ── Input submit ── */
+  const handleSubmit = useCallback(() => {
+    if (!inputValue.trim()) return;
+    const v = inputValue.trim();
     setInputValue('');
-    typingTimers.current.forEach(t => clearTimeout(t));
-    typingTimers.current = [];
-
-    const chars = chip.prompt.split('');
-    chars.forEach((_, i) => {
-      const timer = setTimeout(() => {
-        setInputValue(chip.prompt.slice(0, i + 1));
-        if (i % 3 === 0) playTick();
-      }, i * 28);
-      typingTimers.current.push(timer);
-    });
-
-    const submitTimer = setTimeout(() => {
-      setInputTyping(false);
-      handlePromptSubmit(chip.prompt);
-    }, chars.length * 28 + 250);
-    typingTimers.current.push(submitTimer);
-  }, [handlePromptSubmit, inputTyping]);
+    startGameFlow(v);
+  }, [inputValue, startGameFlow]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      handlePromptSubmit(inputValue);
-    }
-  }, [inputValue, handlePromptSubmit]);
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); }
+  }, [handleSubmit]);
 
-  const animateProgress = (): Promise<void> => {
-    return new Promise(resolve => {
-      setProgressWidth(0);
-      requestAnimationFrame(() => setProgressWidth(100));
-      setTimeout(resolve, 2200);
-    });
-  };
-
-  useEffect(() => {
-    setMounted(true);
-    runFlow();
-    return () => { typingTimers.current.forEach(t => clearTimeout(t)); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const activeCat = CATEGORIES.find(c => c.id === activeCategory)!;
 
   /* ═══════════════════════════════════════════════
-     Render — Apple Intelligence Dark Chat UI
+     RENDER
      ═══════════════════════════════════════════════ */
   return (
     <div style={{
       height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
-      background: 'linear-gradient(180deg, #0A0A1A 0%, #111125 40%, #1A1A2E 100%)',
       position: 'relative',
       overflow: 'hidden',
-      opacity: mounted ? 1 : 0,
-      transition: 'opacity 0.8s ease',
+      background: '#0A0A1A',
     }}>
-      {/* ═══ Subtle background glow ═══ */}
+      {/* ═══ Ambient mesh gradient ═══ */}
       <div style={{
-        position: 'absolute',
-        top: '-20%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '600px',
-        height: '600px',
-        background: 'radial-gradient(circle, rgba(0,122,255,0.06) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0,
+        position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none',
+      }}>
+        <div style={{
+          position: 'absolute', top: '-30%', left: '-20%', width: '80%', height: '80%',
+          background: 'radial-gradient(ellipse, rgba(88,86,214,0.12) 0%, transparent 70%)',
+          animation: 'meshFloat1 12s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-20%', right: '-20%', width: '70%', height: '70%',
+          background: 'radial-gradient(ellipse, rgba(0,122,255,0.08) 0%, transparent 70%)',
+          animation: 'meshFloat2 15s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', top: '20%', right: '10%', width: '40%', height: '40%',
+          background: 'radial-gradient(ellipse, rgba(139,92,246,0.06) 0%, transparent 70%)',
+          animation: 'meshFloat3 10s ease-in-out infinite',
+        }} />
+      </div>
+
+      {/* ═══ Rainbow glow border ═══ */}
+      <div className="rainbow-border" style={{
+        opacity: inputFocused ? 0.55 : 0.2,
+        transition: 'opacity 0.5s ease',
       }} />
 
-      {/* ═══ Header — minimal ═══ */}
-      <header style={{
-        position: 'relative',
-        zIndex: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px 20px',
-        paddingTop: 'max(16px, env(safe-area-inset-top, 16px))',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Logo circle */}
-          <div style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #007AFF, #5856D6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
-          }}>
-            <span style={{ fontSize: '14px', color: '#fff' }}>✦</span>
-          </div>
-          <span style={{
-            fontSize: '15px',
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.3px',
-          }}>
-            Vibe Coding
-          </span>
-          <span style={{
-            fontSize: '10px',
-            fontWeight: 500,
-            color: 'var(--text-tertiary)',
-            padding: '2px 8px',
-            borderRadius: '6px',
-            background: 'rgba(255,255,255,0.06)',
-            letterSpacing: '0.05em',
-          }}>
-            BETA
-          </span>
-        </div>
-      </header>
-
-      {/* ═══ Chat area — 80% of screen ═══ */}
-      <div
-        ref={scrollRef}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: '0 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          position: 'relative',
-          zIndex: 1,
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
-        }}
-      >
-        <style>{`.chat-scroll::-webkit-scrollbar { display: none; }`}</style>
-        <div className="chat-scroll" style={{
-          maxWidth: '640px',
-          width: '100%',
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          paddingTop: '8px',
-          paddingBottom: '16px',
-        }}>
-          {items.map((item) => {
-            if (!item.visible && (item.type === 'input' || item.type === 'chips' || item.type === 'options')) {
-              return <div key={item.id} style={{ height: 0, overflow: 'hidden', transition: 'height 0.3s' }} />;
-            }
-            switch (item.type) {
-              case 'ai':
-                return <AiMessage key={item.id} text={item.id === typingId ? typingText : (item.text || '')} isTyping={item.id === typingId} isThinking={item.text === '···'} />;
-              case 'user':
-                return <UserMessage key={item.id} text={item.text || ''} />;
-              case 'input':
-                return null; // Input is rendered at the bottom, not in the chat flow
-              case 'options':
-                return <OptionsWidget key={item.id} options={item.options || []} slotId={item.slotId || ''} onSelect={handleOptionSelect} onSkip={item.hasSkip ? handleSkip : undefined} disabled={frozen.has(item.id)} />;
-              case 'progress':
-                return <ProgressBar key={item.id} width={progressWidth} />;
-              default:
-                return null;
-            }
-          })}
-        </div>
-      </div>
-
-      {/* ═══ Bottom section — chips + input ═══ */}
+      {/* ═══ Content ═══ */}
       <div style={{
-        position: 'relative',
-        zIndex: 10,
-        flexShrink: 0,
-        background: 'linear-gradient(to top, rgba(10,10,26,0.98) 0%, rgba(10,10,26,0.85) 70%, transparent 100%)',
-        paddingTop: '16px',
+        position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column',
+        maxWidth: '680px', width: '100%', margin: '0 auto', padding: '0 20px',
+        opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease',
       }}>
-        {/* Horizontal scroll chips */}
-        {showChips && (
-          <div style={{
-            padding: '0 20px 12px',
-            maxWidth: '680px',
-            margin: '0 auto',
-            animation: 'fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1) both',
-          }}>
+
+        {/* ═══ Phase: BROWSE ═══ */}
+        {phase === 'browse' && (
+          <>
+            {/* Hero title */}
+            <div style={{
+              textAlign: 'center',
+              paddingTop: 'max(48px, env(safe-area-inset-top, 48px))',
+              paddingBottom: '24px',
+              flexShrink: 0,
+              opacity: reveal >= 1 ? 1 : 0,
+              transform: reveal >= 1 ? 'translateY(0)' : 'translateY(12px)',
+              transition: 'all 0.8s cubic-bezier(0.16,1,0.3,1)',
+            }}>
+              <h1 className="shimmer-text" style={{
+                fontSize: 'clamp(24px, 5vw, 32px)',
+                fontWeight: 700,
+                letterSpacing: '-0.5px',
+                margin: 0,
+                lineHeight: 1.3,
+                color: '#F5F5F7',
+              }}>
+                무엇을 만들어볼까요?
+              </h1>
+              <p style={{
+                fontSize: '15px',
+                fontWeight: 400,
+                color: 'rgba(255,255,255,0.4)',
+                marginTop: '10px',
+                letterSpacing: '-0.3px',
+              }}>
+                아이디어를 말하면, AI가 만들어줍니다
+              </p>
+            </div>
+
+            {/* Category tabs */}
             <div style={{
               display: 'flex',
-              gap: '8px',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              paddingBottom: '2px',
-              WebkitOverflowScrolling: 'touch',
+              gap: '4px',
+              marginBottom: '16px',
+              flexShrink: 0,
+              background: 'rgba(255,255,255,0.03)',
+              borderRadius: '14px',
+              padding: '4px',
+              border: '1px solid rgba(255,255,255,0.04)',
+              opacity: reveal >= 2 ? 1 : 0,
+              transform: reveal >= 2 ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s',
             }}>
-              {CHIPS.map((chip, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleChipClick(chip)}
-                  style={{
-                    flexShrink: 0,
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    color: 'var(--text-secondary)',
+              {CATEGORIES.map(cat => {
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button key={cat.id} onClick={() => switchCategory(cat.id)} style={{
+                    flex: 1,
+                    padding: '10px 8px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
+                    color: isActive ? '#F5F5F7' : 'rgba(255,255,255,0.35)',
                     fontSize: '13px',
-                    fontWeight: 500,
+                    fontWeight: isActive ? 600 : 500,
                     letterSpacing: '-0.2px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
+                    position: 'relative',
                     whiteSpace: 'nowrap',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0,122,255,0.12)';
-                    e.currentTarget.style.borderColor = 'rgba(0,122,255,0.3)';
-                    e.currentTarget.style.color = '#F5F5F7';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                  }}
-                >
-                  {chip.label}
-                </button>
-              ))}
+                    boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+                  }}>
+                    <span style={{ marginRight: '4px' }}>{cat.icon}</span>
+                    {cat.label}
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '16px',
+                        height: '2px',
+                        borderRadius: '1px',
+                        background: '#007AFF',
+                        boxShadow: '0 0 6px rgba(0,122,255,0.5)',
+                      }} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+
+            {/* Card grid */}
+            <div style={{
+              flex: 1, overflowY: 'auto', overflowX: 'hidden',
+              opacity: reveal >= 3 ? 1 : 0,
+              transform: reveal >= 3 ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'all 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s',
+              scrollbarWidth: 'none', msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: '8px',
+            }}>
+              <div key={cardKey} style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '10px',
+              }}>
+                {activeCat.cards.map((card, i) => (
+                  <button
+                    key={`${card.label}-${i}`}
+                    onClick={() => handleCardClick(card)}
+                    disabled={!card.available}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '20px 8px',
+                      borderRadius: '20px',
+                      background: 'rgba(255,255,255,0.04)',
+                      backdropFilter: 'blur(40px)',
+                      WebkitBackdropFilter: 'blur(40px)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      cursor: card.available ? 'pointer' : 'default',
+                      opacity: card.available ? 1 : 0.35,
+                      transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                      animation: `cardReveal 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 50}ms both`,
+                      minHeight: '100px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!card.available) return;
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(0,122,255,0.3)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,122,255,0.1), 0 0 0 1px rgba(0,122,255,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <span style={{ fontSize: '28px' }}>{card.icon}</span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: card.available ? 'var(--text-primary)' : 'var(--text-dim)',
+                      letterSpacing: '-0.2px',
+                      textAlign: 'center',
+                      lineHeight: 1.3,
+                    }}>
+                      {card.label}
+                    </span>
+                    {!card.available && (
+                      <span style={{
+                        fontSize: '9px',
+                        fontWeight: 500,
+                        color: 'var(--text-dim)',
+                        letterSpacing: '0.05em',
+                      }}>
+                        COMING SOON
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Capsule input bar */}
-        <div style={{
-          padding: '0 16px',
-          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-          maxWidth: '680px',
-          margin: '0 auto',
-          width: '100%',
-        }}>
-          <InputBar
-            value={inputValue}
-            onChange={(v) => !inputTyping && setInputValue(v)}
-            onSubmit={() => handlePromptSubmit(inputValue)}
-            onKeyDown={handleKeyDown}
-            readOnly={inputTyping}
-            isTyping={inputTyping}
-            inputRef={inputRef}
-          />
-        </div>
+        {/* ═══ Phase: CHAT (modifier questions) ═══ */}
+        {phase === 'chat' && (
+          <div ref={scrollRef} style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '24px 0',
+            paddingTop: 'max(24px, env(safe-area-inset-top, 24px))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}>
+            {chatItems.map(item => {
+              if (!item.visible && item.type === 'options') return <div key={item.id} style={{ height: 0, overflow: 'hidden' }} />;
+              switch (item.type) {
+                case 'ai':
+                  return (
+                    <div key={item.id} style={{ display: 'flex', gap: '10px', animation: 'cardReveal 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
+                      <div style={{
+                        width: '30px', height: '30px', borderRadius: '10px', flexShrink: 0,
+                        background: 'linear-gradient(135deg, #007AFF, #5856D6)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
+                        marginTop: '2px',
+                      }}>
+                        <span style={{ fontSize: '14px', color: '#fff' }}>✦</span>
+                      </div>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+                        borderRadius: '4px 18px 18px 18px',
+                        padding: '12px 16px',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        fontSize: '15px', fontWeight: 400, color: '#F5F5F7',
+                        lineHeight: 1.65, letterSpacing: '-0.3px',
+                        maxWidth: 'calc(100% - 44px)',
+                      }}>
+                        {item.text === '···' ? (
+                          <div style={{ display: 'flex', gap: '4px', padding: '4px 0' }}>
+                            {[0,1,2].map(i => <div key={i} className="typing-dot" style={{ animationDelay: `${i*0.16}s` }} />)}
+                          </div>
+                        ) : (
+                          <>
+                            {item.id === typingId ? typingText : item.text}
+                            {item.id === typingId && <span style={{
+                              display: 'inline-block', width: '2px', height: '15px', marginLeft: '2px',
+                              verticalAlign: 'text-bottom', borderRadius: '1px',
+                              background: '#007AFF', animation: 'blink 0.8s ease-in-out infinite',
+                            }} />}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                case 'user':
+                  return (
+                    <div key={item.id} style={{ display: 'flex', justifyContent: 'flex-end', animation: 'cardReveal 0.35s cubic-bezier(0.16,1,0.3,1) both' }}>
+                      <div style={{
+                        background: '#007AFF', borderRadius: '18px 4px 18px 18px',
+                        padding: '12px 16px', fontSize: '15px', fontWeight: 500,
+                        color: '#fff', letterSpacing: '-0.3px', maxWidth: '80%',
+                        boxShadow: '0 2px 10px rgba(0,122,255,0.3)',
+                      }}>{item.text}</div>
+                    </div>
+                  );
+                case 'options':
+                  return (
+                    <div key={item.id} style={{
+                      display: 'flex', flexWrap: 'wrap', gap: '8px', paddingLeft: '40px',
+                      animation: 'cardReveal 0.4s cubic-bezier(0.16,1,0.3,1) both',
+                      opacity: frozen.has(item.id) ? 0.3 : 1,
+                      pointerEvents: frozen.has(item.id) ? 'none' : 'auto',
+                      transition: 'opacity 0.3s',
+                    }}>
+                      {(item.options || []).map(opt => (
+                        <button key={opt.value} onClick={() => handleOptionSelect(item.slotId || '', opt)} style={{
+                          padding: '10px 14px', borderRadius: '14px',
+                          background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.18)',
+                          color: '#5AC8FA', fontSize: '13px', fontWeight: 500,
+                          letterSpacing: '-0.2px', cursor: 'pointer',
+                          transition: 'all 0.2s', minHeight: '42px',
+                        }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.08)'; e.currentTarget.style.color = '#5AC8FA'; }}
+                        >{opt.label}</button>
+                      ))}
+                      {item.hasSkip && (
+                        <button onClick={() => handleSkip(item.slotId || '')} style={{
+                          padding: '10px 14px', borderRadius: '14px',
+                          background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
+                          color: 'var(--text-tertiary)', fontSize: '13px', fontWeight: 500,
+                          cursor: 'pointer', transition: 'all 0.2s', minHeight: '42px',
+                        }}>건너뛰기</button>
+                      )}
+                    </div>
+                  );
+                case 'progress':
+                  return (
+                    <div key={item.id} style={{ paddingLeft: '40px', animation: 'cardReveal 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(40px)',
+                        WebkitBackdropFilter: 'blur(40px)',
+                        borderRadius: '16px', padding: '14px 18px',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#007AFF' }}>코드 생성 중...</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontFamily: "'JetBrains Mono', monospace" }}>{Math.round(progressWidth)}%</span>
+                        </div>
+                        <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', width: `${progressWidth}%`, borderRadius: '2px',
+                            background: 'linear-gradient(90deg, #007AFF, #5AC8FA)',
+                            transition: 'width 2s cubic-bezier(0.16,1,0.3,1)',
+                            boxShadow: '0 0 8px rgba(0,122,255,0.4)',
+                          }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                default: return null;
+              }
+            })}
+          </div>
+        )}
       </div>
+
+      {/* ═══ Bottom input — always visible ═══ */}
+      {phase === 'browse' && (
+        <div style={{
+          position: 'relative', zIndex: 10, flexShrink: 0,
+          padding: '12px 20px',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+          maxWidth: '720px', width: '100%', margin: '0 auto',
+        }}>
+          <div className={inputFocused ? 'input-glow-active' : 'input-glow'} style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+            borderRadius: '27px',
+            border: `1.5px solid ${inputFocused ? 'rgba(0,122,255,0.35)' : 'rgba(255,255,255,0.06)'}`,
+            padding: '7px 7px 7px 22px',
+            transition: 'all 0.35s cubic-bezier(0.16,1,0.3,1)',
+            boxShadow: inputFocused
+              ? '0 0 0 4px rgba(0,122,255,0.06), 0 4px 24px rgba(0,0,0,0.2)'
+              : '0 2px 12px rgba(0,0,0,0.15)',
+            minHeight: '54px',
+          }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="상상하는 것을 적어주세요..."
+              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                color: '#F5F5F7', fontSize: '15px', fontWeight: 400,
+                padding: '8px 0', caretColor: '#007AFF', letterSpacing: '-0.3px',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans KR", system-ui, sans-serif',
+              }}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={!inputValue.trim()}
+              style={{
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: inputValue.trim() ? 'linear-gradient(135deg, #007AFF, #5856D6)' : 'rgba(255,255,255,0.04)',
+                border: 'none', color: inputValue.trim() ? '#fff' : 'var(--text-dim)',
+                cursor: inputValue.trim() ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)', flexShrink: 0,
+                boxShadow: inputValue.trim() ? '0 2px 12px rgba(0,122,255,0.35)' : 'none',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 9L15 9M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ═══ Keyframes ═══ */}
       <style>{`
-        @keyframes aiSlideIn {
-          from { opacity: 0; transform: translateY(8px) scale(0.98); }
+        @property --angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
+        }
+
+        .rainbow-border {
+          position: fixed;
+          inset: 0;
+          z-index: 1;
+          padding: 2px;
+          background: conic-gradient(from var(--angle), #ff0044, #ff8800, #ffee00, #00ff88, #0088ff, #8800ff, #ff0088, #ff0044);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+          -webkit-mask-composite: xor;
+          pointer-events: none;
+          animation: rotateGlow 4s linear infinite;
+          border-radius: 0;
+        }
+
+        @keyframes rotateGlow {
+          to { --angle: 360deg; }
+        }
+
+        .shimmer-text {
+          background: linear-gradient(90deg, #F5F5F7 0%, rgba(255,255,255,0.6) 40%, #F5F5F7 60%, rgba(255,255,255,0.6) 100%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmerText 4s ease-in-out infinite;
+        }
+
+        @keyframes shimmerText {
+          0%, 100% { background-position: 200% 0; }
+          50% { background-position: -200% 0; }
+        }
+
+        @keyframes meshFloat1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(40px, 30px) scale(1.1); }
+          66% { transform: translate(-20px, -10px) scale(0.95); }
+        }
+        @keyframes meshFloat2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-30px, -40px) scale(1.05); }
+        }
+        @keyframes meshFloat3 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(20px, 20px); }
+        }
+
+        @keyframes cardReveal {
+          from { opacity: 0; transform: translateY(12px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes userSlideIn {
-          from { opacity: 0; transform: translateY(6px) scale(0.98); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes cursorBlink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.2; }
-        }
-        @keyframes shimmerDark {
-          0%   { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @keyframes dotPulse {
-          0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-          40% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes progressFill {
-          from { width: 0%; }
-          to   { width: 100%; }
-        }
+
+        /* Hide scrollbar */
+        *::-webkit-scrollbar { width: 0; height: 0; }
       `}</style>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════
-   Sub-components — Apple Intelligence Dark
-   ═══════════════════════════════════════════════ */
-
-function AiMessage({ text, isTyping, isThinking }: { text: string; isTyping: boolean; isThinking: boolean; }) {
-  if (isThinking) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        animation: 'aiSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both',
-        maxWidth: '640px',
-      }}>
-        <AiAvatar pulse />
-        <div style={{ display: 'flex', gap: '5px', padding: '16px 20px' }}>
-          {[0, 1, 2].map(i => (
-            <div key={i} style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: 'var(--text-tertiary)',
-              animation: `dotPulse 1.4s ease-in-out ${i * 0.16}s infinite`,
-            }} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: '12px',
-      animation: 'aiSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both',
-      maxWidth: '640px',
-    }}>
-      <AiAvatar />
-      <div style={{
-        background: 'rgba(255,255,255,0.06)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderRadius: '4px 20px 20px 20px',
-        padding: '14px 18px',
-        border: '1px solid rgba(255,255,255,0.08)',
-        fontSize: '15px',
-        fontWeight: 400,
-        color: 'var(--text-primary)',
-        lineHeight: 1.7,
-        maxWidth: 'calc(100% - 50px)',
-        letterSpacing: '-0.3px',
-      }}>
-        {text}
-        {isTyping && (
-          <span style={{
-            display: 'inline-block',
-            width: '2px',
-            height: '16px',
-            marginLeft: '2px',
-            verticalAlign: 'text-bottom',
-            borderRadius: '1px',
-            background: '#007AFF',
-            animation: 'cursorBlink 0.8s ease-in-out infinite',
-          }} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AiAvatar({ pulse }: { pulse?: boolean }) {
-  return (
-    <div style={{
-      width: '32px',
-      height: '32px',
-      borderRadius: '10px',
-      background: 'linear-gradient(135deg, #007AFF, #5856D6)',
-      flexShrink: 0,
-      marginTop: '2px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 2px 10px rgba(0,122,255,0.3)',
-      transition: 'box-shadow 0.3s',
-      ...(pulse ? { animation: 'dotPulse 2s ease-in-out infinite' } : {}),
-    }}>
-      <span style={{ fontSize: '15px', color: '#fff' }}>✦</span>
-    </div>
-  );
-}
-
-function UserMessage({ text }: { text: string }) {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'flex-end',
-      animation: 'userSlideIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
-      maxWidth: '640px',
-    }}>
-      <div style={{
-        background: '#007AFF',
-        borderRadius: '20px 4px 20px 20px',
-        padding: '12px 18px',
-        fontSize: '15px',
-        fontWeight: 500,
-        color: '#ffffff',
-        lineHeight: 1.7,
-        maxWidth: '80%',
-        letterSpacing: '-0.3px',
-        boxShadow: '0 2px 12px rgba(0,122,255,0.3)',
-      }}>
-        {text}
-      </div>
-    </div>
-  );
-}
-
-function InputBar({ value, onChange, onSubmit, onKeyDown, readOnly, isTyping, inputRef }: {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  readOnly: boolean;
-  isTyping: boolean;
-  inputRef: React.RefObject<HTMLInputElement>;
-}) {
-  const [focused, setFocused] = useState(false);
-
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      background: focused ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.06)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderRadius: '26px',
-      border: `1.5px solid ${focused ? 'rgba(0,122,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
-      padding: '6px 6px 6px 20px',
-      transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-      boxShadow: focused
-        ? '0 0 0 4px rgba(0,122,255,0.08), 0 4px 20px rgba(0,0,0,0.2)'
-        : '0 2px 8px rgba(0,0,0,0.15)',
-      minHeight: '52px',
-    }}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder="어떤 게임을 상상하고 있나요?"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-        readOnly={readOnly}
-        autoFocus
-        style={{
-          flex: 1,
-          background: 'transparent',
-          border: 'none',
-          outline: 'none',
-          color: isTyping ? '#007AFF' : 'var(--text-primary)',
-          fontSize: '15px',
-          fontWeight: 400,
-          lineHeight: '24px',
-          padding: '8px 0',
-          caretColor: '#007AFF',
-          letterSpacing: '-0.3px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans KR", system-ui, sans-serif',
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      />
-      {/* Send button — gradient circle */}
-      <button
-        onClick={onSubmit}
-        disabled={!value.trim() || isTyping}
-        style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          background: value.trim() && !isTyping
-            ? '#007AFF'
-            : 'rgba(255,255,255,0.06)',
-          border: 'none',
-          color: value.trim() && !isTyping ? '#fff' : 'var(--text-dim)',
-          fontSize: '16px',
-          cursor: value.trim() && !isTyping ? 'pointer' : 'default',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
-          flexShrink: 0,
-          boxShadow: value.trim() && !isTyping ? '0 2px 10px rgba(0,122,255,0.35)' : 'none',
-        }}
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M3 9L15 9M15 9L10 4M15 9L10 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ opacity: value.trim() ? 1 : 0.3, transition: 'opacity 0.2s' }} />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-function OptionsWidget({ options, slotId, onSelect, onSkip, disabled }: {
-  options: ModOption[];
-  slotId: string;
-  onSelect: (slotId: string, opt: ModOption) => void;
-  onSkip?: (slotId: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '8px',
-      paddingLeft: '44px',
-      animation: 'aiSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both',
-      opacity: disabled ? 0.4 : 1,
-      pointerEvents: disabled ? 'none' : 'auto',
-      transition: 'opacity 0.3s',
-      maxWidth: '640px',
-    }}>
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onSelect(slotId, opt)}
-          style={{
-            padding: '10px 16px',
-            borderRadius: '16px',
-            background: 'rgba(0,122,255,0.08)',
-            border: '1px solid rgba(0,122,255,0.2)',
-            color: '#5AC8FA',
-            fontSize: '13px',
-            fontWeight: 500,
-            letterSpacing: '-0.2px',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(0,122,255,0.18)';
-            e.currentTarget.style.borderColor = 'rgba(0,122,255,0.4)';
-            e.currentTarget.style.color = '#fff';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(0,122,255,0.08)';
-            e.currentTarget.style.borderColor = 'rgba(0,122,255,0.2)';
-            e.currentTarget.style.color = '#5AC8FA';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          {opt.label}
-        </button>
-      ))}
-      {onSkip && (
-        <button
-          onClick={() => onSkip(slotId)}
-          style={{
-            padding: '10px 16px',
-            borderRadius: '16px',
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: 'var(--text-tertiary)',
-            fontSize: '13px',
-            fontWeight: 500,
-            letterSpacing: '-0.2px',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--text-tertiary)';
-          }}
-        >
-          건너뛰기
-        </button>
-      )}
-    </div>
-  );
-}
-
-function ProgressBar({ width }: { width: number }) {
-  return (
-    <div style={{
-      maxWidth: '640px',
-      paddingLeft: '44px',
-      animation: 'aiSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both',
-    }}>
-      <div style={{
-        background: 'rgba(255,255,255,0.06)',
-        borderRadius: '12px',
-        padding: '16px 20px',
-        border: '1px solid rgba(255,255,255,0.06)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '10px',
-        }}>
-          <span style={{
-            fontSize: '12px',
-            fontWeight: 600,
-            color: '#007AFF',
-            letterSpacing: '-0.2px',
-          }}>
-            코드 생성 중...
-          </span>
-          <span style={{
-            fontSize: '11px',
-            fontWeight: 500,
-            color: 'var(--text-tertiary)',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
-            {Math.round(width)}%
-          </span>
-        </div>
-        <div style={{
-          height: '4px',
-          borderRadius: '2px',
-          background: 'rgba(255,255,255,0.06)',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${width}%`,
-            borderRadius: '2px',
-            background: 'linear-gradient(90deg, #007AFF, #5AC8FA)',
-            transition: 'width 2s cubic-bezier(0.16,1,0.3,1)',
-            boxShadow: '0 0 10px rgba(0,122,255,0.4)',
-          }} />
-        </div>
-      </div>
     </div>
   );
 }
