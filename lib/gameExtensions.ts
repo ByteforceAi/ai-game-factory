@@ -79,6 +79,67 @@ export function getGameExtensionsScript(): string {
   var moveTouch = null; // {id, startX, startY}
   var fireTouch = null; // {id, startX, startY, startTime}
   var activeKeys = {};
+  var controlsEnabled = false; // Don't activate controls until game starts
+
+  /* ── Detect start/tutorial overlays and toggle controls ── */
+  function isStartOverlayVisible() {
+    // Look for common overlay patterns in demo games
+    var overlays = document.querySelectorAll('[id*="start"], [id*="intro"], [id*="tutorial"], [id*="menu"], [id*="overlay"], [class*="start"], [class*="intro"], [class*="tutorial"], [class*="menu"], [class*="overlay"]');
+    for (var i = 0; i < overlays.length; i++) {
+      var el = overlays[i];
+      var style = window.getComputedStyle(el);
+      if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+        // Check if it looks like a full-screen overlay (covers significant area)
+        var rect = el.getBoundingClientRect();
+        if (rect.width > window.innerWidth * 0.5 && rect.height > window.innerHeight * 0.3) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function showGameControls(show) {
+    vjBase.style.display = show ? '' : 'none';
+    vjKnob.style.display = show ? '' : 'none';
+    vjHint.style.display = show ? '' : 'none';
+    controlsEnabled = show;
+    if (!show) clearAllKeys();
+  }
+
+  function isInteractiveTarget(el) {
+    // Walk up the DOM to check if the touch target is a button, link, input, etc.
+    var node = el;
+    while (node && node !== document.body) {
+      var tag = (node.tagName || '').toLowerCase();
+      if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea') return true;
+      if (node.onclick || node.getAttribute && (node.getAttribute('onclick') || node.getAttribute('role') === 'button')) return true;
+      // Check for cursor:pointer as a hint
+      try {
+        var cs = window.getComputedStyle(node);
+        if (cs.cursor === 'pointer') return true;
+      } catch(e) {}
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  // Poll for start overlay state every 500ms
+  var overlayCheckInterval = setInterval(function() {
+    var overlayUp = isStartOverlayVisible();
+    if (overlayUp && controlsEnabled) {
+      showGameControls(false);
+    } else if (!overlayUp && !controlsEnabled) {
+      showGameControls(true);
+    }
+  }, 500);
+
+  // Initial state: check after a short delay
+  setTimeout(function() {
+    if (!isStartOverlayVisible()) {
+      showGameControls(true);
+    }
+  }, 800);
 
   function setKey(key, down) {
     if (down && !activeKeys[key]) {
@@ -126,6 +187,11 @@ export function getGameExtensionsScript(): string {
   }
 
   document.addEventListener('touchstart', function(e) {
+    // If touch is on an interactive element (button, link, etc.) → let it through
+    if (isInteractiveTarget(e.target)) return;
+    // If controls are disabled (start overlay visible) → let touches through
+    if (!controlsEnabled) return;
+
     e.preventDefault();
     vjHint.style.display = 'none';
 
@@ -149,6 +215,7 @@ export function getGameExtensionsScript(): string {
   }, {passive: false});
 
   document.addEventListener('touchmove', function(e) {
+    if (!controlsEnabled || !moveTouch) return;
     e.preventDefault();
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i];
@@ -159,7 +226,7 @@ export function getGameExtensionsScript(): string {
   }, {passive: false});
 
   document.addEventListener('touchend', function(e) {
-    e.preventDefault();
+    if (!controlsEnabled && !moveTouch && !fireTouch) return;
     for (var i = 0; i < e.changedTouches.length; i++) {
       var t = e.changedTouches[i];
       if (moveTouch && t.identifier === moveTouch.id) {
@@ -222,6 +289,7 @@ export function getGameExtensionsScript(): string {
   var gameOverInterval = setInterval(checkGameOver, 300);
   window.addEventListener('beforeunload', function() {
     clearInterval(gameOverInterval);
+    clearInterval(overlayCheckInterval);
   });
 
   window.addEventListener('message', function(e) {
