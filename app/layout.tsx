@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import PWARegister from '@/components/PWARegister';
+import PreviewOverlay from '@/components/PreviewOverlay';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -36,6 +37,7 @@ export default function RootLayout({
         color: '#e2e8f0',
       }}>
         <PWARegister />
+        <PreviewOverlay />
         {children}
       </body>
     </html>
