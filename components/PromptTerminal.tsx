@@ -305,14 +305,17 @@ const AI_REACTIONS: Record<string, Record<string, string>> = {
 /* ═══════════════════════════════════════════════ */
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
+interface SummaryChoice { slotLabel: string; choiceLabel: string; }
+
 interface ChatItem {
   id: string;
-  type: 'ai' | 'user' | 'options' | 'progress';
+  type: 'ai' | 'user' | 'options' | 'progress' | 'create-button';
   text?: string;
   options?: ModOption[];
   slotId?: string;
   hasSkip?: boolean;
   visible: boolean;
+  summaryData?: { gameName: string; gameIcon: string; choices: SummaryChoice[] };
 }
 
 interface PromptTerminalProps {
@@ -342,7 +345,9 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
   const matchRef = useRef<MatchResult | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
+  const createResolver = useRef<(() => void) | null>(null);
 
   const nid = () => `i-${++idCounter.current}`;
 
@@ -352,6 +357,19 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     const t2 = setTimeout(() => setReveal(2), 500);
     const t3 = setTimeout(() => setReveal(3), 800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  /* ── Rainbow glow JS rotation (for browser compat) ── */
+  useEffect(() => {
+    let angle = 0;
+    let raf: number;
+    const animate = () => {
+      angle = (angle + 0.5) % 360;
+      glowRef.current?.style.setProperty('--glow-angle', angle + 'deg');
+      raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   /* ── Category tab switch ── */
@@ -432,6 +450,14 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     if (optionResolver.current) { optionResolver.current('skip'); optionResolver.current = null; }
   }, [addUser]);
 
+  /* ── Wait for "만들기" button click ── */
+  const waitForCreate = (): Promise<void> => new Promise(r => { createResolver.current = r; });
+
+  const handleCreateClick = useCallback(() => {
+    playComplete();
+    if (createResolver.current) { createResolver.current(); createResolver.current = null; }
+  }, []);
+
   /* ── Start game flow — called after card/input selection ── */
   const startGameFlow = useCallback(async (prompt: string) => {
     const result = matchPromptToGame(prompt);
@@ -448,6 +474,8 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     await aiSpeak(`${gameName}, 좋은 선택이에요!`, 500, 50);
 
     const slots = getModifierSlots(result.gameId);
+    const summaryChoices: SummaryChoice[] = [];
+
     for (const slot of slots) {
       await wait(700);
       await aiSpeak(slot.question, 600, 50);
@@ -458,15 +486,32 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       await wait(200);
       setChatItems(prev => prev.map(it => it.id === optId ? { ...it, visible: false } : it));
       await wait(200);
+
+      // Track choice for summary
+      const chosenOpt = slot.options.find(o => o.value === choice);
+      if (choice !== 'skip' && chosenOpt) {
+        summaryChoices.push({ slotLabel: slot.question.replace(/를? .*/, ''), choiceLabel: chosenOpt.label });
+      }
+
       const reaction = AI_REACTIONS[slot.id]?.[choice];
       if (reaction) { await wait(700); await aiSpeak(reaction, 600, 50); }
     }
 
-    await wait(1000);
-    await aiSpeak('완벽해요. 지금 바로 만들어볼게요!', 600, 60);
+    // Show summary + 만들기 button
+    await wait(800);
+    await aiSpeak('설정이 완료됐어요! 확인하고 만들어주세요.', 600, 50);
+    await wait(400);
+    addWidget('create-button', {
+      summaryData: { gameName: game.title, gameIcon: game.icon, choices: summaryChoices },
+    });
+
+    // Wait for user to click "만들기"
+    await waitForCreate();
+
+    await wait(300);
+    await aiSpeak('완벽해요. 지금 바로 만들어볼게요!', 400, 60);
     await wait(400);
     addWidget('progress');
-    playComplete();
     setProgressWidth(0);
     requestAnimationFrame(() => setProgressWidth(100));
     await wait(2200);
@@ -530,10 +575,10 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
       </div>
 
       {/* ═══ Rainbow glow border ═══ */}
-      <div className="rainbow-border" style={{
-        opacity: inputFocused ? 0.55 : 0.2,
-        transition: 'opacity 0.5s ease',
-      }} />
+      <div
+        ref={glowRef}
+        className={`rainbow-glow${inputFocused ? ' active' : ''}`}
+      />
 
       {/* ═══ Content ═══ */}
       <div style={{
@@ -739,12 +784,12 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                         <span style={{ fontSize: '14px', color: '#fff' }}>✦</span>
                       </div>
                       <div style={{
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'rgba(255,255,255,0.08)',
                         backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
                         borderRadius: '4px 18px 18px 18px',
                         padding: '12px 16px',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        fontSize: '15px', fontWeight: 400, color: '#F5F5F7',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        fontSize: '15px', fontWeight: 400, color: 'rgba(255,255,255,0.92)',
                         lineHeight: 1.65, letterSpacing: '-0.3px',
                         maxWidth: 'calc(100% - 44px)',
                       }}>
@@ -788,33 +833,102 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                       {(item.options || []).map(opt => (
                         <button key={opt.value} onClick={() => handleOptionSelect(item.slotId || '', opt)} style={{
                           padding: '10px 14px', borderRadius: '14px',
-                          background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.18)',
-                          color: '#5AC8FA', fontSize: '13px', fontWeight: 500,
+                          background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)',
+                          color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: 500,
                           letterSpacing: '-0.2px', cursor: 'pointer',
                           transition: 'all 0.2s', minHeight: '42px',
                         }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.18)'; e.currentTarget.style.color = '#fff'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.08)'; e.currentTarget.style.color = '#5AC8FA'; }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.22)'; e.currentTarget.style.borderColor = 'rgba(0,122,255,0.35)'; e.currentTarget.style.color = '#fff'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
                         >{opt.label}</button>
                       ))}
                       {item.hasSkip && (
                         <button onClick={() => handleSkip(item.slotId || '')} style={{
                           padding: '10px 14px', borderRadius: '14px',
-                          background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-                          color: 'var(--text-tertiary)', fontSize: '13px', fontWeight: 500,
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.15)',
+                          color: 'rgba(255,255,255,0.5)', fontSize: '13px', fontWeight: 500,
                           cursor: 'pointer', transition: 'all 0.2s', minHeight: '42px',
                         }}>건너뛰기</button>
                       )}
                     </div>
                   );
+                case 'create-button': {
+                  const sd = item.summaryData;
+                  return (
+                    <div key={item.id} style={{
+                      paddingLeft: '40px',
+                      animation: 'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both',
+                    }}>
+                      {/* Summary card */}
+                      {sd && (
+                        <div style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+                          borderRadius: '18px', padding: '18px 20px',
+                          border: '1px solid rgba(255,255,255,0.10)',
+                          marginBottom: '14px',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                            <span style={{ fontSize: '24px' }}>{sd.gameIcon}</span>
+                            <span style={{
+                              fontSize: '16px', fontWeight: 700, color: '#F5F5F7', letterSpacing: '-0.3px',
+                            }}>{sd.gameName}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {sd.choices.map((c, ci) => (
+                              <span key={ci} style={{
+                                padding: '5px 10px', borderRadius: '10px',
+                                background: 'rgba(0,122,255,0.10)',
+                                border: '1px solid rgba(0,122,255,0.20)',
+                                color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: 500,
+                                letterSpacing: '-0.2px',
+                              }}>
+                                {c.choiceLabel}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* 만들기 button */}
+                      <button
+                        onClick={handleCreateClick}
+                        className="create-btn"
+                        style={{
+                          width: '100%', height: '54px', borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #007AFF, #5856D6)',
+                          border: 'none', color: '#fff',
+                          fontSize: '17px', fontWeight: 700, letterSpacing: '-0.3px',
+                          cursor: 'pointer',
+                          boxShadow: '0 0 20px rgba(0,122,255,0.3), 0 4px 16px rgba(0,122,255,0.2)',
+                          transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                          animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.02)';
+                          e.currentTarget.style.filter = 'brightness(1.1)';
+                          e.currentTarget.style.boxShadow = '0 0 28px rgba(0,122,255,0.45), 0 6px 20px rgba(0,122,255,0.3)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.filter = 'brightness(1)';
+                          e.currentTarget.style.boxShadow = '0 0 20px rgba(0,122,255,0.3), 0 4px 16px rgba(0,122,255,0.2)';
+                        }}
+                        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; }}
+                        onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+                      >
+                        ✨ 만들기
+                      </button>
+                    </div>
+                  );
+                }
                 case 'progress':
                   return (
                     <div key={item.id} style={{ paddingLeft: '40px', animation: 'cardReveal 0.4s cubic-bezier(0.16,1,0.3,1) both' }}>
                       <div style={{
-                        background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(40px)',
+                        background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(40px)',
                         WebkitBackdropFilter: 'blur(40px)',
                         borderRadius: '16px', padding: '14px 18px',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.08)',
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                           <span style={{ fontSize: '12px', fontWeight: 600, color: '#007AFF' }}>코드 생성 중...</span>
@@ -899,28 +1013,35 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
 
       {/* ═══ Keyframes ═══ */}
       <style>{`
-        @property --angle {
-          syntax: '<angle>';
-          initial-value: 0deg;
-          inherits: false;
-        }
-
-        .rainbow-border {
+        /* ── Rainbow glow border (JS-driven rotation) ── */
+        .rainbow-glow {
           position: fixed;
           inset: 0;
           z-index: 1;
-          padding: 2px;
-          background: conic-gradient(from var(--angle), #ff0044, #ff8800, #ffee00, #00ff88, #0088ff, #8800ff, #ff0088, #ff0044);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask-composite: exclude;
-          -webkit-mask-composite: xor;
           pointer-events: none;
-          animation: rotateGlow 4s linear infinite;
           border-radius: 0;
+          opacity: 0.25;
+          transition: opacity 0.5s ease;
         }
-
-        @keyframes rotateGlow {
-          to { --angle: 360deg; }
+        .rainbow-glow::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          padding: 2px;
+          background: conic-gradient(
+            from var(--glow-angle, 0deg),
+            #ff6b6b, #ffa500, #ffd700, #4ecdc4, #45b7d1, #6c5ce7, #fd79a8, #ff6b6b
+          );
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          filter: blur(1px);
+        }
+        .rainbow-glow.active {
+          opacity: 0.5;
+        }
+        .rainbow-glow.active::before {
+          filter: blur(0.5px);
         }
 
         .shimmer-text {
@@ -954,6 +1075,16 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
         @keyframes cardReveal {
           from { opacity: 0; transform: translateY(12px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 만들기 button active press */
+        .create-btn:active {
+          transform: scale(0.97) !important;
         }
 
         /* Hide scrollbar */

@@ -77,7 +77,7 @@ export default function PreviewOverlay() {
            * SVG 패턴: 45도 회전된 "PREVIEW" 텍스트
            * 200x80 타일로 반복, 극히 희미한 투명도 (0.03)
            */
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Ctext x='100' y='45' text-anchor='middle' font-family='-apple-system,BlinkMacSystemFont,SF Pro Text,Inter,sans-serif' font-size='14' font-weight='600' letter-spacing='8' fill='rgba(255,255,255,0.03)' transform='rotate(-35 100 40)'%3EPREVIEW%3C/text%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Ctext x='100' y='45' text-anchor='middle' font-family='-apple-system,BlinkMacSystemFont,SF Pro Text,Inter,sans-serif' font-size='14' font-weight='600' letter-spacing='8' fill='rgba(255,255,255,0.018)' transform='rotate(-35 100 40)'%3EPREVIEW%3C/text%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat',
           backgroundSize: '200px 80px',
         }}
