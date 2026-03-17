@@ -518,7 +518,8 @@ export default function CodeStreamView({
 
   return (
     <div style={{
-      minHeight: '100dvh',
+      height: '100dvh',
+      maxHeight: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
