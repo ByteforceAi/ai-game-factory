@@ -504,6 +504,11 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
     addWidget('create-button', {
       summaryData: { gameName: game.title, gameIcon: game.icon, choices: summaryChoices },
     });
+    // Extra scroll after animation settles
+    await wait(200);
+    scrollToBottom();
+    await wait(400);
+    scrollToBottom();
 
     // Wait for user to click "만들기"
     await waitForCreate();
@@ -889,35 +894,71 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
                           </div>
                         </div>
                       )}
-                      {/* 만들기 button */}
-                      <button
-                        onClick={handleCreateClick}
-                        className="create-btn"
-                        style={{
-                          width: '100%', height: '54px', borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #007AFF, #5856D6)',
-                          border: 'none', color: '#fff',
-                          fontSize: '17px', fontWeight: 700, letterSpacing: '-0.3px',
-                          cursor: 'pointer',
-                          boxShadow: '0 0 20px rgba(0,122,255,0.3), 0 4px 16px rgba(0,122,255,0.2)',
-                          transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
-                          animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both',
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.transform = 'scale(1.02)';
-                          e.currentTarget.style.filter = 'brightness(1.1)';
-                          e.currentTarget.style.boxShadow = '0 0 28px rgba(0,122,255,0.45), 0 6px 20px rgba(0,122,255,0.3)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.filter = 'brightness(1)';
-                          e.currentTarget.style.boxShadow = '0 0 20px rgba(0,122,255,0.3), 0 4px 16px rgba(0,122,255,0.2)';
-                        }}
-                        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; }}
-                        onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
-                      >
-                        ✨ 만들기
-                      </button>
+                      {/* ── High-tech neon 만들기 button ── */}
+                      <div className="create-btn-wrap" style={{
+                        position: 'relative',
+                        animation: 'fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.15s both',
+                      }}>
+                        {/* Outer pulse ring */}
+                        <div className="create-pulse-ring" />
+                        {/* Rotating neon border */}
+                        <div className="create-neon-border" />
+                        {/* Button itself */}
+                        <button
+                          onClick={handleCreateClick}
+                          className="create-btn"
+                          style={{
+                            position: 'relative', zIndex: 2,
+                            width: '100%', height: '58px', borderRadius: '16px',
+                            background: 'linear-gradient(135deg, rgba(0,122,255,0.15) 0%, rgba(88,86,214,0.15) 100%)',
+                            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(0,200,255,0.25)',
+                            color: '#fff',
+                            fontSize: '16px', fontWeight: 700, letterSpacing: '0.5px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                            overflow: 'hidden',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'scale(1.02)';
+                            e.currentTarget.style.borderColor = 'rgba(0,220,255,0.5)';
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,122,255,0.25) 0%, rgba(88,86,214,0.25) 100%)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.borderColor = 'rgba(0,200,255,0.25)';
+                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0,122,255,0.15) 0%, rgba(88,86,214,0.15) 100%)';
+                          }}
+                          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; }}
+                          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+                        >
+                          {/* Scan line effect */}
+                          <div className="create-scanline" />
+                          {/* Status dot */}
+                          <span style={{
+                            width: '8px', height: '8px', borderRadius: '50%',
+                            background: '#00ff88',
+                            boxShadow: '0 0 8px #00ff88, 0 0 16px rgba(0,255,136,0.4)',
+                            animation: 'statusPulse 1.5s ease-in-out infinite',
+                            flexShrink: 0,
+                          }} />
+                          <span style={{
+                            textTransform: 'uppercase',
+                            textShadow: '0 0 12px rgba(0,200,255,0.6), 0 0 30px rgba(0,122,255,0.3)',
+                          }}>
+                            만들기
+                          </span>
+                          {/* Chevrons */}
+                          <span style={{
+                            fontSize: '14px', opacity: 0.6,
+                            animation: 'chevronPush 1.2s ease-in-out infinite',
+                            letterSpacing: '-3px',
+                          }}>
+                            {'››'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   );
                 }
@@ -1082,9 +1123,90 @@ export default function PromptTerminal({ onComplete }: PromptTerminalProps) {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* 만들기 button active press */
+        /* ── High-tech 만들기 button system ── */
+        .create-btn-wrap {
+          position: relative;
+          border-radius: 18px;
+        }
+
+        /* Outer pulse ring */
+        .create-pulse-ring {
+          position: absolute;
+          inset: -4px;
+          border-radius: 20px;
+          border: 1px solid rgba(0, 200, 255, 0.15);
+          animation: pulseRing 2s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* Rotating neon border glow */
+        .create-neon-border {
+          position: absolute;
+          inset: -1px;
+          border-radius: 17px;
+          background: conic-gradient(
+            from var(--glow-angle, 0deg),
+            transparent, rgba(0,200,255,0.4), transparent, rgba(88,86,214,0.3),
+            transparent, rgba(0,255,136,0.3), transparent
+          );
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          padding: 1.5px;
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+          z-index: 1;
+          opacity: 0.8;
+          filter: blur(0.5px);
+        }
+
+        /* Horizontal scan line */
+        .create-scanline {
+          position: absolute;
+          left: 0; right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(0,200,255,0.4), transparent);
+          animation: scanMove 2.5s linear infinite;
+          pointer-events: none;
+          z-index: 3;
+        }
+
+        .create-btn {
+          box-shadow:
+            0 0 20px rgba(0,122,255,0.2),
+            0 0 40px rgba(0,122,255,0.08),
+            inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .create-btn:hover {
+          box-shadow:
+            0 0 30px rgba(0,200,255,0.35),
+            0 0 60px rgba(0,122,255,0.15),
+            inset 0 1px 0 rgba(255,255,255,0.1) !important;
+        }
         .create-btn:active {
           transform: scale(0.97) !important;
+        }
+
+        @keyframes pulseRing {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.01); }
+        }
+
+        @keyframes scanMove {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+
+        @keyframes statusPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0,255,136,0.4); }
+          50% { opacity: 0.6; box-shadow: 0 0 4px #00ff88, 0 0 8px rgba(0,255,136,0.2); }
+        }
+
+        @keyframes chevronPush {
+          0%, 100% { transform: translateX(0); opacity: 0.6; }
+          50% { transform: translateX(3px); opacity: 1; }
         }
 
         /* Hide scrollbar */
