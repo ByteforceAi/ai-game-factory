@@ -54,9 +54,9 @@ export default function AIMessage({
         if (inTag) continue;
 
         visibleCount++;
-        // Update every 3rd visible character for smooth but fast streaming
-        if (visibleCount % 3 === 0) {
-          if (visibleCount % 15 === 0) playTick(); // subtle click every ~15 chars
+        // Update every 2nd visible character — realistic AI streaming speed
+        if (visibleCount % 2 === 0) {
+          if (visibleCount % 20 === 0) playTick();
           el.innerHTML =
             output +
             '<span style="display:inline-block;width:2px;height:16px;background:var(--text-primary);animation:cursorBlink .7s step-end infinite;vertical-align:text-bottom;margin-left:1px"></span>';
@@ -64,7 +64,8 @@ export default function AIMessage({
             block: 'end',
             behavior: 'smooth',
           });
-          await sleep(8 + Math.random() * 8);
+          // Realistic speed: 25~45ms per update (like real Claude)
+          await sleep(25 + Math.random() * 20);
         }
       }
 
@@ -167,8 +168,53 @@ export default function AIMessage({
               </button>
             )}
 
+            {/* Terminal-style typing prompt — student must type this */}
+            {phase === 'done' && response.typingPrompt && (
+              <div
+                className="mt-4 rounded-xl overflow-hidden"
+                style={{
+                  background: 'rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(34,197,94,0.15)',
+                  boxShadow: '0 0 20px rgba(34,197,94,0.05)',
+                }}
+              >
+                {/* Terminal header */}
+                <div
+                  className="flex items-center gap-2 px-4 py-2"
+                  style={{ borderBottom: '1px solid rgba(34,197,94,0.1)' }}
+                >
+                  <div className="w-[6px] h-[6px] rounded-full" style={{ background: 'rgba(34,197,94,0.4)' }} />
+                  <span className="font-mono text-[10px] tracking-[2px] uppercase" style={{ color: 'rgba(34,197,94,0.35)' }}>
+                    input command
+                  </span>
+                </div>
+                {/* Command to type */}
+                <div className="px-5 py-4">
+                  <div className="font-mono text-[11px] mb-2" style={{ color: 'rgba(34,197,94,0.3)' }}>
+                    {'>'} 아래 명령어를 입력창에 타이핑하세요:
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[15px] font-medium" style={{
+                      color: 'rgba(34,197,94,0.85)',
+                      textShadow: '0 0 10px rgba(34,197,94,0.3)',
+                    }}>
+                      {response.typingPrompt}
+                    </span>
+                    <span
+                      className="inline-block w-[8px] h-[18px] rounded-[1px]"
+                      style={{
+                        background: 'rgba(34,197,94,0.6)',
+                        animation: 'cursorBlink .8s step-end infinite',
+                        boxShadow: '0 0 6px rgba(34,197,94,0.3)',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Suggestion hints — read-only, student must type manually */}
-            {phase === 'done' && response.suggestions && response.suggestions.length > 0 && (
+            {phase === 'done' && !response.typingPrompt && response.suggestions && response.suggestions.length > 0 && (
               <div className="mt-4 px-3 py-3 rounded-claude-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
                 <div className="text-[11px] text-[var(--text-muted)] mb-2">
                   💡 아래 문장을 직접 입력해보세요:
@@ -180,7 +226,7 @@ export default function AIMessage({
                       className="text-[13px] text-[var(--text-secondary)] font-mono pl-2"
                       style={{ borderLeft: '2px solid var(--accent-coral)', paddingLeft: '8px' }}
                     >
-                      "{s.prompt}"
+                      &ldquo;{s.prompt}&rdquo;
                     </div>
                   ))}
                 </div>

@@ -180,17 +180,28 @@ export default function Home() {
     [userName, addLog]
   );
 
-  // After phase transition, set hint text in input (NOT auto-send)
+  // After phase transition, show AI guide message with the prompt to type
   useEffect(() => {
     if (phase === 2 && pendingPromptRef.current) {
       const prompt = pendingPromptRef.current;
       pendingPromptRef.current = null;
-      // Wait for InputArea to mount, then set hint text
+
+      // Show AI guide message — terminal style prompt instruction
       setTimeout(() => {
-        inputAreaRef.current?.setHint(prompt);
-      }, 500);
+        const guideMsg: ChatMessage = {
+          id: Date.now().toString(),
+          type: 'ai',
+          text: '',
+          response: {
+            text: `${userName}님, 아래 명령어를 **직접 입력**해보세요! ⌨️\n\nAI에게 말하듯이 타이핑하면 코드가 만들어져요.`,
+            typingPrompt: prompt, // Special field for terminal-style prompt display
+          },
+        };
+        setMessages([guideMsg]);
+        setShowHints(true);
+      }, 600);
     }
-  }, [phase]);
+  }, [phase, userName]);
 
   // ══════════════════════
   // SEND MESSAGE
@@ -235,11 +246,24 @@ export default function Home() {
 
       // ── "다른 게임" handler — go back to welcome ──
       if (lower.includes('다른') && (lower.includes('게임') || lower.includes('보여'))) {
+        // CRITICAL: Kill iframe audio/game BEFORE switching
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach((iframe) => {
+          try {
+            iframe.contentWindow?.postMessage({ type: 'STOP_ALL' }, '*');
+            iframe.srcdoc = ''; // wipe the iframe
+            iframe.remove();
+          } catch {}
+        });
+
         setPhase(1);
         setMessages([]);
         setShowHints(true);
         setChatTitle('새 대화');
         setArtifactOpen(false);
+        setArtifactGameHtml('');
+        setArtifactCode('');
+        setArtifactPreview('');
         setActiveGameId(null);
         addLog('user', text);
         addLog('system', '웰컴 화면으로 이동');

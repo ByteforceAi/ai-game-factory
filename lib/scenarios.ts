@@ -13,6 +13,8 @@ export interface ScenarioResponse {
   gameHtml?: string;
   /** Suggestion chips shown after AI response — for game modifications */
   suggestions?: { icon: string; label: string; prompt: string }[];
+  /** Terminal-style prompt — student must type this themselves */
+  typingPrompt?: string;
 }
 
 export interface Scenario {
