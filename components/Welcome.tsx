@@ -139,7 +139,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
 
         {/* Card Grid — appears on category click with stagger */}
         {selectedCategory && (
-          <div className="grid grid-cols-3 gap-5 mb-10">
+          <div className="grid grid-cols-3 gap-2.5 mb-8">
             {filteredScenarios.map((scenario, idx) => (
               <ModuleCard
                 key={scenario.id}
@@ -208,13 +208,11 @@ function ModuleCard({
   return (
     <button
       onClick={onClick}
-      className="module-card-hover group relative text-left rounded-[20px] cursor-pointer overflow-hidden transition-all duration-400"
+      className="module-card-hover group relative text-left rounded-[12px] cursor-pointer overflow-hidden transition-all duration-400"
       style={{
-        background: 'rgba(20,20,25,0.6)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(20px)',
-        padding: '24px',
-        minHeight: 120,
+        background: 'rgba(20,20,25,0.5)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        padding: '14px 16px',
         fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
@@ -222,30 +220,22 @@ function ModuleCard({
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.transform = 'translateY(-6px)';
-        el.style.background = 'rgba(30,30,40,0.8)';
-        el.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(34,197,94,0.08)';
-        el.style.borderColor = 'rgba(34,197,94,0.2)';
+        el.style.transform = 'translateY(-2px)';
+        el.style.background = 'rgba(30,30,40,0.7)';
+        el.style.borderColor = 'rgba(34,197,94,0.15)';
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.transform = 'translateY(0)';
-        el.style.background = 'rgba(20,20,25,0.6)';
-        el.style.boxShadow = 'none';
-        el.style.borderColor = 'rgba(255,255,255,0.08)';
+        el.style.background = 'rgba(20,20,25,0.5)';
+        el.style.borderColor = 'rgba(255,255,255,0.06)';
       }}
     >
       <div
-        className="text-[1rem] font-medium mb-1.5 tracking-tight transition-colors duration-300 group-hover:text-[#22c55e]"
+        className="text-[0.85rem] font-medium tracking-tight transition-colors duration-300 group-hover:text-[#22c55e]"
         style={{ color: '#fff' }}
       >
         {scenario.title}
-      </div>
-      <div
-        className="text-[0.8rem] font-light leading-relaxed"
-        style={{ color: 'rgba(255,255,255,0.4)' }}
-      >
-        {scenario.description}
       </div>
     </button>
   );
