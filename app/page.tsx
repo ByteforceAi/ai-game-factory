@@ -499,11 +499,9 @@ export default function Home() {
                   ☰
                 </button>
               )}
-              <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-1">
-                Claude Opus 4.6
-                <span className="text-[11px] text-[var(--text-secondary)]">
-                  ⌄
-                </span>
+              <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}>
+                <div className="w-2 h-3 rounded-[1px]" style={{ background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.3)' }} />
+                바이브코딩 아레나
               </div>
             </div>
             <div className="flex items-center gap-1">

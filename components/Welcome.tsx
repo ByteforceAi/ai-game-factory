@@ -44,10 +44,16 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
       <div className="w-full max-w-[800px] px-6 py-8">
         {/* Header */}
         <div className="text-center mb-6">
-          <SparkleIcon size={36} className="mx-auto mb-3" />
-          <h1 className="text-[26px] font-normal text-[var(--text-primary)] tracking-tight">
+          {/* Cursor block logo */}
+          <div className="flex items-center justify-center gap-[2px] mb-4">
+            <div
+              className="w-3 h-[18px] rounded-[1px] animate-[cursorGlow_2s_ease-in-out_infinite]"
+              style={{ background: '#22c55e', boxShadow: '0 0 12px rgba(34,197,94,0.3)' }}
+            />
+          </div>
+          <h1 className="text-[26px] font-medium text-[var(--text-primary)] tracking-tight" style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}>
             환영합니다,{' '}
-            <span className="text-[var(--accent-coral)]">{userName}</span>님
+            <span style={{ color: '#22c55e' }}>{userName}</span>님
           </h1>
           <p className="text-[14px] text-[var(--text-secondary)] mt-2">
             체험하고 싶은 항목을 선택하세요

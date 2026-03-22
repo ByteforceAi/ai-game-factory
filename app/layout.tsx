@@ -12,16 +12,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ai-game-factory.vercel.app'
   ),
-  title: 'Claude 맛보기 — AI 체험 시뮬레이터',
+  title: '바이브코딩 아레나 — AI 코딩 플레이그라운드',
   description:
-    'Claude와 대화하는 방법을 직접 체험해보세요. AI 개념 설명, 코딩 체험, 이야기 만들기 등 다양한 시나리오를 경험할 수 있습니다.',
+    '말로 설명하면 AI가 코드를 만들어줘요. 게임, 수학, 과학, 시뮬레이션을 직접 만들고 수정하는 바이브코딩 체험 플랫폼.',
   keywords: [
-    'Claude',
-    'AI 체험',
-    '시뮬레이터',
+    '바이브코딩',
+    'AI 코딩',
+    '플레이그라운드',
     'AI 교육',
-    'Anthropic',
-    '맛보기',
+    'ByteForce',
+    '아레나',
   ],
   robots: { index: false, follow: false },
   icons: {
