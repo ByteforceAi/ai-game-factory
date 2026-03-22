@@ -297,6 +297,170 @@ export function getGameExtensionsScript(): string {
       gameOverSent = false;
     }
   });
+
+  /* ========================================
+     CODE X-RAY SYSTEM
+     Receives highlight requests from parent
+     and draws visual overlays on game canvas
+     ======================================== */
+  var xrayOverlay = null;
+  var xrayLabel = null;
+  var xrayTimer = null;
+
+  function createXRayOverlay() {
+    if (xrayOverlay) return;
+    xrayOverlay = document.createElement('div');
+    xrayOverlay.id = 'xray-overlay';
+    xrayOverlay.style.cssText = 'position:fixed;pointer-events:none;z-index:99990;border:2px solid rgba(99,102,241,0.8);border-radius:8px;background:rgba(99,102,241,0.08);box-shadow:0 0 20px rgba(99,102,241,0.3),inset 0 0 20px rgba(99,102,241,0.05);transition:all 0.3s cubic-bezier(0.16,1,0.3,1);opacity:0;display:none';
+    document.body.appendChild(xrayOverlay);
+
+    xrayLabel = document.createElement('div');
+    xrayLabel.id = 'xray-label';
+    xrayLabel.style.cssText = 'position:fixed;pointer-events:none;z-index:99991;background:rgba(99,102,241,0.95);color:#fff;font-size:11px;font-family:system-ui,sans-serif;font-weight:600;padding:4px 10px;border-radius:6px;white-space:nowrap;transition:all 0.3s;opacity:0;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+    document.body.appendChild(xrayLabel);
+  }
+
+  function showXRay(target, label) {
+    createXRayOverlay();
+    if (xrayTimer) { clearTimeout(xrayTimer); xrayTimer = null; }
+
+    var rect = null;
+    var W = window.innerWidth;
+    var H = window.innerHeight;
+
+    // Target zone mapping — works for ALL canvas-based games
+    var zones = {
+      'player':     { x: W*0.4,  y: H*0.65, w: W*0.2,  h: H*0.2,  lbl: '🚀 플레이어' },
+      'score':      { x: W*0.02, y: 0,       w: W*0.3,  h: H*0.08, lbl: '🏆 점수 표시' },
+      'enemies':    { x: W*0.1,  y: H*0.1,   w: W*0.8,  h: H*0.35, lbl: '👾 적/장애물 영역' },
+      'background': { x: 0,      y: 0,       w: W,      h: H,      lbl: '🖼️ 배경/화면 전체' },
+      'speed':      { x: W*0.3,  y: H*0.4,   w: W*0.4,  h: H*0.3,  lbl: '⚡ 속도 영향 영역' },
+      'gravity':    { x: W*0.35, y: H*0.3,   w: W*0.3,  h: H*0.5,  lbl: '⬇️ 중력 영향 영역' },
+      'collision':  { x: W*0.2,  y: H*0.3,   w: W*0.6,  h: H*0.4,  lbl: '💥 충돌 판정 영역' },
+      'input':      { x: W*0.2,  y: H*0.5,   w: W*0.6,  h: H*0.4,  lbl: '🎮 입력 처리 영역' },
+      'render':     { x: 0,      y: 0,       w: W,      h: H,      lbl: '🎨 렌더링 전체' },
+      'ui':         { x: W*0.01, y: 0,       w: W*0.98, h: H*0.1,  lbl: '📊 UI/HUD 영역' },
+      'spawn':      { x: W*0.1,  y: 0,       w: W*0.8,  h: H*0.15, lbl: '✨ 생성 영역' },
+      'timer':      { x: W*0.7,  y: 0,       w: W*0.28, h: H*0.08, lbl: '⏱️ 타이머' },
+      'lives':      { x: W*0.7,  y: 0,       w: W*0.28, h: H*0.08, lbl: '❤️ 목숨/체력' },
+      'grid':       { x: W*0.15, y: H*0.05,  w: W*0.7,  h: H*0.9,  lbl: '🧱 그리드 영역' },
+      'particles':  { x: 0,      y: 0,       w: W,      h: H,      lbl: '✨ 파티클 효과' },
+    };
+
+    // Try to read actual game object positions
+    try {
+      if (target === 'player') {
+        if (typeof player !== 'undefined' && player.x != null) {
+          var px = player.x, py = player.y;
+          var pw = player.width || player.w || 40;
+          var ph = player.height || player.h || 40;
+          // Scale to viewport if canvas is scaled
+          var cvs = document.getElementById('gameCanvas') || document.querySelector('canvas');
+          if (cvs) {
+            var cr = cvs.getBoundingClientRect();
+            var sx = cr.width / (cvs.width || cr.width);
+            var sy = cr.height / (cvs.height || cr.height);
+            px = cr.left + px * sx;
+            py = cr.top + py * sy;
+            pw = pw * sx;
+            ph = ph * sy;
+          }
+          zones.player = { x: px - pw*0.5, y: py - ph*0.5, w: pw*2, h: ph*2, lbl: zones.player.lbl };
+        }
+      }
+    } catch(e) {}
+
+    rect = zones[target] || zones['render'];
+    var displayLabel = label || rect.lbl;
+
+    xrayOverlay.style.left = rect.x + 'px';
+    xrayOverlay.style.top = rect.y + 'px';
+    xrayOverlay.style.width = rect.w + 'px';
+    xrayOverlay.style.height = rect.h + 'px';
+    xrayOverlay.style.display = 'block';
+    xrayOverlay.style.opacity = '1';
+
+    xrayLabel.textContent = displayLabel;
+    xrayLabel.style.left = (rect.x + rect.w/2 - 60) + 'px';
+    xrayLabel.style.top = Math.max(4, rect.y - 28) + 'px';
+    xrayLabel.style.display = 'block';
+    xrayLabel.style.opacity = '1';
+
+    // Pulse animation
+    xrayOverlay.style.animation = 'none';
+    void xrayOverlay.offsetWidth;
+    xrayOverlay.style.animation = 'xrayPulse 1.5s ease-in-out infinite';
+  }
+
+  function hideXRay() {
+    if (!xrayOverlay) return;
+    xrayOverlay.style.opacity = '0';
+    xrayLabel.style.opacity = '0';
+    xrayTimer = setTimeout(function() {
+      if (xrayOverlay) xrayOverlay.style.display = 'none';
+      if (xrayLabel) xrayLabel.style.display = 'none';
+    }, 300);
+  }
+
+  // Inject pulse animation
+  var xrayStyle = document.createElement('style');
+  xrayStyle.textContent = '@keyframes xrayPulse{0%,100%{box-shadow:0 0 20px rgba(99,102,241,0.3),inset 0 0 20px rgba(99,102,241,0.05)}50%{box-shadow:0 0 40px rgba(99,102,241,0.5),inset 0 0 30px rgba(99,102,241,0.1)}}';
+  document.head.appendChild(xrayStyle);
+
+  /* ========================================
+     GET_STATE — Live Dashboard support
+     Returns current game variables to parent
+     ======================================== */
+  function getGameState() {
+    var state = {};
+    // Common variable names across all games
+    var vars = ['score','speed','level','lives','gold','water','coins',
+                'distance','fireRate','jumpForce','gravity','enemies',
+                'lines','combo','time','playerX','playerY','growSpeed'];
+    for (var i = 0; i < vars.length; i++) {
+      try {
+        var v = vars[i];
+        if (typeof window[v] !== 'undefined') {
+          var val = window[v];
+          if (typeof val === 'number') state[v] = val;
+          else if (Array.isArray(val)) state[v] = val.length;
+          else if (typeof val === 'object' && val !== null) {
+            // For player objects, extract x/y
+            if (v === 'playerX' || v === 'playerY') state[v] = val;
+            else if (val.length != null) state[v] = val.length;
+          }
+        }
+        // Try player.x, player.y specifically
+        if (v === 'playerX' && typeof player !== 'undefined' && player.x != null) state.playerX = player.x;
+        if (v === 'playerY' && typeof player !== 'undefined' && player.y != null) state.playerY = player.y;
+      } catch(e) {}
+    }
+    return state;
+  }
+
+  /* ========================================
+     UNIFIED MESSAGE HANDLER
+     Handles: resetGameOver, XRAY, GET_STATE
+     + all vibe commands (already in game code)
+     ======================================== */
+  window.addEventListener('message', function(e) {
+    if (!e.data || !e.data.type) return;
+
+    switch (e.data.type) {
+      case 'XRAY_HIGHLIGHT':
+        showXRay(e.data.target, e.data.label);
+        break;
+      case 'XRAY_CLEAR':
+        hideXRay();
+        break;
+      case 'GET_STATE':
+        try {
+          window.parent.postMessage({ type: 'STATE_REPORT', state: getGameState() }, '*');
+        } catch(ex) {}
+        break;
+    }
+  });
+
 })();
 `;
 }

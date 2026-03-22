@@ -2,533 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 
 /* ============================================
-   APPLE INTELLIGENCE DESIGN SYSTEM
+   CLAUDE DARK MINIMAL DESIGN SYSTEM
    ============================================ */
 :root {
-  /* Core palette */
-  --apple-blue: #007AFF;
-  --apple-blue-light: #5AC8FA;
-  --apple-green: #34C759;
-  --apple-red: #FF3B30;
-  --apple-orange: #FF9500;
-  --apple-yellow: #FFCC00;
-
-  /* Backgrounds */
-  --bg-deep: #0A0A1A;
-  --bg-primary: #111125;
-  --bg-secondary: #1A1A2E;
-  --bg-surface: rgba(255,255,255,0.06);
-  --bg-surface-hover: rgba(255,255,255,0.10);
-  --bg-glass: rgba(255,255,255,0.06);
-  --bg-glass-heavy: rgba(255,255,255,0.10);
-
-  /* Borders */
-  --border-dim: rgba(255,255,255,0.06);
-  --border-subtle: rgba(255,255,255,0.10);
-  --border-active: rgba(0,122,255,0.4);
+  /* Background */
+  --bg-primary: #2b2b2b;
+  --bg-secondary: #343434;
+  --bg-tertiary: #3d3d3d;
+  --bg-surface: #404040;
+  --bg-input: #393939;
+  --bg-sidebar: #252525;
+  --bg-sidebar-hover: #303030;
+  --bg-sidebar-active: #353535;
+  --bg-bubble-user: #404040;
+  --bg-bubble-ai: transparent;
 
   /* Text */
-  --text-primary: #F5F5F7;
-  --text-secondary: #A1A1AA;
-  --text-tertiary: #636366;
-  --text-dim: #48484A;
+  --text-primary: #ececec;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #707070;
+  --text-muted: #585858;
 
-  /* Legacy aliases — keep for CodeStreamView, LaunchSequence, RemixPanel */
-  --ai-indigo: #007AFF;
-  --ai-violet: #5856D6;
-  --ai-cyan: #5AC8FA;
-  --ai-emerald: #34C759;
-  --text-bright: #F5F5F7;
-  --text-body: #A1A1AA;
-  --text-muted: #636366;
-  --border-glow: rgba(0,122,255,0.3);
+  /* Border */
+  --border: #3a3a3a;
+  --border-light: #444444;
 
-  /* Light theme (still used by IntroScreen) */
-  --light-bg-from: #dbeafe;
-  --light-bg-via: #e0e7ff;
-  --light-bg-to: #fce7f3;
-  --light-card: rgba(255,255,255,0.85);
-  --light-card-hover: rgba(255,255,255,0.95);
-  --light-border: rgba(0,0,0,0.06);
-  --light-border-hover: rgba(99,102,241,0.3);
-  --light-text-primary: #1e293b;
-  --light-text-secondary: #475569;
-  --light-text-muted: #94a3b8;
-  --light-accent: #007AFF;
-  --light-accent-light: #5AC8FA;
-  --light-success: #34C759;
-  --light-chip-bg: rgba(255,255,255,0.9);
-  --light-chip-border: rgba(0,0,0,0.08);
-  --light-chip-hover: rgba(0,122,255,0.08);
-  --light-input-bg: rgba(255,255,255,0.95);
-  --light-input-border: rgba(0,0,0,0.12);
-  --light-shadow: 0 2px 16px rgba(0,0,0,0.06);
-  --light-shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  /* Accent */
+  --accent-coral: #e07a5f;
+  --accent-orange: #d4815a;
+  --accent-purple: #9b8ec4;
+  --accent-blue: #6b9bd2;
+  --accent-green: #6bbd7b;
+
+  /* Typography */
+  --font-body: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  /* Transition */
+  --transition: all 0.2s ease;
 }
 
-* { -webkit-tap-highlight-color: transparent; }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
-body {
-  background: var(--bg-deep);
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.3px;
 }
 
 /* ============================================
-   SCROLLBAR — ultra thin
+   SCROLLBAR
    ============================================ */
-::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-::selection { background: rgba(0,122,255,0.3); color: var(--text-primary); }
-*:focus-visible { outline: 2px solid rgba(0,122,255,0.5); outline-offset: 2px; }
-
-/* ============================================
-   MONOSPACE — for code/system labels
-   ============================================ */
-.mono-xs {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.mono-sm {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-}
+::selection { background: rgba(224, 122, 95, 0.3); color: var(--text-primary); }
+*:focus-visible { outline: 2px solid rgba(224, 122, 95, 0.5); outline-offset: 2px; }
 
 /* ============================================
-   GLOW TEXT
+   KEYFRAME ANIMATIONS (used by DOM manipulation)
    ============================================ */
-.text-glow-indigo {
-  color: var(--apple-blue);
-  text-shadow: 0 0 20px rgba(0,122,255,0.4), 0 0 40px rgba(0,122,255,0.15);
+@keyframes gradientBorderFlow {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 300%; }
 }
 
-.text-glow-cyan {
-  color: var(--apple-blue-light);
-  text-shadow: 0 0 20px rgba(90,200,250,0.4);
-}
-
-.text-glow-emerald {
-  color: var(--apple-green);
-  text-shadow: 0 0 20px rgba(52,199,89,0.4);
-}
-
-/* ============================================
-   CINEMATIC CARD (kept for CodeStreamView etc.)
-   ============================================ */
-.card-cinematic {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-dim);
-  border-radius: 16px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.card-cinematic::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(0,122,255,0.05) 0%, transparent 50%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s;
-}
-
-.card-cinematic:hover {
-  border-color: var(--border-active);
-  box-shadow: 0 0 30px rgba(0,122,255,0.08), 0 8px 32px rgba(0,0,0,0.3);
-  transform: translateY(-2px);
-}
-.card-cinematic:hover::before { opacity: 1; }
-
-/* ============================================
-   BAR — top/bottom HUD
-   ============================================ */
-.bar-cinematic {
-  background: rgba(10,10,26,0.85);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border-color: var(--border-dim);
-}
-
-/* ============================================
-   BUTTONS
-   ============================================ */
-.btn-glow {
-  background: var(--apple-blue);
-  border: none;
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.2px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 12px rgba(0,122,255,0.3);
-}
-
-.btn-glow:hover {
-  box-shadow: 0 4px 24px rgba(0,122,255,0.45);
-  transform: translateY(-1px);
-  filter: brightness(1.1);
-}
-
-.btn-glow:active {
-  transform: scale(0.97);
-}
-
-/* ============================================
-   CODE TERMINAL (CodeStreamView)
-   ============================================ */
-.code-terminal {
-  background: rgba(10,10,26,0.95);
-  color: #e2e8f0;
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-/* ============================================
-   STATUS DOT
-   ============================================ */
-.status-dot-green {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--apple-green);
-  box-shadow: 0 0 8px rgba(52,199,89,0.6);
-  animation: dot-glow 2s ease-in-out infinite;
-}
-
-.status-dot-indigo {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--apple-blue);
-  box-shadow: 0 0 8px rgba(0,122,255,0.6);
-  animation: dot-glow 1.5s ease-in-out infinite;
-}
-
-@keyframes dot-glow {
+@keyframes cursorBlink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0; }
+}
+
+@keyframes lineFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dotBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes logPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 /* ============================================
-   SHIMMER
+   ONBOARDING — Launch / Boot / Login
    ============================================ */
-.shimmer-line {
-  position: relative; overflow: hidden; height: 1px;
-  background: rgba(0,122,255,0.15);
-}
-.shimmer-line::after {
-  content: '';
-  position: absolute; top: 0; left: -60%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, var(--apple-blue), transparent);
-  animation: shimmer 3s ease-in-out infinite;
-}
-@keyframes shimmer {
-  0% { left: -60%; }
-  100% { left: 100%; }
-}
-@keyframes shimmer-bar {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ============================================
-   KEYFRAMES
-   ============================================ */
-@keyframes glitch-complete {
-  0% { filter: hue-rotate(0deg); transform: skewX(0); }
-  25% { filter: hue-rotate(20deg); transform: skewX(1deg); }
-  50% { filter: hue-rotate(-10deg); transform: skewX(-0.5deg); }
-  100% { filter: hue-rotate(0deg); transform: skewX(0); }
-}
-@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes pulse-subtle { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-@keyframes companionSlide {
-  0% { opacity: 0; transform: translateY(12px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ============================================
-   VIEW TRANSITIONS
-   ============================================ */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-.anim-fade-in { animation: fadeIn 0.4s ease-out both; }
-.anim-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.anim-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.anim-slide-down { animation: slideDown 0.3s ease-out both; }
-.anim-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-.stagger-children > * { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-
-/* ============================================
-   HUD BUTTONS (game overlay)
-   ============================================ */
-.btn-hud {
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.10);
-  color: rgba(255,255,255,0.7);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 12px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-.btn-hud:hover {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.95);
-  transform: translateY(-1px);
-}
-.btn-hud:active { transform: scale(0.97); }
-
-.btn-hud--active {
-  background: rgba(0,122,255,0.2);
-  border-color: rgba(0,122,255,0.4);
-  color: var(--apple-blue-light);
-}
-.btn-hud--accent {
-  background: rgba(52,199,89,0.15);
-  border-color: rgba(52,199,89,0.3);
-  color: var(--apple-green);
-}
-.btn-hud--accent:hover {
-  background: rgba(52,199,89,0.25);
-  border-color: rgba(52,199,89,0.45);
-}
-
-/* ============================================
-   GAME OVER OVERLAY
-   ============================================ */
-.overlay-game-over {
-  position: absolute;
-  inset: 0;
-  background: rgba(10,10,26,0.88);
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: max(6vh, 40px) 20px 20px;
-  gap: 12px;
-  z-index: 30;
-  overflow-y: auto;
-  animation: fadeIn 0.4s ease-out;
-}
-
-/* ============================================
-   PANEL SLIDE-UP
-   ============================================ */
-.panel-slide-up {
-  position: absolute;
-  bottom: 52px;
-  left: 0; right: 0;
-  z-index: 25;
-  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* ============================================
-   CHIP
-   ============================================ */
-.chip-select {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-dim);
-  border-radius: 100px;
-  padding: 10px 18px;
-  color: var(--text-secondary);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.25s;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.2px;
-}
-.chip-select:hover {
-  border-color: var(--border-active);
-  color: var(--text-primary);
-  background: rgba(0,122,255,0.08);
-}
-.chip-select:active { transform: scale(0.96); }
-
-/* ============================================
-   TYPING DOTS
-   ============================================ */
-@keyframes typingDot {
-  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-4px); }
-}
-.typing-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--text-tertiary);
-  display: inline-block;
-}
-.typing-dot:nth-child(1) { animation: typingDot 1.4s ease-in-out infinite 0s; }
-.typing-dot:nth-child(2) { animation: typingDot 1.4s ease-in-out infinite 0.2s; }
-.typing-dot:nth-child(3) { animation: typingDot 1.4s ease-in-out infinite 0.4s; }
-
-/* ============================================
-   CHAT BUBBLE ANIMATION
-   ============================================ */
-@keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-.chat-bubble-in {
-  animation: bubbleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* ============================================
-   PROGRESS BAR ANIMATION
-   ============================================ */
-@keyframes progressIndeterminate {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
-}
-
-/* ============================================
-   MOBILE HELPERS
-   ============================================ */
-@media (max-width: 480px) {
-  .btn-hud { padding: 10px 16px; min-height: 44px; font-size: 12px; }
-  .btn-glow { padding: 14px 24px; font-size: 14px; min-height: 44px; }
-  .overlay-game-over button { min-height: 44px; font-size: 13px; }
-  .panel-slide-up { bottom: 58px; }
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .btn-hud:active { transform: scale(0.95); transition-duration: 0.1s; }
-  .btn-glow:active { transform: scale(0.97); filter: brightness(1.15); transition-duration: 0.1s; }
-  .card-cinematic:active { transform: scale(0.98); transition-duration: 0.1s; }
-}
-
-/* ============================================
-   INTRO SCREEN BUTTONS (legacy support)
-   ============================================ */
-@keyframes btnPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,122,255,0.3); transform: scale(1); }
-  50% { box-shadow: 0 0 30px rgba(0,122,255,0.5); transform: scale(1.03); }
-}
-@keyframes btnShimmer { 0% { left: -100%; } 100% { left: 200%; } }
-@keyframes btnGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-.btn-start {
-  background: var(--apple-blue);
-  animation: btnPulse 2.5s ease-in-out infinite;
-  border: none; color: #fff;
-  font-family: -apple-system, sans-serif;
-  font-size: 15px; font-weight: 700; letter-spacing: -0.2px;
-  padding: 16px 52px; border-radius: 14px;
-  cursor: pointer; margin-top: 20px;
-  position: relative; overflow: hidden;
-  transition: filter 0.3s;
-}
-.btn-start::after {
-  content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-  animation: btnShimmer 3s ease-in-out infinite; pointer-events: none;
-}
-.btn-start:hover { filter: brightness(1.15); box-shadow: 0 0 40px rgba(0,122,255,0.5); }
-.btn-start:active { transform: scale(0.97); animation: none; }
-
-/* Light theme gradient bg */
-@keyframes gradientShift {
+@keyframes gradientFlow {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-@keyframes floatBlob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -20px) scale(1.05); }
-  50% { transform: translate(-20px, 15px) scale(0.95); }
-  75% { transform: translate(15px, 25px) scale(1.03); }
+
+@keyframes breatheCore {
+  0% {
+    transform: scale(0.8);
+    box-shadow: 0 0 20px rgba(188,19,254,0.5);
+  }
+  100% {
+    transform: scale(1.2) rotate(15deg);
+    box-shadow: 0 0 50px rgba(0,243,255,0.8), 0 0 80px rgba(255,0,127,0.5);
+  }
 }
 
-/* Code cursor */
-@keyframes cursorPulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,122,255,1), 0 0 20px rgba(0,122,255,0.6); }
-  50% { opacity: 0.4; box-shadow: 0 0 4px rgba(0,122,255,0.6); }
+@keyframes pulseText {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
-@keyframes previewSlideIn {
-  from { opacity: 0; transform: translateX(20px) scale(0.9); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
-}
-@keyframes scanlineMove { 0% { background-position: 0 0; } 100% { background-position: 0 200px; } }
-@keyframes insightGlow {
-  0% { opacity: 0; transform: scaleY(0.8); }
-  15% { opacity: 1; transform: scaleY(1); }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
+/* Noise texture overlay for launch/boot screens */
+.noise-bg {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
 /* ============================================
-   TOOLBAR EXPAND (Dynamic Island)
+   SYNTAX HIGHLIGHTING (Code Artifact)
    ============================================ */
-@keyframes toolbarExpand {
-  from { opacity: 0; transform: translateY(8px) scale(0.95); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .overlay-game-over { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-}
+.syn-keyword { color: #c792ea; }
+.syn-string { color: #c3e88d; }
+.syn-number { color: #f78c6c; }
+.syn-comment { color: #546e7a; font-style: italic; }
+.syn-function { color: #82aaff; }
+.syn-tag { color: #f07178; }
+.syn-attr { color: #ffcb6b; }
 
 /* ============================================
-   INTRO SCREEN legacy keyframes
+   RESPONSIVE (mobile < 900px)
    ============================================ */
-@keyframes introFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes introPulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,122,255,0.3); }
-  50%      { opacity: 0.5; box-shadow: 0 0 14px rgba(0,122,255,0.5); }
+@media (max-width: 900px) {
+  .artifact-panel-open {
+    width: 100% !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 50 !important;
+  }
 }

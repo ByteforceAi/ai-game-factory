@@ -283,7 +283,7 @@ function checkLines(){
   clearing=[];
   for(var r=0;r<ROWS;r++){var full=true;for(var c=0;c<COLS;c++)if(!grid[r][c]){full=false;break}if(full)clearing.push(r)}
   if(clearing.length){
-    clearAnim=350;
+    clearAnim=150;
     sfxClear(clearing.length);
     var pts=[0,100,300,500,800][clearing.length]||800;
     score+=pts*level;lines+=clearing.length;
@@ -350,7 +350,7 @@ function render(){
     if(grid[r][c]){
       if(clearing.indexOf(r)!==-1){
         // Enhanced line clear animation: flash + dissolve
-        var progress=clearAnim/350;
+        var progress=clearAnim/150;
         ctx.globalAlpha=progress;
         ctx.fillStyle='#ffffff';
         ctx.fillRect(c*BS,r*BS,BS,BS);
@@ -459,8 +459,9 @@ function loop(ts){
   // Line clear animation
   if(clearAnim>0){
     clearAnim-=dt;
-    if(clearAnim<=0)collapseLines();
-    render();requestAnimationFrame(loop);
+    if(clearAnim<=0){collapseLines();render()}
+    else{render()}
+    requestAnimationFrame(loop);
     return;
   }
 

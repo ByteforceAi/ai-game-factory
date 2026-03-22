@@ -1,906 +1,727 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { DEMO_GAMES, DemoGame } from '@/lib/demoGames';
+import Onboarding from '@/components/Onboarding';
+import Welcome from '@/components/Welcome';
+import Sidebar from '@/components/Sidebar';
+import InputArea, { type InputAreaHandle } from '@/components/InputArea';
+import UserMessage from '@/components/UserMessage';
+import AIMessage from '@/components/AIMessage';
+import ArtifactPanel from '@/components/ArtifactPanel';
+import {
+  findResponse,
+  createLogEntry,
+  SCENARIOS,
+  type LogEntry,
+  type ScenarioResponse,
+} from '@/lib/scenarios';
+import { getGameHtml } from '@/lib/gameLoader';
+import { matchChatCommand, getVibeConfig } from '@/lib/vibeCommands';
 import { getGameExtensionsScript } from '@/lib/gameExtensions';
-import IntroScreen from '@/components/IntroScreen';
-import PromptTerminal from '@/components/PromptTerminal';
-import CodeStreamView from '@/components/CodeStreamView';
-import RemixPanel from '@/components/RemixPanel';
-import ShareModal from '@/components/ShareModal';
-import VibeOverlay from '@/components/VibeOverlay';
-import VibeControlPanel from '@/components/VibeControlPanel';
-import LaunchSequence from '@/components/LaunchSequence';
-import { VIBE_STATUS_MESSAGES } from '@/lib/codeSimulator';
-import { playAmbient, stopAmbient } from '@/lib/sounds';
+import { VISUAL_THEMES, applyVisualTheme } from '@/lib/visualThemes';
+import { initAudio, playTick, playPing, playComplete } from '@/lib/sounds';
+import { scorePrompt, type PromptScore } from '@/lib/promptScoring';
+import { timeline } from '@/lib/timelineRecorder';
+import PromptLevel from '@/components/PromptLevel';
+import CodeDiff from '@/components/CodeDiff';
+import LiveDashboard from '@/components/LiveDashboard';
+import TimelineReplay from '@/components/TimelineReplay';
 
-interface LeaderboardEntry {
-  name: string;
-  score: number;
-  ts: number;
+// ═══════════════════════════════════════════
+// CLAUDE SIMULATOR — Main Page
+// 3 Phase Flow: Onboarding → Welcome → Chat
+// + Code Diff, Prompt Level, Live Dashboard,
+//   Code X-Ray, Timeline Replay
+// ═══════════════════════════════════════════
+
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'ai';
+  text: string;
+  response?: ScenarioResponse;
+  promptScore?: PromptScore;
+  codeDiff?: { oldCode: string; newCode: string; label: string };
 }
 
-type AppView = 'intro' | 'select' | 'generating' | 'launching' | 'playing';
-
 export default function Home() {
-  const [view, setView] = useState<AppView>('intro');
-  const [selectedGame, setSelectedGame] = useState<DemoGame | null>(null);
-  const [gameCode, setGameCode] = useState('');
-  const [showRemix, setShowRemix] = useState(false);
-  const [showCode, setShowCode] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [gameScore, setGameScore] = useState(0);
-  const [playerName, setPlayerName] = useState('');
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [submittingScore, setSubmittingScore] = useState(false);
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [myRank, setMyRank] = useState<number | null>(null);
-  const [vibeGenerating, setVibeGenerating] = useState(false);
-  const [pendingVibeHtml, setPendingVibeHtml] = useState<string | null>(null);
-  const [vibePresetLabel, setVibePresetLabel] = useState('');
-  const [vibeMode, setVibeMode] = useState<'full' | 'overlay'>('full');
-  const [showVibeControl, setShowVibeControl] = useState(false);
-  const [vibeCodeSnippet, setVibeCodeSnippet] = useState('');
-  const [transitioning, setTransitioning] = useState(false);
-  const [displayScore, setDisplayScore] = useState(0);
-  const confettiRef = useRef<HTMLCanvasElement>(null);
-  const [toolbarOpen, setToolbarOpen] = useState(false);
-  const [hudVisible, setHudVisible] = useState(true);
-  const hudTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── Phase state ──
+  const [phase, setPhase] = useState<0 | 1 | 2>(0);
+  const [userName, setUserName] = useState('');
 
-  // ── Instructor override ──
-  const [instructorGame, setInstructorGame] = useState<string | null>(null);
-  const [instructorSkip, setInstructorSkip] = useState(false);
-  const [studentName, setStudentName] = useState('');
+  // ── Chat state ──
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [showHints, setShowHints] = useState(true);
+  const [chatTitle, setChatTitle] = useState('새 대화');
 
+  // ── Sidebar state ──
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Collapse sidebar on mobile
   useEffect(() => {
-    try {
-      const override = localStorage.getItem('instructor-override');
-      const skip = localStorage.getItem('instructor-skip') === 'true';
-      const name = localStorage.getItem('student-name') || '';
-      if (override) setInstructorGame(override);
-      if (skip) setInstructorSkip(skip);
-      if (name) setStudentName(name);
-    } catch {}
+    if (window.innerWidth < 900) setSidebarCollapsed(true);
   }, []);
 
-  const changeView = useCallback((newView: AppView) => {
-    setTransitioning(true);
-    setTimeout(() => {
-      setView(newView);
-      setTimeout(() => setTransitioning(false), 50);
-    }, 350);
-  }, []);
+  // ── Artifact state ──
+  const [artifactOpen, setArtifactOpen] = useState(false);
+  const [artifactTitle, setArtifactTitle] = useState('');
+  const [artifactCode, setArtifactCode] = useState('');
+  const [artifactPreview, setArtifactPreview] = useState('');
+  const [artifactGameHtml, setArtifactGameHtml] = useState('');
 
-  const writeGameToIframe = useCallback((html: string) => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
-    doc.open();
-    doc.write(html);
-    doc.close();
-    setTimeout(() => {
-      try {
-        const innerDoc = iframeRef.current?.contentDocument;
-        if (innerDoc?.body) {
-          const script = innerDoc.createElement('script');
-          script.textContent = getGameExtensionsScript();
-          innerDoc.body.appendChild(script);
-        }
-      } catch {}
-    }, 200);
-  }, []);
+  // ── Active game (for vibe commands) ──
+  const [activeGameId, setActiveGameId] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  const fetchLeaderboard = useCallback(async (gameId: string) => {
-    try {
-      const res = await fetch(`/api/leaderboard?gameId=${gameId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-      }
-    } catch {}
-  }, []);
+  // ── Innovative features ──
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
 
+  // ── Input ref (for typing animation) ──
+  const inputAreaRef = useRef<InputAreaHandle>(null);
+
+  // ── Log system ──
+  const messageLogRef = useRef<LogEntry[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [logCount, setLogCount] = useState(0);
+
+  // Expose log functions + init audio + listen for game over
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'gameOver' && typeof event.data.score === 'number') {
-        setGameScore(event.data.score);
-        setShowLeaderboard(true);
-        setScoreSubmitted(false);
-        setMyRank(null);
-        setShowRemix(false);  // close remix panel on game over
-        setShowCode(false);   // close code panel on game over
-        setShowVibeControl(false);  // close vibe control on game over
-        setToolbarOpen(false);     // close toolbar on game over
-        if (selectedGame) fetchLeaderboard(selectedGame.id);
+    (window as any).getLog = () => {
+      console.table(messageLogRef.current);
+      return messageLogRef.current;
+    };
+    (window as any).exportLog = () => {
+      const data = JSON.stringify(messageLogRef.current, null, 2);
+      console.log(data);
+      return data;
+    };
+
+    // Init audio on first interaction
+    const handleFirstClick = () => {
+      initAudio();
+      window.removeEventListener('click', handleFirstClick);
+    };
+    window.addEventListener('click', handleFirstClick);
+
+    // Listen for game over postMessage from iframe (with dedup)
+    let gameOverHandled = false;
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'gameOver' && !gameOverHandled) {
+        gameOverHandled = true;
+        const score = e.data.score || 0;
+        playComplete();
+        const gameOverMsg: ChatMessage = {
+          id: Date.now().toString(),
+          type: 'ai',
+          text: '',
+          response: {
+            text: `🏆 **게임 오버!** 점수: **${score}점**\n\n잘 했어요! 다시 도전하거나 다른 게임을 해볼까요?`,
+            suggestions: [
+              { icon: '🔄', label: '다시 시작해줘', prompt: '다시 시작해줘' },
+              { icon: '🎮', label: '다른 게임 보여줘', prompt: '다른 게임 보여줘' },
+            ],
+          },
+        };
+        setMessages((prev) => [...prev, gameOverMsg]);
+        setIsStreaming(false);
+        // Reset after 3s so next game over can be detected
+        setTimeout(() => { gameOverHandled = false; }, 3000);
       }
     };
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [selectedGame, fetchLeaderboard]);
 
-  // Score count-up animation
-  useEffect(() => {
-    if (showLeaderboard && gameScore > 0) {
-      setDisplayScore(0);
-      const duration = 1500;
-      const startTime = Date.now();
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        setDisplayScore(Math.floor(eased * gameScore));
-        if (progress < 1) requestAnimationFrame(animate);
-      };
-      requestAnimationFrame(animate);
-    }
-  }, [showLeaderboard, gameScore]);
+    return () => {
+      window.removeEventListener('click', handleFirstClick);
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Confetti particle burst on game over
-  useEffect(() => {
-    if (showLeaderboard && confettiRef.current) {
-      const canvas = confettiRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+  const addLog = useCallback(
+    (type: LogEntry['type'], content: string) => {
+      messageLogRef.current.push(createLogEntry(userName, type, content));
+      setLogCount(messageLogRef.current.length);
+    },
+    [userName]
+  );
 
-      const particles: Array<{x:number;y:number;vx:number;vy:number;color:string;size:number;rotation:number;rotSpeed:number}> = [];
-      const colors = ['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899'];
-
-      for (let i = 0; i < 80; i++) {
-        particles.push({
-          x: canvas.width / 2,
-          y: canvas.height * 0.3,
-          vx: (Math.random() - 0.5) * 12,
-          vy: Math.random() * -10 - 3,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          size: Math.random() * 6 + 3,
-          rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 0.2,
-        });
-      }
-
-      let frame = 0;
-      const animateConfetti = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.15;
-          p.vx *= 0.99;
-          p.rotation += p.rotSpeed;
-
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rotation);
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = Math.max(0, 1 - frame / 120);
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-          ctx.restore();
-        });
-        frame++;
-        if (frame < 120) requestAnimationFrame(animateConfetti);
-      };
-      requestAnimationFrame(animateConfetti);
-    }
-  }, [showLeaderboard]);
-
-  // Auto-hide HUD after 3 seconds of inactivity
-  const resetHudTimer = useCallback(() => {
-    setHudVisible(true);
-    if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
-    hudTimerRef.current = setTimeout(() => {
-      // Only hide if no panels are open
-      if (!showCode && !showRemix && !showVibeControl && !showLeaderboard && !toolbarOpen) {
-        setHudVisible(false);
-      }
-    }, 3500);
-  }, [showCode, showRemix, showVibeControl, showLeaderboard, toolbarOpen]);
-
-  // Show HUD on any tap, then auto-hide
-  const handleScreenTap = useCallback(() => {
-    if (showLeaderboard || showCode || showRemix || showVibeControl) return;
-    resetHudTimer();
-  }, [showLeaderboard, showCode, showRemix, showVibeControl, resetHudTimer]);
-
-  // Start auto-hide timer when entering play mode
-  useEffect(() => {
-    if (view === 'playing') {
-      resetHudTimer();
-    }
-    return () => { if (hudTimerRef.current) clearTimeout(hudTimerRef.current); };
-  }, [view, resetHudTimer]);
-
-  // Keep HUD visible when panels are open
-  useEffect(() => {
-    if (showCode || showRemix || showVibeControl || showLeaderboard || toolbarOpen) {
-      setHudVisible(true);
-      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
-    }
-  }, [showCode, showRemix, showVibeControl, showLeaderboard, toolbarOpen]);
-
-  const handleSubmitScore = async () => {
-    if (!selectedGame || !playerName.trim() || submittingScore) return;
-    setSubmittingScore(true);
-    try {
-      const res = await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId: selectedGame.id, name: playerName.trim(), score: gameScore }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-        setMyRank(data.rank || null);
-        setScoreSubmitted(true);
-      }
-    } catch {} finally { setSubmittingScore(false); }
-  };
-
-  const handleSelectGame = (game: DemoGame) => {
-    // Instructor override: force a specific game regardless of user selection
-    let finalGame = game;
-    if (instructorGame) {
-      const override = DEMO_GAMES.find(g => g.id === instructorGame);
-      if (override) finalGame = override;
-    }
-    setSelectedGame(finalGame);
-    changeView('generating');
-    playAmbient();
-  };
-
-  const handleGenerationComplete = useCallback((html: string) => {
-    setGameCode(html);
-    stopAmbient();
-    setView('launching');
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   }, []);
 
-  const handleLaunchComplete = useCallback(() => {
-    setView('playing');
-    setTimeout(() => writeGameToIframe(gameCode), 100);
-  }, [gameCode, writeGameToIframe]);
+  // ══════════════════════
+  // PHASE 0 → 1: Name submitted
+  // ══════════════════════
+  const handleNameSubmit = useCallback((name: string) => {
+    setUserName(name);
+    setPhase(1);
+    timeline.reset();
+    timeline.record({ type: 'system', label: `학생 "${name}" 입장` });
+  }, []);
 
-  const handleRestart = () => {
-    setShowLeaderboard(false);
-    setGameScore(0);
-    setScoreSubmitted(false);
-    setMyRank(null);
-    setPlayerName('');
-    setLeaderboard([]);
-    if (gameCode) writeGameToIframe(gameCode);
-  };
+  // ══════════════════════
+  // PHASE 1 → 2: Start chat
+  // ══════════════════════
+  const pendingPromptRef = useRef<string | null>(null);
+  const doSendRef = useRef<((text: string) => void) | null>(null);
 
-  const handleReset = () => {
-    changeView('intro');
-    setSelectedGame(null);
-    setGameCode('');
-    setShowRemix(false);
-    setShowCode(false);
-    setShowVibeControl(false);
-    setToolbarOpen(false);
-    setShowLeaderboard(false);
-    setShowShare(false);
-    setGameScore(0);
-    setScoreSubmitted(false);
-    setMyRank(null);
-    setPlayerName('');
-    setLeaderboard([]);
-  };
+  const handleStartChat = useCallback(
+    (initialPrompt?: string) => {
+      setPhase(2);
+      addLog('system', `학생 "${userName}" 입장`);
+      if (initialPrompt) {
+        pendingPromptRef.current = initialPrompt;
+      }
+    },
+    [userName, addLog]
+  );
 
-  const handleApplyRemix = (newHtml: string, presetLabel: string, codeSnippet?: string) => {
-    setShowRemix(false);
-    setShowCode(false);
-    setPendingVibeHtml(newHtml);
-    setVibePresetLabel(presetLabel);
-    if (codeSnippet) {
-      // Visual theme → lightweight overlay (game stays visible)
-      setVibeMode('overlay');
-      setVibeCodeSnippet(codeSnippet);
-    } else {
-      // Gameplay mod → full-screen code stream
-      setVibeMode('full');
-      setVibeCodeSnippet('');
+  // Send pending prompt after phase transition
+  useEffect(() => {
+    if (phase === 2 && pendingPromptRef.current && doSendRef.current) {
+      const prompt = pendingPromptRef.current;
+      const send = doSendRef.current;
+      pendingPromptRef.current = null;
+      setTimeout(() => send(prompt), 400);
     }
-    setVibeGenerating(true);
-  };
+  }, [phase]);
 
-  const handleVibeComplete = useCallback((html: string) => {
-    setGameCode(html);
-    setVibeGenerating(false);
-    setPendingVibeHtml(null);
-    setVibePresetLabel('');
-    setTimeout(() => writeGameToIframe(html), 100);
-  }, [writeGameToIframe]);
+  // ══════════════════════
+  // SEND MESSAGE
+  // ══════════════════════
+  const doSendMessage = useCallback(
+    (text: string) => {
+      if (isStreaming) return;
+      setIsStreaming(true);
+      setShowHints(false);
+      inputAreaRef.current?.clear(); // clear input after send
 
-  if (view === 'intro') {
-    return (
-      <div style={{
-        opacity: transitioning ? 0 : 1,
-        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
-        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-        <IntroScreen onComplete={() => changeView('select')} />
-      </div>
-    );
-  }
+      // Update chat title with first message
+      if (messages.length === 0) {
+        setChatTitle(text.length > 20 ? text.slice(0, 20) + '...' : text);
+      }
 
-  if (view === 'select') {
-    return (
-      <div style={{
-        opacity: transitioning ? 0 : 1,
-        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
-        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-        <PromptTerminal onComplete={handleSelectGame} />
-      </div>
-    );
-  }
+      // ── "다시 시작" handler ──
+      const lower = text.toLowerCase();
+      if (lower.includes('다시') && (lower.includes('시작') || lower.includes('도전') || lower.includes('하기'))) {
+        if (activeGameId) {
+          const iframe = document.querySelector<HTMLIFrameElement>('iframe');
+          if (iframe?.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'resetGameOver' }, '*');
+            // Reload the game by resetting srcdoc
+            const srcdoc = iframe.srcdoc;
+            iframe.srcdoc = '';
+            setTimeout(() => { iframe.srcdoc = srcdoc; }, 100);
+          }
+          const restartMsg: ScenarioResponse = {
+            text: '🔄 게임을 다시 시작했어요! 이번엔 더 높은 점수를 노려보세요! 💪',
+            suggestions: buildGameSuggestions(activeGameId),
+          };
+          const userMsg: ChatMessage = { id: Date.now().toString(), type: 'user', text };
+          const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), type: 'ai', text: restartMsg.text, response: restartMsg };
+          setMessages((prev) => [...prev, userMsg, aiMsg]);
+          addLog('user', text);
+          addLog('ai', '[RESTART]');
+          setTimeout(() => scrollToBottom(), 100);
+          return;
+        }
+      }
 
-  if (view === 'generating' && selectedGame) {
-    return (
-      <div style={{
-        opacity: transitioning ? 0 : 1,
-        transform: transitioning ? 'scale(0.97)' : 'scale(1)',
-        transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-        <CodeStreamView
-          gameHtml={selectedGame.html}
-          gameTitle={studentName ? `${studentName}의 ${selectedGame.title}` : selectedGame.title}
-          onComplete={handleGenerationComplete}
-          duration={instructorSkip ? 3000 : undefined}
-          accentColor={selectedGame.accentColor}
-          gameIcon={selectedGame.icon}
-        />
-      </div>
-    );
-  }
+      // ── "다른 게임" handler — go back to welcome ──
+      if (lower.includes('다른') && (lower.includes('게임') || lower.includes('보여'))) {
+        setPhase(1);
+        setMessages([]);
+        setShowHints(true);
+        setChatTitle('새 대화');
+        setArtifactOpen(false);
+        setActiveGameId(null);
+        addLog('user', text);
+        addLog('system', '웰컴 화면으로 이동');
+        return;
+      }
 
-  if (view === 'launching' && selectedGame) {
-    return (
-      <LaunchSequence
-        gameTitle={studentName ? `${studentName}의 ${selectedGame.title}` : selectedGame.title}
-        onComplete={handleLaunchComplete}
-      />
-    );
-  }
+      // ── Check if this is a vibe command for active game ──
+      if (activeGameId) {
+        const vibeMatch = matchChatCommand(
+          activeGameId === 'gugudan-3d' ? 'gugudan' : activeGameId,
+          text
+        );
+        if (vibeMatch) {
+          // Send postMessage to iframe
+          const iframe = document.querySelector<HTMLIFrameElement>(
+            '.artifact-panel-open iframe, [class*="artifact"] iframe'
+          );
+          if (iframe?.contentWindow) {
+            iframe.contentWindow.postMessage(
+              { type: vibeMatch.messageType, value: vibeMatch.value },
+              '*'
+            );
+          }
 
-  const lineCount = gameCode.split('\n').length;
+          // Create AI response with the vibe result + code diff
+          const oldSnippet = `// 기존 코드\nlet value = defaultValue;`;
+          const vibeResponse: ScenarioResponse = {
+            text: vibeMatch.response + '\n\n다른 수정도 해볼까요?',
+            artifact: true,
+            artifactTitle: '코드 수정',
+            artifactCode: vibeMatch.codeSnippet,
+            suggestions: buildGameSuggestions(activeGameId),
+          };
 
+          const pScore = scorePrompt(text);
+          const userMsg: ChatMessage = {
+            id: Date.now().toString(),
+            type: 'user',
+            text,
+            promptScore: pScore,
+          };
+          const aiMsg: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            type: 'ai',
+            text: vibeResponse.text,
+            response: vibeResponse,
+            codeDiff: {
+              oldCode: oldSnippet,
+              newCode: vibeMatch.codeSnippet,
+              label: vibeMatch.response.slice(0, 20),
+            },
+          };
+
+          setMessages((prev) => [...prev, userMsg, aiMsg]);
+          addLog('user', text);
+          addLog('ai', `[VIBE] ${vibeMatch.response}`);
+
+          // Timeline
+          timeline.record({ type: 'user', label: text.slice(0, 40), score: pScore.score });
+          timeline.record({ type: 'vibe', label: vibeMatch.response.slice(0, 40), gameId: activeGameId });
+          setTimeout(() => scrollToBottom(), 100);
+          return;
+        }
+      }
+
+      // ── Check for visual theme request ──
+      if (activeGameId) {
+        const lower = text.toLowerCase();
+        const themeKeywords: [string[], string][] = [
+          [['네온', 'neon'], 'mood-neon-nights'],
+          [['사이버펑크', 'cyber'], 'theme-cyberpunk'],
+          [['베이퍼', 'vapor'], 'theme-vaporwave'],
+          [['레트로', 'retro'], 'mood-retro-arcade'],
+          [['눈', 'snow'], 'overlay-snow'],
+          [['비', 'rain', '비가'], 'overlay-rain'],
+          [['스캔', 'scanline', 'crt'], 'effect-scanlines'],
+          [['매트릭스', 'matrix'], 'theme-matrix'],
+        ];
+        for (const [keywords, themeId] of themeKeywords) {
+          if (keywords.some((k) => lower.includes(k))) {
+            const theme = VISUAL_THEMES.find((t) => t.id === themeId);
+            if (theme) {
+              // Apply theme to iframe via style injection
+              const iframe = document.querySelector<HTMLIFrameElement>('iframe');
+              if (iframe) {
+                try {
+                  // Try direct DOM access (works with allow-same-origin)
+                  if (iframe.contentDocument) {
+                    // Remove old theme styles
+                    const old = iframe.contentDocument.querySelectorAll('style[data-theme]');
+                    old.forEach((s) => s.remove());
+                    const style = iframe.contentDocument.createElement('style');
+                    style.setAttribute('data-theme', theme.id);
+                    style.textContent = theme.css;
+                    iframe.contentDocument.head.appendChild(style);
+                  }
+                } catch {
+                  // Fallback: rebuild srcdoc with theme CSS
+                  if (iframe.srcdoc) {
+                    iframe.srcdoc = applyVisualTheme(iframe.srcdoc, theme);
+                  }
+                }
+              }
+              playPing();
+
+              const themeResponse: ScenarioResponse = {
+                text: `🎨 **${theme.label}** 테마를 적용했어요!\n\n${theme.description || '게임의 비주얼이 바뀌었어요.'} 다른 테마도 해볼까요?`,
+                suggestions: [
+                  { icon: '🌈', label: '사이버펑크', prompt: '사이버펑크 테마 적용해줘' },
+                  { icon: '🌙', label: '레트로', prompt: '레트로 테마 적용해줘' },
+                  { icon: '🌧️', label: '비 효과', prompt: '비 효과 적용해줘' },
+                  { icon: '❄️', label: '눈 효과', prompt: '눈 효과 적용해줘' },
+                ],
+              };
+              const userMsg: ChatMessage = { id: Date.now().toString(), type: 'user', text };
+              const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), type: 'ai', text: themeResponse.text, response: themeResponse };
+              setMessages((prev) => [...prev, userMsg, aiMsg]);
+              addLog('user', text);
+              addLog('ai', `[THEME] ${theme.label}`);
+              setTimeout(() => scrollToBottom(), 100);
+              return;
+            }
+          }
+        }
+      }
+
+      // ── Normal scenario response ──
+      const response = findResponse(text, userName);
+      const matchedScenario = SCENARIOS.find((s) => s.prompt === text);
+      if (matchedScenario?.gameId) {
+        const gameHtml = getGameHtml(matchedScenario.gameId);
+        if (gameHtml) {
+          // Inject touch extensions
+          const extensions = getGameExtensionsScript();
+          response.gameHtml = gameHtml.replace(
+            '</body>',
+            `<script>${extensions}<\/script></body>`
+          );
+        }
+        // Set active game for vibe commands
+        setActiveGameId(matchedScenario.gameId);
+        // Add game-specific suggestions
+        response.suggestions = buildGameSuggestions(matchedScenario.gameId);
+      }
+
+      // Score the prompt
+      const pScore = scorePrompt(text);
+
+      // Add user + AI messages
+      const userMsg: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'user',
+        text,
+        promptScore: pScore,
+      };
+      const aiMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        text: response.text,
+        response,
+      };
+
+      setMessages((prev) => [...prev, userMsg, aiMsg]);
+      addLog('user', text);
+      addLog('ai', response.text.substring(0, 80) + '...');
+
+      // Timeline recording
+      timeline.record({ type: 'user', label: text.slice(0, 40), detail: text, score: pScore.score });
+      timeline.record({ type: matchedScenario?.gameId ? 'game-start' : 'ai', label: response.text.slice(0, 40), gameId: matchedScenario?.gameId });
+
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    },
+    [isStreaming, messages.length, userName, addLog, scrollToBottom]
+  );
+
+  // Keep ref in sync for handleStartChat's useEffect
+  doSendRef.current = doSendMessage;
+
+  // Called when AI message finishes streaming
+  const handleStreamComplete = useCallback(() => {
+    setIsStreaming(false);
+  }, []);
+
+  // ══════════════════════
+  // ARTIFACT
+  // ══════════════════════
+  const handleArtifactOpen = useCallback(
+    (title: string, code: string, preview?: string, gameHtmlArg?: string) => {
+      setArtifactTitle(title);
+      setArtifactCode(code);
+      setArtifactPreview(preview || '');
+      setArtifactGameHtml(gameHtmlArg || '');
+      setArtifactOpen(true);
+    },
+    []
+  );
+
+  // ══════════════════════
+  // NEW CHAT
+  // ══════════════════════
+  const handleNewChat = useCallback(() => {
+    setMessages([]);
+    setShowHints(true);
+    setChatTitle('새 대화');
+    setArtifactOpen(false);
+    setIsStreaming(false);
+  }, []);
+
+  // ══════════════════════
+  // HINT/SUGGESTION CHIP → put text in input (student must press Enter)
+  // ══════════════════════
+  const handleHintSelect = useCallback(
+    (prompt: string) => {
+      if (isStreaming) return;
+      // Just set the text in input — student types/edits and presses Enter
+      inputAreaRef.current?.setHint(prompt);
+    },
+    [isStreaming]
+  );
+
+  // ══════════════════════
+  // RENDER
+  // ══════════════════════
   return (
-    <div style={{
-      height: '100dvh',
-      width: '100vw',
-      position: 'relative',
-      overflow: 'hidden',
-      background: '#000',
-    }}>
-      {/* Game — Full Screen */}
-      <iframe
-        ref={iframeRef}
-        title="game"
-        sandbox="allow-scripts allow-same-origin"
-        onClick={handleScreenTap}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          zIndex: 1,
-        }}
-      />
+    <>
+      {/* PHASE 0: Onboarding */}
+      {phase === 0 && <Onboarding onSubmit={handleNameSubmit} />}
 
-      {/* Tap overlay to detect taps for showing HUD */}
-      {!showLeaderboard && !showCode && !showRemix && !showVibeControl && !hudVisible && (
-        <div
-          onClick={handleScreenTap}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 5,
-            cursor: 'pointer',
-          }}
+      {/* PHASE 1: Welcome */}
+      {phase === 1 && (
+        <Welcome userName={userName} onStartChat={handleStartChat} />
+      )}
+
+      {/* PHASE 2: Chat App */}
+      <div
+        className={`flex w-full h-screen transition-opacity duration-500 ${
+          phase === 2
+            ? 'opacity-100 pointer-events-auto'
+            : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Sidebar */}
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed((c) => !c)}
+          onNewChat={handleNewChat}
+          chatTitle={chatTitle}
+        />
+
+        {/* Main */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Topbar */}
+          <div className="h-11 flex items-center justify-between px-4 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              {sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+                  style={{ border: 'none', background: 'transparent' }}
+                >
+                  ☰
+                </button>
+              )}
+              <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-1">
+                Claude Opus 4.6
+                <span className="text-[11px] text-[var(--text-secondary)]">
+                  ⌄
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {/* Live Dashboard toggle — only when game is active */}
+              {activeGameId && (
+                <button
+                  onClick={() => setShowDashboard(d => !d)}
+                  title="실시간 대시보드"
+                  className={`w-8 h-8 rounded-claude-sm flex items-center justify-center text-[14px] cursor-pointer transition-all duration-200 ${showDashboard ? 'text-[var(--accent-coral)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
+                  style={{ border: 'none', background: showDashboard ? 'var(--bg-surface)' : 'transparent' }}
+                >
+                  📊
+                </button>
+              )}
+              {/* Timeline button */}
+              <button
+                onClick={() => setShowTimeline(true)}
+                title="학습 타임라인"
+                className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-[14px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+                style={{ border: 'none', background: 'transparent' }}
+              >
+                🎬
+              </button>
+              <button
+                title="공유"
+                className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-[15px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+                style={{ border: 'none', background: 'transparent' }}
+              >
+                ⤴
+              </button>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 flex overflow-hidden relative">
+            {/* Chat Panel */}
+            <div
+              className="flex-1 flex flex-col min-w-0"
+              style={{
+                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="max-w-[680px] w-full mx-auto px-6 py-5 pb-10 flex flex-col gap-6">
+                  {messages.map((msg) =>
+                    msg.type === 'user' ? (
+                      <div key={msg.id}>
+                        <UserMessage text={msg.text} />
+                        {msg.promptScore && msg.promptScore.score > 0 && (
+                          <div className="flex justify-end mt-0.5 mr-1">
+                            <PromptLevel {...msg.promptScore} />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div key={msg.id}>
+                        <AIMessage
+                          response={msg.response!}
+                          onArtifactOpen={handleArtifactOpen}
+                          onStreamComplete={handleStreamComplete}
+                          onSuggestionClick={handleHintSelect}
+                        />
+                        {msg.codeDiff && (
+                          <div className="ml-10">
+                            <CodeDiff
+                              oldCode={msg.codeDiff.oldCode}
+                              newCode={msg.codeDiff.newCode}
+                              label={msg.codeDiff.label}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+
+              {/* Input Area */}
+              <InputArea
+                ref={inputAreaRef}
+                onSend={doSendMessage}
+                disabled={isStreaming}
+                showHints={showHints}
+                onHintSelect={handleHintSelect}
+              />
+            </div>
+
+            {/* Artifact Panel */}
+            <ArtifactPanel
+              open={artifactOpen}
+              title={artifactTitle}
+              code={artifactCode}
+              preview={artifactPreview}
+              gameHtml={artifactGameHtml}
+              onClose={() => setArtifactOpen(false)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Live Dashboard — floating overlay */}
+      {activeGameId && (
+        <LiveDashboard
+          gameId={activeGameId}
+          open={showDashboard}
+          onClose={() => setShowDashboard(false)}
         />
       )}
 
-      {/* Top HUD — Auto-hide overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 20,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 12px',
-        paddingTop: 'max(10px, env(safe-area-inset-top, 10px))',
-        background: 'linear-gradient(to bottom, rgba(10,10,26,0.75) 0%, transparent 100%)',
-        pointerEvents: 'none',
-        opacity: hudVisible ? 1 : 0,
-        transform: hudVisible ? 'translateY(0)' : 'translateY(-10px)',
-        transition: 'opacity 0.4s ease, transform 0.4s ease',
-      }}>
-        <button onClick={handleReset} className="btn-hud" style={{ fontSize: '12px' }}>
-          ← 나가기
-        </button>
-        <span style={{
-          color: 'rgba(255,255,255,0.85)',
-          fontSize: 'clamp(12px, 3vw, 14px)',
-          fontWeight: 600,
-          letterSpacing: '-0.3px',
-          textShadow: '0 2px 8px rgba(0,0,0,0.8)',
-        }}>
-          {studentName ? `${studentName}의 ${selectedGame?.title}` : selectedGame?.title}
-        </span>
-        <button onClick={handleRestart} className="btn-hud btn-hud--active" style={{ fontSize: '12px' }}>
-          ↻ 다시
-        </button>
-      </div>
+      {/* Timeline Replay modal */}
+      <TimelineReplay
+        open={showTimeline}
+        onClose={() => setShowTimeline(false)}
+      />
 
-      {/* Game Over Overlay */}
-      {showLeaderboard && (
-        <div className="overlay-game-over" style={{ position: 'absolute' }}>
-            <canvas ref={confettiRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }} />
-            <span className="mono-xs" style={{ fontSize: '10px', letterSpacing: '0.15em', color: 'var(--ai-cyan)', position: 'relative', zIndex: 2 }}>
-              FINAL SCORE
-            </span>
-            <div style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '48px',
-              fontWeight: 700,
-              lineHeight: 1,
-              color: 'var(--text-bright)',
-              textShadow: '0 0 30px rgba(99,102,241,0.4), 0 0 60px rgba(99,102,241,0.15)',
-              position: 'relative',
-              zIndex: 2,
-            }}>
-              {displayScore}
-            </div>
-
-            {/* Name input */}
-            {!scoreSubmitted ? (
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                width: '100%',
-                maxWidth: '300px',
-                marginTop: '8px',
-              }}>
-                <input
-                  type="text"
-                  placeholder="이름 입력"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmitScore()}
-                  maxLength={20}
-                  style={{
-                    flex: 1,
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border-dim)',
-                    borderRadius: '10px',
-                    padding: '10px 14px',
-                    color: 'var(--text-bright)',
-                    fontSize: '14px',
-                    outline: 'none',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    transition: 'border-color 0.3s',
-                  }}
-                />
-                <button
-                  onClick={handleSubmitScore}
-                  disabled={!playerName.trim() || submittingScore}
-                  className="btn-glow"
-                  style={{
-                    opacity: playerName.trim() ? 1 : 0.4,
-                    cursor: playerName.trim() ? 'pointer' : 'default',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {submittingScore ? '...' : 'SUBMIT'}
-                </button>
-              </div>
-            ) : myRank && (
-              <div style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '13px',
-                fontWeight: 600,
-              }}>
-                <span className="text-glow-emerald">RANKED #{myRank}</span>
-              </div>
-            )}
-
-            {/* Leaderboard */}
-            {leaderboard.length > 0 && (
-              <div className="card-cinematic" style={{
-                width: '100%',
-                maxWidth: '300px',
-                marginTop: '8px',
-                padding: '14px',
-              }}>
-                <div className="mono-xs" style={{ marginBottom: '10px', fontSize: '9px', letterSpacing: '0.12em' }}>
-                  LEADERBOARD
-                </div>
-                {leaderboard.slice(0, 10).map((entry, i) => {
-                  const isMe = scoreSubmitted && myRank === i + 1;
-                  const rankColors = ['#f59e0b', '#94a3b8', '#b45309'];
-                  return (
-                    <div key={`${entry.name}-${entry.ts}`} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '5px 0',
-                      borderBottom: i < Math.min(leaderboard.length, 10) - 1 ? '1px solid var(--border-dim)' : 'none',
-                      borderLeft: i < 3 ? `2px solid ${rankColors[i]}` : '2px solid transparent',
-                      paddingLeft: '8px',
-                    }}>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '12px',
-                        color: isMe ? 'var(--ai-indigo)' : 'var(--text-body)',
-                        fontWeight: isMe ? 700 : 400,
-                      }}>
-                        <span style={{
-                          display: 'inline-block',
-                          width: '24px',
-                          color: i < 3 ? rankColors[i] : 'var(--text-muted)',
-                          fontWeight: 600,
-                        }}>
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        {entry.name}
-                      </span>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: '12px',
-                        color: isMe ? 'var(--ai-indigo)' : 'var(--text-muted)',
-                        fontWeight: isMe ? 700 : 400,
-                      }}>
-                        {entry.score}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="anim-fade-in-up" style={{
-              display: 'flex',
-              gap: '8px',
-              width: '100%',
-              maxWidth: '300px',
-              marginTop: '8px',
-              flexWrap: 'wrap',
-            }}>
-              <button
-                onClick={() => setShowShare(true)}
-                style={{
-                  flex: 1,
-                  minWidth: '80px',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-glow)',
-                  color: 'var(--ai-indigo)',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '11px 8px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s',
-                }}
-              >
-                📤 SHARE
-              </button>
-              <button
-                onClick={() => {
-                  setShowLeaderboard(false);
-                  setShowRemix(true);
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: '80px',
-                  background: 'rgba(16,185,129,0.1)',
-                  border: '1px solid rgba(16,185,129,0.3)',
-                  color: '#6ee7b7',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '11px 8px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s',
-                }}
-              >
-                ✨ 바이브 코딩하기
-              </button>
-              <button
-                onClick={handleRestart}
-                className="btn-glow"
-                style={{
-                  flex: 1,
-                  minWidth: '80px',
-                  padding: '11px 8px',
-                  borderRadius: '12px',
-                }}
-              >
-                ↻ RETRY
-              </button>
-              <button
-                onClick={() => {
-                  setShowLeaderboard(false);
-                  changeView('select');
-                  setSelectedGame(null);
-                  setGameCode('');
-                  setShowRemix(false);
-                  setShowCode(false);
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: '80px',
-                  background: 'rgba(99,102,241,0.1)',
-                  border: '1px solid rgba(99,102,241,0.3)',
-                  color: '#a5b4fc',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '11px 8px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s',
-                }}
-              >
-                + NEW GAME
-              </button>
-            </div>
-          </div>
-        )}
-
-      {/* ═══ Bottom — Dynamic Island Pill + Expandable Toolbar ═══ */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
-        pointerEvents: 'none',
-        opacity: hudVisible || toolbarOpen ? 1 : 0,
-        transform: (hudVisible || toolbarOpen) ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'opacity 0.4s ease, transform 0.4s ease',
-      }}>
-        {/* Expanded toolbar */}
-        {toolbarOpen && (
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            padding: '8px',
-            marginBottom: '8px',
-            background: 'rgba(10,10,26,0.85)',
-            backdropFilter: 'blur(20px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.08)',
-            pointerEvents: 'auto',
-            animation: 'toolbarExpand 0.3s cubic-bezier(0.16,1,0.3,1) both',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          }}>
-            <button
-              onClick={() => { setShowCode(!showCode); if (!showCode) { setShowRemix(false); setShowVibeControl(false); } setToolbarOpen(false); }}
-              className={`btn-hud ${showCode ? 'btn-hud--active' : ''}`}
-              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
-            >
-              {'</>'} 코드
-            </button>
-            <button
-              onClick={() => { setShowVibeControl(!showVibeControl); if (!showVibeControl) { setShowCode(false); setShowRemix(false); } setToolbarOpen(false); }}
-              className={`btn-hud ${showVibeControl ? 'btn-hud--accent' : ''}`}
-              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
-            >
-              🎛️ 라이브
-            </button>
-            <button
-              onClick={() => { setShowRemix(!showRemix); if (!showRemix) { setShowCode(false); setShowVibeControl(false); } setToolbarOpen(false); }}
-              className={`btn-hud ${showRemix ? 'btn-hud--accent' : ''}`}
-              style={{ minHeight: '44px', padding: '10px 18px', fontSize: '12px' }}
-            >
-              ✨ 바이브 코딩
-            </button>
-          </div>
-        )}
-
-        {/* Collapsed pill — Dynamic Island style */}
-        <button
-          onClick={() => {
-            setToolbarOpen(!toolbarOpen);
-            resetHudTimer();
-          }}
+      {/* Log indicator */}
+      {phase === 2 && (
+        <div
+          className="fixed bottom-3 right-3 flex items-center gap-1.5 z-10"
           style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: toolbarOpen ? '8px 20px' : '8px 16px',
-            minHeight: '36px',
-            borderRadius: '20px',
-            background: toolbarOpen
-              ? 'rgba(10,10,26,0.9)'
-              : 'rgba(10,10,26,0.75)',
-            backdropFilter: 'blur(20px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-            border: `1px solid ${toolbarOpen ? 'rgba(0,122,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-            boxShadow: toolbarOpen
-              ? '0 4px 20px rgba(0,122,255,0.15)'
-              : '0 4px 16px rgba(0,0,0,0.3)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            color: 'var(--text-muted)',
           }}
         >
-          {/* Status dot */}
-          <span style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: (showCode || showVibeControl || showRemix) ? '#007AFF' : '#34C759',
-            boxShadow: (showCode || showVibeControl || showRemix)
-              ? '0 0 6px rgba(0,122,255,0.5)'
-              : '0 0 6px rgba(52,199,89,0.5)',
-            transition: 'all 0.3s',
-          }} />
-
-          {/* Label */}
-          <span style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.7)',
-            letterSpacing: '-0.2px',
-            whiteSpace: 'nowrap',
-          }}>
-            {toolbarOpen ? '닫기' : (showCode ? '코드 보는 중' : showVibeControl ? '라이브 수정 중' : showRemix ? '바이브 코딩 중' : `${lineCount} LOC`)}
-          </span>
-
-          {/* Chevron */}
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{
-            transform: toolbarOpen ? 'rotate(180deg)' : 'rotate(0)',
-            transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1)',
-          }}>
-            <path d="M2 6.5L5 3.5L8 6.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Click outside to close toolbar */}
-      {toolbarOpen && (
-        <div
-          onClick={() => setToolbarOpen(false)}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 15,
-          }}
-        />
-      )}
-
-      {/* Code Panel — Overlay */}
-      {showCode && (
-        <div style={{
-          position: 'absolute',
-          bottom: '60px',
-          left: 0,
-          right: 0,
-          zIndex: 25,
-          maxHeight: '45vh',
-          overflow: 'auto',
-          animation: 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
-        }}>
-          <div className="code-terminal" style={{
-            padding: '12px 16px',
-            minHeight: '100px',
-            background: 'rgba(10,10,26,0.95)',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px',
-              borderBottom: '1px solid var(--border-dim)',
-              paddingBottom: '8px',
-            }}>
-              <span className="mono-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {selectedGame?.title}.html — {lineCount} lines
-              </span>
-              <button
-                onClick={() => setShowCode(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: '4px 12px',
-                  borderRadius: '8px',
-                  letterSpacing: '-0.2px',
-                }}
-              >
-                닫기
-              </button>
-            </div>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-              {gameCode}
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {/* Vibe Control Panel — Live Parameter + AI Chat */}
-      {showVibeControl && selectedGame && (
-        <VibeControlPanel
-          gameId={selectedGame.id}
-          iframeRef={iframeRef}
-          onClose={() => setShowVibeControl(false)}
-        />
-      )}
-
-      {/* Remix Panel — Overlay */}
-      {showRemix && selectedGame && (
-        <div style={{
-          position: 'absolute',
-          bottom: '60px',
-          left: 0,
-          right: 0,
-          zIndex: 25,
-          animation: 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
-        }}>
-          <RemixPanel
-            gameId={selectedGame.id}
-            gameHtml={gameCode}
-            onApplyRemix={handleApplyRemix}
-            onBack={() => setShowRemix(false)}
+          <div
+            className="w-[5px] h-[5px] rounded-full animate-log-pulse"
+            style={{ background: 'var(--accent-green)' }}
           />
+          <span>{logCount}건 기록됨</span>
         </div>
       )}
-
-      {showShare && selectedGame && (
-        <ShareModal
-          gameHtml={gameCode}
-          gameTitle={selectedGame.title}
-          onClose={() => setShowShare(false)}
-        />
-      )}
-
-      {vibeGenerating && pendingVibeHtml && vibeMode === 'full' && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-          <CodeStreamView
-            gameHtml={pendingVibeHtml}
-            gameTitle={`${selectedGame?.title} — ${vibePresetLabel}`}
-            onComplete={handleVibeComplete}
-            duration={3500}
-            statusMessages={VIBE_STATUS_MESSAGES}
-            completionText="VIBE CODING COMPLETE"
-            accentColor={selectedGame?.accentColor}
-            gameIcon={selectedGame?.icon}
-          />
-        </div>
-      )}
-
-      {vibeGenerating && pendingVibeHtml && vibeMode === 'overlay' && (
-        <VibeOverlay
-          codeSnippet={vibeCodeSnippet}
-          label={vibePresetLabel}
-          duration={2200}
-          onComplete={() => handleVibeComplete(pendingVibeHtml)}
-        />
-      )}
-    </div>
+    </>
   );
+}
+
+// ── Utility ──
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+// Game-specific rich suggestion prompts
+const GAME_SUGGESTIONS: Record<string, { icon: string; label: string; prompt: string }[]> = {
+  'neon-shooter': [
+    { icon: '🛡️', label: '무적 모드 켜줘', prompt: '무적 모드 켜줘' },
+    { icon: '🔥', label: '연사 속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '👹', label: '보스 나오게 해줘', prompt: '보스 나오게 해줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+    { icon: '❄️', label: '눈 효과 적용해줘', prompt: '눈 효과 적용해줘' },
+  ],
+  'tetris': [
+    { icon: '🐢', label: '속도 느리게 해줘', prompt: '속도 느리게 해줘' },
+    { icon: '⚡', label: '속도 빠르게 해줘', prompt: '속도 올려줘' },
+    { icon: '🎨', label: '사이버펑크 테마 적용해줘', prompt: '사이버펑크 테마 적용해줘' },
+    { icon: '🌧️', label: '비 효과 적용해줘', prompt: '비 효과 적용해줘' },
+  ],
+  'temple-runner': [
+    { icon: '💨', label: '속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '💰', label: '코인 많이 줘', prompt: '코인 많이 줘' },
+    { icon: '🎨', label: '레트로 테마 적용해줘', prompt: '레트로 테마 적용해줘' },
+  ],
+  'cat-jump': [
+    { icon: '🦘', label: '점프력 높여줘', prompt: '점프력 높여줘' },
+    { icon: '💨', label: '속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ],
+  'neon-platformer': [
+    { icon: '🦘', label: '점프력 높여줘', prompt: '점프력 높여줘' },
+    { icon: '🛡️', label: '무적 모드 켜줘', prompt: '무적 모드 켜줘' },
+    { icon: '🎨', label: '매트릭스 테마 적용해줘', prompt: '매트릭스 테마 적용해줘' },
+  ],
+  'dot-rpg': [
+    { icon: '⚔️', label: '공격력 올려줘', prompt: '공격력 올려줘' },
+    { icon: '❤️', label: '체력 올려줘', prompt: '체력 올려줘' },
+    { icon: '🎨', label: '레트로 테마 적용해줘', prompt: '레트로 테마 적용해줘' },
+  ],
+  'balloon-pop': [
+    { icon: '⏱️', label: '시간 늘려줘', prompt: '시간 늘려줘' },
+    { icon: '🎈', label: '풍선 많이 나오게 해줘', prompt: '풍선 많이 나오게 해줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ],
+  'star-catch': [
+    { icon: '⭐', label: '별 많이 나오게 해줘', prompt: '별 많이 나오게 해줘' },
+    { icon: '💨', label: '속도 느리게 해줘', prompt: '속도 느리게 해줘' },
+    { icon: '🎨', label: '사이버펑크 테마 적용해줘', prompt: '사이버펑크 테마 적용해줘' },
+  ],
+  'farm-garden': [
+    { icon: '🌧️', label: '비 오게 해줘', prompt: '비 오게 해줘' },
+    { icon: '⏱️', label: '시간 빠르게 해줘', prompt: '시간 빠르게 해줘' },
+    { icon: '🌙', label: '밤으로 바꿔줘', prompt: '밤으로 바꿔줘' },
+    { icon: '💰', label: '골드 많이 줘', prompt: '골드 많이 줘' },
+  ],
+  'moon-orbit': [
+    { icon: '🔭', label: '카메라 줌인 해줘', prompt: '줌인 해줘' },
+    { icon: '⏱️', label: '공전 속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ],
+  'gugudan-3d': [
+    { icon: '🔢', label: '다른 단 보여줘', prompt: '다른 단 보여줘' },
+    { icon: '⏱️', label: '속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ],
+  'emoji-catch': [
+    { icon: '💨', label: '속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '🍔', label: '음식 많이 나오게 해줘', prompt: '음식 많이 나오게 해줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ],
+};
+
+function buildGameSuggestions(
+  gameId: string
+): { icon: string; label: string; prompt: string }[] {
+  return GAME_SUGGESTIONS[gameId] || [
+    { icon: '⚡', label: '속도 올려줘', prompt: '속도 올려줘' },
+    { icon: '🎨', label: '네온 테마 적용해줘', prompt: '네온 테마 적용해줘' },
+  ];
 }

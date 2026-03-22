@@ -8,7 +8,7 @@ export interface DemoGame {
   html: string;
 }
 
-const EMOJI_BURGER_HTML = `<!DOCTYPE html>
+export const EMOJI_BURGER_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
