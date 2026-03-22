@@ -1,8 +1,6 @@
 'use client';
 
 import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import SuggestionChips from './SuggestionChips';
-import { HINT_CHIPS } from '@/lib/scenarios';
 
 interface InputAreaProps {
   onSend: (text: string) => void;
@@ -18,11 +16,13 @@ export interface InputAreaHandle {
 }
 
 const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea(
-  { onSend, disabled, showHints, onHintSelect },
+  { onSend, disabled },
   ref
 ) {
   const [text, setText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hasText = text.trim().length > 0;
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -32,9 +32,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
     }
   }, [text]);
 
-  // Expose methods to parent
   useImperativeHandle(ref, () => ({
-    /** Type text character by character into the input */
     async typeText(target: string) {
       setText('');
       textareaRef.current?.focus();
@@ -43,12 +41,10 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
         await sleep(30 + Math.random() * 40);
       }
     },
-    /** Set text instantly (for hint chip click) */
     setHint(target: string) {
       setText(target);
       textareaRef.current?.focus();
     },
-    /** Clear the input */
     clear() {
       setText('');
     },
@@ -71,55 +67,114 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
   return (
     <div className="px-6 pb-5 flex-shrink-0">
       <div className="max-w-[680px] mx-auto">
-        <div
-          className="flex items-end gap-2 transition-all duration-200"
-          style={{
-            background: 'var(--bg-input)',
-            border: '1px solid var(--border-light)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '4px 4px 4px 18px',
-          }}
-        >
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            placeholder="메시지를 입력하세요..."
-            spellCheck={false}
-            className="flex-1 bg-transparent border-none outline-none resize-none text-[15px] leading-normal"
+        {/* Vibe Prompt Input — aurora glow */}
+        <div className="relative" style={{ borderRadius: 30 }}>
+          {/* Aurora glow background */}
+          <div
+            className="absolute rounded-[30px]"
             style={{
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-body)',
-              maxHeight: 120,
-              minHeight: 40,
-              padding: '10px 0',
+              inset: isFocused ? -2 : 4,
+              background: 'linear-gradient(90deg, #00f3ff, #bc13fe, #ff007f, #ff9500, #00f3ff)',
+              backgroundSize: '300% 300%',
+              animation: `gradientFlow ${isFocused ? '3s' : '6s'} linear infinite`,
+              filter: `blur(${isFocused ? 20 : 10}px)`,
+              opacity: isFocused ? 0.7 : 0.12,
+              transition: 'all 0.4s cubic-bezier(0.25,1,0.5,1)',
+              zIndex: 0,
             }}
           />
-          <button
-            onClick={handleSend}
-            disabled={!text.trim() || disabled}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[15px] flex-shrink-0 mb-0.5 cursor-pointer transition-opacity duration-200 disabled:opacity-20 disabled:cursor-not-allowed hover:opacity-80"
+
+          {/* Glass panel */}
+          <div
+            className="relative flex items-end z-[1]"
             style={{
-              background: 'var(--text-primary)',
-              color: 'var(--bg-primary)',
-              border: 'none',
+              background: isFocused ? 'rgba(20,20,25,0.8)' : 'rgba(15,15,20,0.6)',
+              backdropFilter: 'blur(25px)',
+              WebkitBackdropFilter: 'blur(25px)',
+              border: `1px solid ${isFocused ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 24,
+              padding: '8px 10px 8px 24px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)',
+              transition: 'all 0.3s ease',
             }}
           >
-            ↑
-          </button>
-        </div>
+            {/* Sparkle icon */}
+            <div
+              className="mr-3 flex items-center justify-center flex-shrink-0 mb-2.5 transition-all duration-300"
+              style={{
+                color: isFocused ? '#00f3ff' : 'rgba(255,255,255,0.4)',
+                filter: isFocused ? 'drop-shadow(0 0 8px #00f3ff)' : 'none',
+              }}
+            >
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3v18M3 12h18M15 9l-6 6M9 9l6 6"/>
+              </svg>
+            </div>
 
-        {showHints && (
-          <div className="mt-2.5">
-            <SuggestionChips
-              chips={HINT_CHIPS}
-              onSelect={onHintSelect}
-              size="small"
+            {/* Input */}
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              rows={1}
+              placeholder="메시지를 입력하세요..."
+              spellCheck={false}
+              className="flex-1 bg-transparent border-none outline-none resize-none"
+              style={{
+                color: '#fff',
+                fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
+                fontWeight: 300,
+                fontSize: '1.05rem',
+                lineHeight: 1.5,
+                maxHeight: 120,
+                minHeight: 40,
+                padding: '10px 0',
+              }}
             />
+
+            {/* Send button — transforms on text input */}
+            <button
+              onClick={handleSend}
+              disabled={!hasText || disabled}
+              className="flex-shrink-0 mb-1.5 flex items-center justify-center cursor-pointer"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 18,
+                marginLeft: 12,
+                background: hasText ? '#fff' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${hasText ? '#fff' : 'rgba(255,255,255,0.05)'}`,
+                boxShadow: hasText
+                  ? '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(188,19,254,0.3)'
+                  : 'none',
+                transform: hasText ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.3s cubic-bezier(0.25,1,0.5,1)',
+                opacity: !hasText && disabled ? 0.2 : 1,
+              }}
+            >
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  stroke: hasText ? '#000' : 'rgba(255,255,255,0.4)',
+                  transform: hasText ? 'translateY(-2px)' : 'none',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
