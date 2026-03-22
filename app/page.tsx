@@ -260,13 +260,11 @@ export default function Home() {
             );
           }
 
-          // Create AI response with the vibe result + code diff
+          // Create AI response — NO artifact (keep game running!)
+          // Code diff shown inline in chat instead
           const oldSnippet = `// 기존 코드\nlet value = defaultValue;`;
           const vibeResponse: ScenarioResponse = {
-            text: vibeMatch.response + '\n\n다른 수정도 해볼까요?',
-            artifact: true,
-            artifactTitle: '코드 수정',
-            artifactCode: vibeMatch.codeSnippet,
+            text: vibeMatch.response + '\n\n게임에 바로 적용됐어요! 다른 수정도 해볼까요?',
             suggestions: buildGameSuggestions(activeGameId),
           };
 
