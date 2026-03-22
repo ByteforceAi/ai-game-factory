@@ -8,69 +8,44 @@ interface OnboardingProps {
 
 type Stage = 'launch' | 'boot' | 'login';
 
-// ── 20초+ 럭셔리 부팅 시퀀스 ──
-const BOOT_SEQUENCE: { text: string; delay: number }[] = [
-  { text: '> system boot initiated', delay: 800 },
-  { text: '> loading kernel modules...', delay: 1200 },
-  { text: '  ├─ vibe-engine v4.2.0', delay: 600 },
-  { text: '  ├─ neural-context [200K tokens]', delay: 800 },
-  { text: '  └─ code-sandbox runtime', delay: 700 },
-  { text: '', delay: 400 },
-  { text: '> initializing AI pipeline...', delay: 1500 },
-  { text: '  ├─ language model: connected', delay: 900 },
-  { text: '  ├─ code interpreter: ready', delay: 800 },
-  { text: '  ├─ game renderer: standby', delay: 700 },
-  { text: '  └─ visual effects: loaded', delay: 600 },
-  { text: '', delay: 300 },
-  { text: '> authenticating workspace...', delay: 1800 },
-  { text: '  ├─ session: encrypted', delay: 600 },
-  { text: '  └─ permissions: granted', delay: 500 },
-  { text: '', delay: 400 },
-  { text: '> loading arena assets...', delay: 1600 },
-  { text: '  ├─ games: 12 modules', delay: 700 },
-  { text: '  ├─ themes: 18 presets', delay: 600 },
-  { text: '  ├─ sounds: initialized', delay: 500 },
-  { text: '  └─ fonts: Noto Sans KR, JetBrains Mono, Space Grotesk', delay: 800 },
-  { text: '', delay: 300 },
-  { text: '> running diagnostics...', delay: 1200 },
-  { text: '  ├─ latency: 12ms ✓', delay: 500 },
-  { text: '  ├─ memory: optimal ✓', delay: 500 },
-  { text: '  └─ GPU: hardware accelerated ✓', delay: 600 },
-  { text: '', delay: 500 },
-  { text: '> all systems nominal', delay: 1000 },
-  { text: '> 바이브코딩 아레나 online ✓', delay: 800 },
+// ── 부팅 상태 텍스트 (같은 자리에서 교체) ──
+const BOOT_PHASES: { text: string; duration: number; sparkScale: number; glowIntensity: number }[] = [
+  { text: '뉴럴 네트워크 연결 중', duration: 3500, sparkScale: 1, glowIntensity: 0.2 },
+  { text: 'AI 모델 로딩', duration: 4000, sparkScale: 1.5, glowIntensity: 0.4 },
+  { text: '코드 샌드박스 준비', duration: 3500, sparkScale: 2, glowIntensity: 0.6 },
+  { text: '아레나 모듈 활성화', duration: 3000, sparkScale: 2.5, glowIntensity: 0.8 },
+  { text: '시스템 준비 완료', duration: 2000, sparkScale: 3, glowIntensity: 1 },
 ];
 
 export default function Onboarding({ onSubmit }: OnboardingProps) {
   const [stage, setStage] = useState<Stage>('launch');
-  const [bootLines, setBootLines] = useState<string[]>([]);
-  const [sparkExplode, setSparkExplode] = useState(false);
+  const [bootPhaseIdx, setBootPhaseIdx] = useState(0);
   const [bootProgress, setBootProgress] = useState(0);
+  const [sparkExplode, setSparkExplode] = useState(false);
   const [name, setName] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const launched = useRef(false);
 
-  // ── Launch → Boot (20s+ luxurious) → Login ──
+  const currentPhase = BOOT_PHASES[bootPhaseIdx] || BOOT_PHASES[BOOT_PHASES.length - 1];
+  const totalDuration = BOOT_PHASES.reduce((sum, p) => sum + p.duration, 0);
+
+  // ── Launch → Boot (cinematic) → Login ──
   const launch = useCallback(() => {
     if (launched.current) return;
     launched.current = true;
     setStage('boot');
 
-    // Schedule each boot line with cumulative delay
-    let cumDelay = 600;
-    const totalDelay = BOOT_SEQUENCE.reduce((sum, s) => sum + s.delay, 0) + 600;
-
-    BOOT_SEQUENCE.forEach((step, i) => {
-      cumDelay += step.delay;
+    // Schedule phase transitions
+    let cumDelay = 800; // initial pause
+    BOOT_PHASES.forEach((phase, i) => {
       const d = cumDelay;
       setTimeout(() => {
-        if (step.text) {
-          setBootLines(prev => [...prev, step.text]);
-        }
-        setBootProgress(Math.round(((i + 1) / BOOT_SEQUENCE.length) * 100));
+        setBootPhaseIdx(i);
+        setBootProgress(Math.round(((i + 1) / BOOT_PHASES.length) * 100));
       }, d);
+      cumDelay += phase.duration;
     });
 
     // Core spark explosion → Login
@@ -80,7 +55,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         setStage('login');
         setTimeout(() => inputRef.current?.focus(), 300);
       }, 800);
-    }, totalDelay + 600);
+    }, cumDelay + 400);
   }, []);
 
   useEffect(() => {
@@ -107,7 +82,6 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
     >
       {/* ── Ambient Background ── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Green ambient glow — rises from bottom */}
         <div
           className="absolute left-1/2 animate-[ambientBreath_6s_ease-in-out_infinite]"
           style={{
@@ -118,7 +92,6 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             background: 'radial-gradient(ellipse, rgba(34,197,94,0.06) 0%, transparent 70%)',
           }}
         />
-        {/* Noise texture */}
         <div
           className="absolute inset-0"
           style={{
@@ -135,7 +108,6 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         }`}
         onClick={launch}
       >
-        {/* Cursor block logo */}
         <div className="flex items-center gap-[3px] mb-12">
           <div
             className="w-5 h-7 rounded-[2px] animate-[cursorGlow_2s_ease-in-out_infinite]"
@@ -178,15 +150,15 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         </div>
       </div>
 
-      {/* ═══ STAGE: BOOT ═══ */}
+      {/* ═══ STAGE: BOOT (cinematic core spark) ═══ */}
       <div
         className={`absolute inset-0 flex flex-col items-center justify-center z-10 transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${
           stage !== 'boot' ? 'opacity-0 pointer-events-none' : ''
         }`}
       >
-        {/* Aurora core spark — original rainbow orb restored */}
+        {/* Aurora core spark — grows with progress */}
         <div
-          className="rounded-full mb-8"
+          className="rounded-full mb-10"
           style={{
             width: 30,
             height: 30,
@@ -195,62 +167,54 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             animation: sparkExplode
               ? undefined
               : 'gradientFlow 3s ease infinite, breatheCore 2s ease-in-out infinite alternate',
-            filter: 'blur(8px)',
-            transform: sparkExplode ? 'scale(80)' : 'scale(1)',
+            filter: `blur(${sparkExplode ? 0 : 6 + currentPhase.sparkScale * 2}px)`,
+            transform: sparkExplode
+              ? 'scale(80)'
+              : `scale(${currentPhase.sparkScale})`,
             opacity: sparkExplode ? 0 : 1,
-            transition: 'all 1.5s cubic-bezier(0.25,1,0.5,1)',
+            boxShadow: sparkExplode
+              ? 'none'
+              : `0 0 ${20 + currentPhase.glowIntensity * 40}px rgba(34,197,94,${0.2 + currentPhase.glowIntensity * 0.3}), 0 0 ${40 + currentPhase.glowIntensity * 60}px rgba(188,19,254,${0.1 + currentPhase.glowIntensity * 0.2})`,
+            transition: 'transform 1.5s cubic-bezier(0.25,1,0.5,1), filter 1.5s ease, box-shadow 1.5s ease, opacity 1s',
           }}
         />
 
-        {/* Terminal boot lines */}
-        <div
-          className="text-left font-mono text-[11px] leading-[1.9] max-h-[280px] overflow-hidden"
-          style={{ width: 380, maxWidth: '90vw' }}
-        >
-          {bootLines.map((line, i) => (
-            <div
-              key={i}
-              className="animate-[lineIn_0.3s_ease_forwards]"
-              style={{
-                opacity: 0,
-                animationDelay: `${i * 0.02}s`,
-                color: line.includes('✓')
-                  ? 'rgba(34,197,94,0.8)'
-                  : line.startsWith('  ')
-                  ? 'rgba(34,197,94,0.25)'
-                  : 'rgba(34,197,94,0.45)',
-              }}
-            >
-              {line}
-            </div>
-          ))}
+        {/* Status text — fades in/out in place */}
+        <div className="h-8 flex items-center justify-center">
+          <div
+            key={bootPhaseIdx}
+            className="font-mono text-[12px] tracking-[1px] animate-[fadeInUp_0.6s_ease_forwards]"
+            style={{
+              color: currentPhase.glowIntensity >= 1
+                ? 'rgba(34,197,94,0.7)'
+                : 'rgba(34,197,94,0.35)',
+            }}
+          >
+            {currentPhase.text}
+            {currentPhase.glowIntensity < 1 && (
+              <span className="animate-[pulseText_1s_ease_infinite]">...</span>
+            )}
+            {currentPhase.glowIntensity >= 1 && ' ✓'}
+          </div>
         </div>
 
-        {/* Progress bar */}
-        {bootProgress > 0 && (
-          <div className="mt-6" style={{ width: 200 }}>
+        {/* Thin progress bar */}
+        <div className="mt-6" style={{ width: 120 }}>
+          <div
+            className="h-[1.5px] rounded-full overflow-hidden"
+            style={{ background: 'rgba(34,197,94,0.08)' }}
+          >
             <div
-              className="h-[2px] rounded-full overflow-hidden"
-              style={{ background: 'rgba(34,197,94,0.1)' }}
-            >
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${bootProgress}%`,
-                  background: 'rgba(34,197,94,0.5)',
-                  boxShadow: '0 0 8px rgba(34,197,94,0.3)',
-                  transition: 'width 0.5s ease-out',
-                }}
-              />
-            </div>
-            <div
-              className="text-center mt-2 font-mono text-[9px] tracking-[2px]"
-              style={{ color: 'rgba(34,197,94,0.3)' }}
-            >
-              {bootProgress}%
-            </div>
+              className="h-full rounded-full"
+              style={{
+                width: `${bootProgress}%`,
+                background: `rgba(34,197,94,${0.3 + currentPhase.glowIntensity * 0.3})`,
+                boxShadow: `0 0 6px rgba(34,197,94,${currentPhase.glowIntensity * 0.3})`,
+                transition: 'width 1s ease-out, background 1s, box-shadow 1s',
+              }}
+            />
           </div>
-        )}
+        </div>
       </div>
 
       {/* ═══ STAGE: LOGIN (Gate) ═══ */}
@@ -262,7 +226,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         <div className="relative w-[440px] max-w-[92vw]">
           {/* Green glow border — reactive */}
           <div
-            className="absolute z-[-1] rounded-[22px] transition-all duration-600"
+            className="absolute z-[-1] rounded-[22px]"
             style={{
               inset: isFocused || name.length > 0 ? -6 : -2,
               background: 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.03), rgba(34,197,94,0.1))',
