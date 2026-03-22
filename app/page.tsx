@@ -474,11 +474,19 @@ export default function Home() {
   // NEW CHAT
   // ══════════════════════
   const handleNewChat = useCallback(() => {
+    // 전체 세션 초기화 — 게임/아티팩트 상태도 클리어
     setMessages([]);
     setShowHints(true);
     setChatTitle('새 대화');
     setArtifactOpen(false);
+    setArtifactGameHtml('');
+    setArtifactCode('');
+    setArtifactTitle('');
+    setArtifactPreview('');
+    setActiveGameId(null);
     setIsStreaming(false);
+    // Welcome 화면으로 돌아가기
+    setPhase(1);
   }, []);
 
   // ══════════════════════

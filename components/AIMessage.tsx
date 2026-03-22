@@ -27,8 +27,12 @@ export default function AIMessage({
     let timers: ReturnType<typeof setTimeout>[] = [];
 
     const run = async () => {
-      // Phase 1: Show thinking dots
-      await sleep(800 + Math.random() * 600);
+      // Phase 1: Show thinking dots — longer for artifact responses (뜸 들이기)
+      const hasArtifact = response.artifact || response.gameHtml;
+      const thinkTime = hasArtifact
+        ? 2500 + Math.random() * 2500  // 2.5~5s for game/code generation
+        : 1000 + Math.random() * 800;  // 1~1.8s for text responses
+      await sleep(thinkTime);
       if (cancelRef.current) return;
       setPhase('streaming');
 

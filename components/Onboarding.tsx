@@ -8,13 +8,19 @@ interface OnboardingProps {
 
 type Stage = 'launch' | 'boot' | 'login';
 
-// ── 부팅 상태 텍스트 (같은 자리에서 교체) ──
-const BOOT_PHASES: { text: string; duration: number; sparkScale: number; glowIntensity: number }[] = [
-  { text: '뉴럴 네트워크 연결 중', duration: 3500, sparkScale: 1, glowIntensity: 0.2 },
-  { text: 'AI 모델 로딩', duration: 4000, sparkScale: 1.5, glowIntensity: 0.4 },
-  { text: '코드 샌드박스 준비', duration: 3500, sparkScale: 2, glowIntensity: 0.6 },
-  { text: '아레나 모듈 활성화', duration: 3000, sparkScale: 2.5, glowIntensity: 0.8 },
-  { text: '시스템 준비 완료', duration: 2000, sparkScale: 3, glowIntensity: 1 },
+// ── 부팅: 코어스파크 색상 전환으로 진행도 표현 (텍스트 없음) ──
+const BOOT_PHASES: {
+  color: string; // gradient primary color
+  glow: string;  // box-shadow color
+  duration: number;
+  scale: number;
+  blur: number;
+}[] = [
+  { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 3500, scale: 1,   blur: 8 },   // Cyan — 연결
+  { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 4000, scale: 1.4, blur: 10 },  // Green — 로딩
+  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 3500, scale: 1.8, blur: 12 },  // Purple — 준비
+  { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 3000, scale: 2.2, blur: 14 },  // Orange — 활성화
+  { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 2500, scale: 2.8, blur: 18 },  // White — 완료
 ];
 
 export default function Onboarding({ onSubmit }: OnboardingProps) {
@@ -29,7 +35,6 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
   const launched = useRef(false);
 
   const currentPhase = BOOT_PHASES[bootPhaseIdx] || BOOT_PHASES[BOOT_PHASES.length - 1];
-  const totalDuration = BOOT_PHASES.reduce((sum, p) => sum + p.duration, 0);
 
   // ── Launch → Boot (cinematic) → Login ──
   const launch = useCallback(() => {
@@ -156,64 +161,40 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
           stage !== 'boot' ? 'opacity-0 pointer-events-none' : ''
         }`}
       >
-        {/* Aurora core spark — grows with progress */}
+        {/* Core spark — color shifts through phases, no text */}
         <div
-          className="rounded-full mb-10"
+          className="rounded-full"
           style={{
             width: 30,
             height: 30,
-            background: 'linear-gradient(90deg, #00f3ff, #22c55e, #bc13fe, #22c55e, #00f3ff)',
-            backgroundSize: '300% 300%',
-            animation: sparkExplode
-              ? undefined
-              : 'gradientFlow 3s ease infinite, breatheCore 2s ease-in-out infinite alternate',
-            filter: `blur(${sparkExplode ? 0 : 6 + currentPhase.sparkScale * 2}px)`,
-            transform: sparkExplode
-              ? 'scale(80)'
-              : `scale(${currentPhase.sparkScale})`,
+            background: sparkExplode
+              ? '#fff'
+              : `radial-gradient(circle, ${currentPhase.color}, ${currentPhase.color}88, transparent)`,
+            filter: `blur(${sparkExplode ? 0 : currentPhase.blur}px)`,
+            transform: sparkExplode ? 'scale(80)' : `scale(${currentPhase.scale})`,
             opacity: sparkExplode ? 0 : 1,
             boxShadow: sparkExplode
               ? 'none'
-              : `0 0 ${20 + currentPhase.glowIntensity * 40}px rgba(34,197,94,${0.2 + currentPhase.glowIntensity * 0.3}), 0 0 ${40 + currentPhase.glowIntensity * 60}px rgba(188,19,254,${0.1 + currentPhase.glowIntensity * 0.2})`,
-            transition: 'transform 1.5s cubic-bezier(0.25,1,0.5,1), filter 1.5s ease, box-shadow 1.5s ease, opacity 1s',
+              : `0 0 ${30 + currentPhase.scale * 15}px ${currentPhase.glow}, 0 0 ${60 + currentPhase.scale * 25}px ${currentPhase.glow.replace('0.4', '0.15')}`,
+            transition: 'all 2s cubic-bezier(0.25,1,0.5,1)',
+            animation: sparkExplode ? undefined : 'breatheCore 2.5s ease-in-out infinite alternate',
           }}
         />
 
-        {/* Status text — fades in/out in place */}
-        <div className="h-8 flex items-center justify-center">
-          <div
-            key={bootPhaseIdx}
-            className="font-mono text-[12px] tracking-[1px] animate-[fadeInUp_0.6s_ease_forwards]"
-            style={{
-              color: currentPhase.glowIntensity >= 1
-                ? 'rgba(34,197,94,0.7)'
-                : 'rgba(34,197,94,0.35)',
-            }}
-          >
-            {currentPhase.text}
-            {currentPhase.glowIntensity < 1 && (
-              <span className="animate-[pulseText_1s_ease_infinite]">...</span>
-            )}
-            {currentPhase.glowIntensity >= 1 && ' ✓'}
-          </div>
-        </div>
-
-        {/* Thin progress bar */}
-        <div className="mt-6" style={{ width: 120 }}>
-          <div
-            className="h-[1.5px] rounded-full overflow-hidden"
-            style={{ background: 'rgba(34,197,94,0.08)' }}
-          >
+        {/* Minimal progress dots — 5 dots that fill with phase */}
+        <div className="flex gap-2 mt-12">
+          {BOOT_PHASES.map((phase, i) => (
             <div
-              className="h-full rounded-full"
+              key={i}
+              className="rounded-full transition-all duration-[1.5s]"
               style={{
-                width: `${bootProgress}%`,
-                background: `rgba(34,197,94,${0.3 + currentPhase.glowIntensity * 0.3})`,
-                boxShadow: `0 0 6px rgba(34,197,94,${currentPhase.glowIntensity * 0.3})`,
-                transition: 'width 1s ease-out, background 1s, box-shadow 1s',
+                width: i <= bootPhaseIdx ? 6 : 4,
+                height: i <= bootPhaseIdx ? 6 : 4,
+                background: i <= bootPhaseIdx ? phase.color : 'rgba(255,255,255,0.08)',
+                boxShadow: i <= bootPhaseIdx ? `0 0 8px ${phase.glow}` : 'none',
               }}
             />
-          </div>
+          ))}
         </div>
       </div>
 
