@@ -213,7 +213,12 @@ export default function Home() {
       if (isStreaming) return;
       setIsStreaming(true);
       setShowHints(false);
-      inputAreaRef.current?.clear(); // clear input after send
+      inputAreaRef.current?.clear();
+
+      // Prevent double-sends via rapid clicking
+      const sendTime = Date.now();
+      if ((window as any).__lastSendTime && sendTime - (window as any).__lastSendTime < 500) return;
+      (window as any).__lastSendTime = sendTime;
 
       // Update chat title with first message
       if (messages.length === 0) {
@@ -241,7 +246,7 @@ export default function Home() {
           setMessages((prev) => [...prev, userMsg, aiMsg]);
           addLog('user', text);
           addLog('ai', '[RESTART]');
-          setTimeout(() => scrollToBottom(), 100);
+          setTimeout(() => { scrollToBottom(); setIsStreaming(false); }, 100);
           return;
         }
       }
@@ -320,17 +325,15 @@ export default function Home() {
           setMessages((prev) => [...prev, userMsg, aiMsg]);
           addLog('user', text);
           addLog('ai', `[VIBE] ${vibeMatch.response}`);
-
-          // Timeline
           timeline.record({ type: 'user', label: text.slice(0, 40), score: pScore.score });
           timeline.record({ type: 'vibe', label: vibeMatch.response.slice(0, 40), gameId: activeGameId });
-          setTimeout(() => scrollToBottom(), 100);
+          setTimeout(() => { scrollToBottom(); setIsStreaming(false); }, 100);
           return;
         }
       }
 
-      // ── Check for visual theme request ──
-      if (activeGameId) {
+      // ── Check for visual theme request (works even without activeGameId) ──
+      {
         const lower = text.toLowerCase();
         const themeKeywords: [string[], string][] = [
           [['네온', 'neon'], 'mood-neon-nights'],
@@ -392,7 +395,7 @@ export default function Home() {
               addLog('ai', `[THEME] ${theme.label}`);
               timeline.record({ type: 'user', label: text.slice(0, 40), score: pScore.score });
               timeline.record({ type: 'theme', label: theme.label });
-              setTimeout(() => scrollToBottom(), 100);
+              setTimeout(() => { scrollToBottom(); setIsStreaming(false); }, 100);
               return;
             }
           }

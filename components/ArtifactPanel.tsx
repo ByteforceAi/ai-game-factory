@@ -119,12 +119,14 @@ export default function ArtifactPanel({
       const body = bodyRef.current;
       if (!body) return;
 
-      if (t === 'code' && code) {
+      if (t === 'code' && (code || gameHtml)) {
+        // Show FULL source code — if gameHtml exists, show that instead of short snippet
+        const fullCode = gameHtml || code;
         body.innerHTML = '';
         body.style.fontFamily = 'var(--font-mono)';
         body.style.fontSize = '13px';
         body.style.padding = '16px 20px';
-        const lines = code.split('\n');
+        const lines = fullCode.split('\n');
         lines.forEach((line, idx) => {
           const div = document.createElement('div');
           div.style.padding = '0 2px';
@@ -233,7 +235,7 @@ export default function ArtifactPanel({
             </div>
 
             {/* Copy code button */}
-            <CopyButton code={code} />
+            <CopyButton code={gameHtml || code} />
 
             <button
               onClick={onClose}
