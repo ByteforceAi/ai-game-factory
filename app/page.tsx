@@ -168,12 +168,14 @@ export default function Home() {
   const doSendRef = useRef<((text: string) => void) | null>(null);
 
   const handleStartChat = useCallback(
-    (initialPrompt?: string) => {
+    (initialPrompt?: string, typingPrompt?: string) => {
       setPhase(2);
       addLog('system', `학생 "${userName}" 입장`);
-      if (initialPrompt) {
-        // Don't auto-send! Just put the text in the input as a hint
-        // Student must type it themselves (타자 연습)
+      // typingPrompt = card click (show typing prompt for student)
+      // initialPrompt = direct text (auto-send legacy, not used now)
+      if (typingPrompt) {
+        pendingPromptRef.current = typingPrompt;
+      } else if (initialPrompt) {
         pendingPromptRef.current = initialPrompt;
       }
     },
