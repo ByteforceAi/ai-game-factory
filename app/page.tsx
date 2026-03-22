@@ -320,13 +320,11 @@ export default function Home() {
           if (keywords.some((k) => lower.includes(k))) {
             const theme = VISUAL_THEMES.find((t) => t.id === themeId);
             if (theme) {
-              // Apply theme to iframe via style injection
+              // Apply theme to iframe
               const iframe = document.querySelector<HTMLIFrameElement>('.artifact-panel-open iframe') || document.querySelector<HTMLIFrameElement>('iframe');
               if (iframe) {
                 try {
-                  // Try direct DOM access (works with allow-same-origin)
                   if (iframe.contentDocument) {
-                    // Remove old theme styles
                     const old = iframe.contentDocument.querySelectorAll('style[data-theme]');
                     old.forEach((s) => s.remove());
                     const style = iframe.contentDocument.createElement('style');
@@ -335,9 +333,17 @@ export default function Home() {
                     iframe.contentDocument.head.appendChild(style);
                   }
                 } catch {
-                  // Fallback: rebuild srcdoc with theme CSS
                   if (iframe.srcdoc) {
                     iframe.srcdoc = applyVisualTheme(iframe.srcdoc, theme);
+                  }
+                }
+
+                // Weather overlays — canvas-based particles that show OVER the game
+                if (iframe.contentWindow) {
+                  if (themeId === 'overlay-rain') {
+                    iframe.contentWindow.postMessage({ type: 'WEATHER_START', weatherType: 'rain' }, '*');
+                  } else if (themeId === 'overlay-snow') {
+                    iframe.contentWindow.postMessage({ type: 'WEATHER_START', weatherType: 'snow' }, '*');
                   }
                 }
               }

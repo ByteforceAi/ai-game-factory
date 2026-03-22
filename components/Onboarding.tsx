@@ -8,43 +8,79 @@ interface OnboardingProps {
 
 type Stage = 'launch' | 'boot' | 'login';
 
-const BOOT_LINES = [
-  '> initializing vibe engine...',
-  '> loading neural context [200K tokens]',
-  '> code sandbox connecting...',
-  '> arena modules ready',
-  '> playground online ✓',
+// ── 20초+ 럭셔리 부팅 시퀀스 ──
+const BOOT_SEQUENCE: { text: string; delay: number }[] = [
+  { text: '> system boot initiated', delay: 800 },
+  { text: '> loading kernel modules...', delay: 1200 },
+  { text: '  ├─ vibe-engine v4.2.0', delay: 600 },
+  { text: '  ├─ neural-context [200K tokens]', delay: 800 },
+  { text: '  └─ code-sandbox runtime', delay: 700 },
+  { text: '', delay: 400 },
+  { text: '> initializing AI pipeline...', delay: 1500 },
+  { text: '  ├─ language model: connected', delay: 900 },
+  { text: '  ├─ code interpreter: ready', delay: 800 },
+  { text: '  ├─ game renderer: standby', delay: 700 },
+  { text: '  └─ visual effects: loaded', delay: 600 },
+  { text: '', delay: 300 },
+  { text: '> authenticating workspace...', delay: 1800 },
+  { text: '  ├─ session: encrypted', delay: 600 },
+  { text: '  └─ permissions: granted', delay: 500 },
+  { text: '', delay: 400 },
+  { text: '> loading arena assets...', delay: 1600 },
+  { text: '  ├─ games: 12 modules', delay: 700 },
+  { text: '  ├─ themes: 18 presets', delay: 600 },
+  { text: '  ├─ sounds: initialized', delay: 500 },
+  { text: '  └─ fonts: Noto Sans KR, JetBrains Mono, Space Grotesk', delay: 800 },
+  { text: '', delay: 300 },
+  { text: '> running diagnostics...', delay: 1200 },
+  { text: '  ├─ latency: 12ms ✓', delay: 500 },
+  { text: '  ├─ memory: optimal ✓', delay: 500 },
+  { text: '  └─ GPU: hardware accelerated ✓', delay: 600 },
+  { text: '', delay: 500 },
+  { text: '> all systems nominal', delay: 1000 },
+  { text: '> 바이브코딩 아레나 online ✓', delay: 800 },
 ];
 
 export default function Onboarding({ onSubmit }: OnboardingProps) {
   const [stage, setStage] = useState<Stage>('launch');
   const [bootLines, setBootLines] = useState<string[]>([]);
   const [sparkExplode, setSparkExplode] = useState(false);
+  const [bootProgress, setBootProgress] = useState(0);
   const [name, setName] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const launched = useRef(false);
 
-  // ── Launch → Boot (longer, with terminal text) → Login ──
+  // ── Launch → Boot (20s+ luxurious) → Login ──
   const launch = useCallback(() => {
     if (launched.current) return;
     launched.current = true;
     setStage('boot');
 
-    // Terminal boot lines — 500ms apart
-    BOOT_LINES.forEach((line, i) => {
-      setTimeout(() => setBootLines(prev => [...prev, line]), 600 + i * 500);
+    // Schedule each boot line with cumulative delay
+    let cumDelay = 600;
+    const totalDelay = BOOT_SEQUENCE.reduce((sum, s) => sum + s.delay, 0) + 600;
+
+    BOOT_SEQUENCE.forEach((step, i) => {
+      cumDelay += step.delay;
+      const d = cumDelay;
+      setTimeout(() => {
+        if (step.text) {
+          setBootLines(prev => [...prev, step.text]);
+        }
+        setBootProgress(Math.round(((i + 1) / BOOT_SEQUENCE.length) * 100));
+      }, d);
     });
 
-    // Core spark explosion → Login (total ~4s boot)
+    // Core spark explosion → Login
     setTimeout(() => {
       setSparkExplode(true);
       setTimeout(() => {
         setStage('login');
         setTimeout(() => inputRef.current?.focus(), 300);
-      }, 600);
-    }, 600 + BOOT_LINES.length * 500 + 400);
+      }, 800);
+    }, totalDelay + 600);
   }, []);
 
   useEffect(() => {
@@ -166,10 +202,10 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
           }}
         />
 
-        {/* Terminal boot lines — improved visibility */}
+        {/* Terminal boot lines */}
         <div
-          className="text-left font-mono text-[12px] leading-[2.2]"
-          style={{ color: 'rgba(34,197,94,0.35)' }}
+          className="text-left font-mono text-[11px] leading-[1.9] max-h-[280px] overflow-hidden"
+          style={{ width: 380, maxWidth: '90vw' }}
         >
           {bootLines.map((line, i) => (
             <div
@@ -177,14 +213,44 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
               className="animate-[lineIn_0.3s_ease_forwards]"
               style={{
                 opacity: 0,
-                animationDelay: `${i * 0.05}s`,
-                color: line.includes('✓') ? 'rgba(34,197,94,0.8)' : 'rgba(34,197,94,0.4)',
+                animationDelay: `${i * 0.02}s`,
+                color: line.includes('✓')
+                  ? 'rgba(34,197,94,0.8)'
+                  : line.startsWith('  ')
+                  ? 'rgba(34,197,94,0.25)'
+                  : 'rgba(34,197,94,0.45)',
               }}
             >
               {line}
             </div>
           ))}
         </div>
+
+        {/* Progress bar */}
+        {bootProgress > 0 && (
+          <div className="mt-6" style={{ width: 200 }}>
+            <div
+              className="h-[2px] rounded-full overflow-hidden"
+              style={{ background: 'rgba(34,197,94,0.1)' }}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${bootProgress}%`,
+                  background: 'rgba(34,197,94,0.5)',
+                  boxShadow: '0 0 8px rgba(34,197,94,0.3)',
+                  transition: 'width 0.5s ease-out',
+                }}
+              />
+            </div>
+            <div
+              className="text-center mt-2 font-mono text-[9px] tracking-[2px]"
+              style={{ color: 'rgba(34,197,94,0.3)' }}
+            >
+              {bootProgress}%
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ═══ STAGE: LOGIN (Gate) ═══ */}

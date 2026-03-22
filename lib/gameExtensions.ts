@@ -439,9 +439,91 @@ export function getGameExtensionsScript(): string {
   }
 
   /* ========================================
+     WEATHER OVERLAY SYSTEM
+     Rain / Snow particles over canvas
+     ======================================== */
+  var weatherCanvas = null;
+  var weatherCtx = null;
+  var weatherType = null; // 'rain' | 'snow' | null
+  var weatherParticles = [];
+  var weatherRAF = null;
+
+  function initWeatherCanvas() {
+    if (weatherCanvas) return;
+    weatherCanvas = document.createElement('canvas');
+    weatherCanvas.id = 'weather-overlay';
+    weatherCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:99980';
+    document.body.appendChild(weatherCanvas);
+    weatherCtx = weatherCanvas.getContext('2d');
+    function resize() {
+      weatherCanvas.width = window.innerWidth;
+      weatherCanvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  function startWeather(type) {
+    initWeatherCanvas();
+    weatherType = type;
+    weatherParticles = [];
+    var count = type === 'rain' ? 200 : 80;
+    for (var i = 0; i < count; i++) {
+      weatherParticles.push({
+        x: Math.random() * weatherCanvas.width,
+        y: Math.random() * weatherCanvas.height,
+        speed: type === 'rain' ? 4 + Math.random() * 6 : 0.5 + Math.random() * 1.5,
+        size: type === 'rain' ? 1 : 2 + Math.random() * 3,
+        drift: type === 'snow' ? (Math.random() - 0.5) * 0.5 : 0,
+        opacity: 0.3 + Math.random() * 0.5,
+      });
+    }
+    if (!weatherRAF) animateWeather();
+  }
+
+  function stopWeather() {
+    weatherType = null;
+    weatherParticles = [];
+    if (weatherRAF) { cancelAnimationFrame(weatherRAF); weatherRAF = null; }
+    if (weatherCtx && weatherCanvas) weatherCtx.clearRect(0, 0, weatherCanvas.width, weatherCanvas.height);
+  }
+
+  function animateWeather() {
+    if (!weatherType || !weatherCtx) return;
+    var W = weatherCanvas.width, H = weatherCanvas.height;
+    weatherCtx.clearRect(0, 0, W, H);
+
+    for (var i = 0; i < weatherParticles.length; i++) {
+      var p = weatherParticles[i];
+      p.y += p.speed;
+      p.x += p.drift;
+      if (p.y > H) { p.y = -10; p.x = Math.random() * W; }
+      if (p.x > W) p.x = 0;
+      if (p.x < 0) p.x = W;
+
+      weatherCtx.globalAlpha = p.opacity;
+      if (weatherType === 'rain') {
+        weatherCtx.strokeStyle = 'rgba(150,200,255,0.6)';
+        weatherCtx.lineWidth = p.size;
+        weatherCtx.beginPath();
+        weatherCtx.moveTo(p.x, p.y);
+        weatherCtx.lineTo(p.x + 0.5, p.y + 12);
+        weatherCtx.stroke();
+      } else {
+        weatherCtx.fillStyle = '#fff';
+        weatherCtx.beginPath();
+        weatherCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        weatherCtx.fill();
+      }
+    }
+    weatherCtx.globalAlpha = 1;
+    weatherRAF = requestAnimationFrame(animateWeather);
+  }
+
+  /* ========================================
      UNIFIED MESSAGE HANDLER
-     Handles: resetGameOver, XRAY, GET_STATE
-     + all vibe commands (already in game code)
+     Handles: resetGameOver, XRAY, GET_STATE,
+     WEATHER overlay, + vibe commands
      ======================================== */
   window.addEventListener('message', function(e) {
     if (!e.data || !e.data.type) return;
@@ -457,6 +539,12 @@ export function getGameExtensionsScript(): string {
         try {
           window.parent.postMessage({ type: 'STATE_REPORT', state: getGameState() }, '*');
         } catch(ex) {}
+        break;
+      case 'WEATHER_START':
+        startWeather(e.data.weatherType || 'rain');
+        break;
+      case 'WEATHER_STOP':
+        stopWeather();
         break;
     }
   });
