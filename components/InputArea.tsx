@@ -111,7 +111,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
               </svg>
             </div>
 
-            {/* Input */}
+            {/* Input — all outlines/borders killed */}
             <textarea
               ref={textareaRef}
               value={text}
@@ -122,8 +122,14 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
               rows={1}
               placeholder="메시지를 입력하세요..."
               spellCheck={false}
-              className="flex-1 bg-transparent border-none outline-none resize-none"
               style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none',
+                WebkitAppearance: 'none',
+                resize: 'none',
                 color: '#fff',
                 fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
                 fontWeight: 300,
@@ -132,27 +138,36 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 maxHeight: 120,
                 minHeight: 40,
                 padding: '10px 0',
+                caretColor: '#22c55e',
               }}
             />
 
-            {/* Send button — transforms on text input */}
+            {/* Send button — glass when empty, lit when typing */}
             <button
               onClick={handleSend}
               disabled={!hasText || disabled}
-              className="flex-shrink-0 mb-1.5 flex items-center justify-center cursor-pointer"
               style={{
                 width: 44,
                 height: 44,
                 borderRadius: 18,
                 marginLeft: 12,
-                background: hasText ? '#fff' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${hasText ? '#fff' : 'rgba(255,255,255,0.05)'}`,
+                flexShrink: 0,
+                marginBottom: 6,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: hasText ? 'pointer' : 'default',
+                border: 'none',
+                outline: 'none',
+                background: hasText
+                  ? '#fff'
+                  : 'rgba(255,255,255,0.06)',
                 boxShadow: hasText
                   ? '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(188,19,254,0.3)'
-                  : 'none',
+                  : '0 0 0 1px rgba(255,255,255,0.06)',
                 transform: hasText ? 'scale(1.05)' : 'scale(1)',
                 transition: 'all 0.3s cubic-bezier(0.25,1,0.5,1)',
-                opacity: !hasText && disabled ? 0.2 : 1,
+                opacity: !hasText ? 0.5 : 1,
               }}
             >
               <svg
@@ -164,7 +179,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
-                  stroke: hasText ? '#000' : 'rgba(255,255,255,0.4)',
+                  stroke: hasText ? '#000' : 'rgba(255,255,255,0.25)',
                   transform: hasText ? 'translateY(-2px)' : 'none',
                   transition: 'all 0.3s ease',
                 }}

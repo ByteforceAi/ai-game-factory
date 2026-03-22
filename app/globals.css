@@ -4,6 +4,16 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+/* Kill all browser default focus outlines */
+textarea, input, button, select, a {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+textarea:focus, input:focus, button:focus {
+  outline: none !important;
+  box-shadow: none;
+}
+
 /* ============================================
    CLAUDE DARK MINIMAL DESIGN SYSTEM
    ============================================ */
