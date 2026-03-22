@@ -11,33 +11,58 @@ interface AIMessageProps {
   onSuggestionClick?: (prompt: string) => void;
 }
 
+// ── Build sequence lines for game generation ──
+const BUILD_LINES = [
+  '프로젝트 스캐폴딩...',
+  '게임 엔진 초기화...',
+  '에셋 컴파일...',
+  '물리 엔진 연결...',
+  '렌더 파이프라인 구성...',
+  '빌드 완료 ✓',
+];
+
 export default function AIMessage({
   response,
   onArtifactOpen,
   onStreamComplete,
   onSuggestionClick,
 }: AIMessageProps) {
-  const [phase, setPhase] = useState<'dots' | 'streaming' | 'done'>('dots');
+  const [phase, setPhase] = useState<'dots' | 'building' | 'streaming' | 'done'>('dots');
+  const [buildLines, setBuildLines] = useState<string[]>([]);
   const [showArtifactBtn, setShowArtifactBtn] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef(false);
 
   useEffect(() => {
     cancelRef.current = false;
-    let timers: ReturnType<typeof setTimeout>[] = [];
 
     const run = async () => {
-      // Phase 1: Show thinking dots — longer for artifact responses (뜸 들이기)
       const hasArtifact = response.artifact || response.gameHtml;
-      const thinkTime = hasArtifact
-        ? 2500 + Math.random() * 2500  // 2.5~5s for game/code generation
-        : 1000 + Math.random() * 800;  // 1~1.8s for text responses
-      await sleep(thinkTime);
-      if (cancelRef.current) return;
+
+      if (hasArtifact) {
+        // ── Phase 1a: Thinking dots (brief) ──
+        await sleep(800 + Math.random() * 400);
+        if (cancelRef.current) return;
+
+        // ── Phase 1b: Build sequence (드르륵 준비) ──
+        setPhase('building');
+        for (let i = 0; i < BUILD_LINES.length; i++) {
+          await sleep(400 + Math.random() * 300);
+          if (cancelRef.current) return;
+          setBuildLines(prev => [...prev, BUILD_LINES[i]]);
+        }
+        await sleep(600);
+        if (cancelRef.current) return;
+      } else {
+        // Text-only: normal thinking dots
+        await sleep(1000 + Math.random() * 800);
+        if (cancelRef.current) return;
+      }
+
       setPhase('streaming');
 
       // Phase 2: Stream character by character via DOM
-      await sleep(50); // wait for DOM mount
+      await sleep(50);
       if (cancelRef.current) return;
 
       const el = textRef.current;
@@ -58,7 +83,6 @@ export default function AIMessage({
         if (inTag) continue;
 
         visibleCount++;
-        // Update every 2nd visible character — realistic AI streaming speed
         if (visibleCount % 2 === 0) {
           if (visibleCount % 20 === 0) playTick();
           el.innerHTML =
@@ -68,16 +92,14 @@ export default function AIMessage({
             block: 'end',
             behavior: 'smooth',
           });
-          // Realistic speed: 25~45ms per update (like real Claude)
           await sleep(25 + Math.random() * 20);
         }
       }
 
       if (cancelRef.current) return;
-      // Final: remove cursor
       el.innerHTML = output;
       setPhase('done');
-      playPing(); // completion sound
+      playPing();
       onStreamComplete?.();
 
       // Phase 3: Show artifact button
@@ -100,27 +122,24 @@ export default function AIMessage({
 
     return () => {
       cancelRef.current = true;
-      timers.forEach(clearTimeout);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex gap-3 items-start animate-msg-in">
-      {/* Avatar */}
+      {/* Avatar — Core spark orb (matches boot visual) */}
       <div
-        className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5"
-        style={{ background: 'var(--accent-coral)' }}
-      >
-        <svg viewBox="0 0 16 16" fill="none" width={16} height={16}>
-          <path d="M8 2c0 0 .7 5 0 6-.7-1 0-6 0-6Z" fill="#fff" />
-          <path d="M8 14c0 0-.7-5 0-6 .7 1 0 6 0 6Z" fill="#fff" />
-          <path d="M2 8c0 0 5-.7 6 0-1 .7-6 0-6 0Z" fill="#fff" />
-          <path d="M14 8c0 0-5 .7-6 0 1-.7 6 0 6 0Z" fill="#fff" />
-        </svg>
-      </div>
+        className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5"
+        style={{
+          background: 'radial-gradient(circle, #22c55e, #22c55e88, transparent)',
+          boxShadow: '0 0 12px rgba(34,197,94,0.3), 0 0 4px rgba(34,197,94,0.5)',
+          animation: 'breatheCore 2.5s ease-in-out infinite alternate',
+        }}
+      />
 
       {/* Body */}
       <div className="flex-1 min-w-0">
+        {/* Thinking dots */}
         {phase === 'dots' && (
           <div className="flex gap-1 py-1">
             {[0, 1, 2].map((i) => (
@@ -136,6 +155,49 @@ export default function AIMessage({
           </div>
         )}
 
+        {/* Build sequence — 드르륵 준비 중 */}
+        {phase === 'building' && (
+          <div
+            className="rounded-lg px-4 py-3 font-mono text-[11px] leading-[2]"
+            style={{
+              background: 'rgba(0,0,0,0.4)',
+              border: '1px solid rgba(34,197,94,0.1)',
+            }}
+          >
+            {buildLines.map((line, i) => (
+              <div
+                key={i}
+                className="animate-[fadeInUp_0.3s_ease_forwards]"
+                style={{
+                  opacity: 0,
+                  color: line.includes('✓')
+                    ? 'rgba(34,197,94,0.7)'
+                    : 'rgba(34,197,94,0.35)',
+                }}
+              >
+                <span style={{ color: 'rgba(34,197,94,0.2)', marginRight: 8 }}>{'>'}</span>
+                {line}
+              </div>
+            ))}
+            {/* Pulsing dots at end */}
+            {buildLines.length < BUILD_LINES.length && (
+              <div className="flex gap-1 mt-1">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-[4px] h-[4px] rounded-full animate-dot-bounce"
+                    style={{
+                      background: 'rgba(34,197,94,0.3)',
+                      animationDelay: `${i * 0.15}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Streamed text */}
         {(phase === 'streaming' || phase === 'done') && (
           <div>
             <div
@@ -172,7 +234,7 @@ export default function AIMessage({
               </button>
             )}
 
-            {/* Terminal-style typing prompt — student must type this */}
+            {/* Terminal-style typing prompt */}
             {phase === 'done' && response.typingPrompt && (
               <div
                 className="mt-4 rounded-xl overflow-hidden"
@@ -182,7 +244,6 @@ export default function AIMessage({
                   boxShadow: '0 0 20px rgba(34,197,94,0.05)',
                 }}
               >
-                {/* Terminal header */}
                 <div
                   className="flex items-center gap-2 px-4 py-2"
                   style={{ borderBottom: '1px solid rgba(34,197,94,0.1)' }}
@@ -192,7 +253,6 @@ export default function AIMessage({
                     input command
                   </span>
                 </div>
-                {/* Command to type */}
                 <div className="px-5 py-4">
                   <div className="font-mono text-[11px] mb-2" style={{ color: 'rgba(34,197,94,0.3)' }}>
                     {'>'} 아래 명령어를 입력창에 타이핑하세요:
@@ -217,7 +277,7 @@ export default function AIMessage({
               </div>
             )}
 
-            {/* Suggestion hints — read-only, student must type manually */}
+            {/* Suggestion hints */}
             {phase === 'done' && !response.typingPrompt && response.suggestions && response.suggestions.length > 0 && (
               <div className="mt-4 px-3 py-3 rounded-claude-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}>
                 <div className="text-[11px] text-[var(--text-muted)] mb-2">
