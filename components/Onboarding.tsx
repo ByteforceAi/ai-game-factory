@@ -148,28 +148,28 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
           stage !== 'boot' ? 'opacity-0 pointer-events-none' : ''
         }`}
       >
-        {/* Aurora core spark — keeps the original rainbow feel */}
+        {/* Aurora core spark — original rainbow orb restored */}
         <div
-          className={`rounded-full mb-6 transition-all duration-[2000ms] ease-[cubic-bezier(0.25,1,0.5,1)] ${
-            sparkExplode ? '' : ''
-          }`}
+          className="rounded-full mb-8"
           style={{
-            width: sparkExplode ? 8 : 8,
-            height: sparkExplode ? 8 : 8,
-            background: '#22c55e',
-            boxShadow: sparkExplode
-              ? '0 0 200px rgba(34,197,94,0.8), 0 0 400px rgba(34,197,94,0.4)'
-              : '0 0 20px rgba(34,197,94,0.5), 0 0 40px rgba(34,197,94,0.3)',
-            transform: sparkExplode ? 'scale(60)' : 'scale(1)',
+            width: 30,
+            height: 30,
+            background: 'linear-gradient(90deg, #00f3ff, #22c55e, #bc13fe, #22c55e, #00f3ff)',
+            backgroundSize: '300% 300%',
+            animation: sparkExplode
+              ? undefined
+              : 'gradientFlow 3s ease infinite, breatheCore 2s ease-in-out infinite alternate',
+            filter: 'blur(8px)',
+            transform: sparkExplode ? 'scale(80)' : 'scale(1)',
             opacity: sparkExplode ? 0 : 1,
-            transition: 'all 2s cubic-bezier(0.25,1,0.5,1)',
+            transition: 'all 1.5s cubic-bezier(0.25,1,0.5,1)',
           }}
         />
 
-        {/* Terminal boot lines */}
+        {/* Terminal boot lines — improved visibility */}
         <div
-          className="text-left font-mono text-[12px] leading-[2]"
-          style={{ color: 'rgba(34,197,94,0.15)' }}
+          className="text-left font-mono text-[12px] leading-[2.2]"
+          style={{ color: 'rgba(34,197,94,0.35)' }}
         >
           {bootLines.map((line, i) => (
             <div
@@ -178,7 +178,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
               style={{
                 opacity: 0,
                 animationDelay: `${i * 0.05}s`,
-                color: line.includes('✓') ? 'rgba(34,197,94,0.6)' : undefined,
+                color: line.includes('✓') ? 'rgba(34,197,94,0.8)' : 'rgba(34,197,94,0.4)',
               }}
             >
               {line}
@@ -247,9 +247,9 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
               className="text-[0.85rem] font-light mb-8 leading-relaxed"
               style={{ color: 'rgba(228,228,231,0.4)' }}
             >
-              말로 설명하면 AI가 코드를 만들어줘요.
+              대화로 코드를 만들고, 실시간으로 수정하는
               <br />
-              입장할 이름을 알려주세요!
+              AI 코딩 플레이그라운드
             </p>
 
             <input

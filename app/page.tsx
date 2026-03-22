@@ -172,19 +172,23 @@ export default function Home() {
       setPhase(2);
       addLog('system', `학생 "${userName}" 입장`);
       if (initialPrompt) {
+        // Don't auto-send! Just put the text in the input as a hint
+        // Student must type it themselves (타자 연습)
         pendingPromptRef.current = initialPrompt;
       }
     },
     [userName, addLog]
   );
 
-  // Send pending prompt after phase transition
+  // After phase transition, set hint text in input (NOT auto-send)
   useEffect(() => {
-    if (phase === 2 && pendingPromptRef.current && doSendRef.current) {
+    if (phase === 2 && pendingPromptRef.current) {
       const prompt = pendingPromptRef.current;
-      const send = doSendRef.current;
       pendingPromptRef.current = null;
-      setTimeout(() => send(prompt), 400);
+      // Wait for InputArea to mount, then set hint text
+      setTimeout(() => {
+        inputAreaRef.current?.setHint(prompt);
+      }, 500);
     }
   }, [phase]);
 
@@ -317,7 +321,7 @@ export default function Home() {
             const theme = VISUAL_THEMES.find((t) => t.id === themeId);
             if (theme) {
               // Apply theme to iframe via style injection
-              const iframe = document.querySelector<HTMLIFrameElement>('iframe');
+              const iframe = document.querySelector<HTMLIFrameElement>('.artifact-panel-open iframe') || document.querySelector<HTMLIFrameElement>('iframe');
               if (iframe) {
                 try {
                   // Try direct DOM access (works with allow-same-origin)
@@ -348,11 +352,14 @@ export default function Home() {
                   { icon: '❄️', label: '눈 효과', prompt: '눈 효과 적용해줘' },
                 ],
               };
-              const userMsg: ChatMessage = { id: Date.now().toString(), type: 'user', text };
+              const pScore = scorePrompt(text);
+              const userMsg: ChatMessage = { id: Date.now().toString(), type: 'user', text, promptScore: pScore };
               const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), type: 'ai', text: themeResponse.text, response: themeResponse };
               setMessages((prev) => [...prev, userMsg, aiMsg]);
               addLog('user', text);
               addLog('ai', `[THEME] ${theme.label}`);
+              timeline.record({ type: 'user', label: text.slice(0, 40), score: pScore.score });
+              timeline.record({ type: 'theme', label: theme.label });
               setTimeout(() => scrollToBottom(), 100);
               return;
             }
