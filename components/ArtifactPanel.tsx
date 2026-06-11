@@ -173,17 +173,17 @@ export default function ArtifactPanel({
         transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      {/* Animated Gradient Border */}
+      {/* Animated Gradient Border — 브랜드 그린→시안 플로우 */}
       {open && (
         <div
-          className="absolute top-0 left-0 w-0.5 h-full z-[100]"
+          className="artifact-edge absolute top-0 left-0 w-0.5 h-full z-[100]"
           style={{
             background:
-              'linear-gradient(180deg, var(--accent-coral) 0%, var(--accent-purple) 33%, var(--accent-blue) 66%, var(--accent-coral) 100%)',
+              'linear-gradient(180deg, var(--accent-primary) 0%, var(--neon-cyan) 50%, var(--accent-primary) 100%)',
             backgroundSize: '100% 300%',
             animation: 'gradientBorderFlow 4s linear infinite',
             boxShadow:
-              '0 0 8px rgba(224,122,95,0.2), 0 0 20px rgba(155,142,196,0.1)',
+              '0 0 8px rgba(34,197,94,0.25), 0 0 20px rgba(0,243,255,0.08)',
           }}
         />
       )}
@@ -200,7 +200,10 @@ export default function ArtifactPanel({
           <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--text-primary)]">
             <div
               className="w-5 h-5 rounded flex items-center justify-center text-[10px] text-white"
-              style={{ background: 'var(--accent-orange)' }}
+              style={{
+                background: 'linear-gradient(135deg, #22c55e, #15803d)',
+                boxShadow: '0 0 8px rgba(34,197,94,0.25)',
+              }}
             >
               ◆
             </div>

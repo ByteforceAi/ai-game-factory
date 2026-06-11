@@ -18,43 +18,39 @@ textarea, input, button, select, a {
 }
 
 /* ============================================
-   CLAUDE DARK MINIMAL DESIGN SYSTEM
+   DEEP SPACE DESIGN SYSTEM — 그린 커서 아이덴티티
+   온보딩(#0a0a0a 딥블랙)과 같은 세계관으로 채팅 셸 통일.
+   쿨톤 다크 스케일 위에 브랜드 그린(#22c55e)이 주인공.
    ============================================ */
 :root {
-  /* Background */
-  --bg-primary: #2b2b2b;
-  --bg-secondary: #343434;
-  --bg-tertiary: #3d3d3d;
-  --bg-surface: #404040;
-  --bg-input: #393939;
-  --bg-sidebar: #252525;
-  --bg-sidebar-hover: #303030;
-  --bg-sidebar-active: #353535;
-  --bg-bubble-user: #404040;
+  /* Background — 딥블랙(--bg-deep) 바로 위에 쌓이는 표고 단계 */
+  --bg-deep: #0a0a0a;
+  --bg-primary: #0c0e10;
+  --bg-secondary: #111418;
+  --bg-tertiary: #191d22;
+  --bg-surface: #1f242a;
+  --bg-input: #12161b;
+  --bg-sidebar: #08090a;
+  --bg-sidebar-hover: #13171c;
+  --bg-sidebar-active: #1a1f25;
+  --bg-bubble-user: #1e2329;
   --bg-bubble-ai: transparent;
 
   /* Text */
-  --text-primary: #ececec;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #707070;
-  --text-muted: #585858;
+  --text-primary: #eef0f2;
+  --text-secondary: #9aa1a9;
+  --text-tertiary: #6b7278;
+  --text-muted: #565c63;
 
   /* Border */
-  --border: #3a3a3a;
-  --border-light: #444444;
-
-  /* Accent */
-  --accent-coral: #e07a5f;
-  --accent-orange: #d4815a;
-  --accent-purple: #9b8ec4;
-  --accent-blue: #6b9bd2;
-  --accent-green: #6bbd7b;
+  --border: #21262c;
+  --border-light: #2c323a;
 
   /* Brand — green cursor identity + neon spectrum */
-  --bg-deep: #0a0a0a;
   --accent-primary: #22c55e;
   --accent-primary-dim: rgba(34, 197, 94, 0.45);
   --accent-primary-glow: rgba(34, 197, 94, 0.3);
+  --accent-green: #22c55e; /* 레거시 별칭 — 브랜드 그린으로 통일 */
   --neon-cyan: #00f3ff;
   --neon-magenta: #bc13fe;
   --neon-pink: #ff007f;
@@ -71,8 +67,10 @@ textarea, input, button, select, a {
   --radius-lg: 20px;
   --radius-xl: 24px;
 
-  /* Transition */
+  /* Motion */
   --transition: all 0.2s ease;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
@@ -214,15 +212,33 @@ html, body {
 .syn-attr { color: #ffcb6b; }
 
 /* ============================================
-   RESPONSIVE (mobile < 900px)
+   RESPONSIVE (< 900px) — 게임+채팅 동시 사용
+   전체화면 점유 대신 상하 분할: 게임이 위(52dvh),
+   채팅+입력창이 아래. "게임 보며 말로 수정"이 태블릿에서도 성립.
    ============================================ */
 @media (max-width: 900px) {
   .artifact-panel-open {
     width: 100% !important;
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 50 !important;
+    height: min(52dvh, 560px);
+    flex: 0 0 auto;
+    order: -1; /* 채팅보다 위 */
+    border-bottom: 1px solid var(--border);
   }
+  /* 세로 모드에선 좌측 그라데이션 엣지 대신 하단 보더 사용 */
+  .artifact-panel-open .artifact-edge {
+    display: none;
+  }
+}
+
+/* ============================================
+   MOTION SYSTEM — 누르는 맛
+   ============================================ */
+.pressable {
+  transition: transform 0.15s var(--ease-out), background-color 0.2s ease,
+    color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pressable:active {
+  transform: scale(0.96);
 }
 
 /* ============================================

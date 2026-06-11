@@ -64,7 +64,7 @@ export default function PromptLevel({ score, level, feedback, tip }: PromptLevel
 
       {/* Tip */}
       {tip && (
-        <span className="text-[10px] text-[var(--accent-coral)] ml-auto">
+        <span className="text-[10px] text-[var(--neon-amber)] ml-auto">
           💡 {tip}
         </span>
       )}

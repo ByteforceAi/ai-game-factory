@@ -108,7 +108,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
       className={`fixed inset-0 z-[1000] transition-all duration-[600ms] ${
         fadeOut ? 'opacity-0 scale-[1.02] pointer-events-none' : ''
       }`}
-      style={{ background: '#0a0a0a' }}
+      style={{ background: 'var(--bg-deep)' }}
     >
       {/* ── Ambient Background ── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">

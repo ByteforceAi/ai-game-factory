@@ -229,7 +229,10 @@ export default function AIMessage({
               >
                 <div
                   className="w-5 h-5 rounded flex items-center justify-center text-[11px] text-white"
-                  style={{ background: 'var(--accent-orange)' }}
+                  style={{
+                    background: 'linear-gradient(135deg, #22c55e, #15803d)',
+                    boxShadow: '0 0 8px rgba(34,197,94,0.25)',
+                  }}
                 >
                   ◆
                 </div>
@@ -291,7 +294,7 @@ export default function AIMessage({
                     <div
                       key={i}
                       className="text-[13px] text-[var(--text-secondary)] font-mono pl-2"
-                      style={{ borderLeft: '2px solid var(--accent-coral)', paddingLeft: '8px' }}
+                      style={{ borderLeft: '2px solid var(--accent-primary)', paddingLeft: '8px' }}
                     >
                       &ldquo;{s.prompt}&rdquo;
                     </div>

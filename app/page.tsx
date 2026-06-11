@@ -588,7 +588,7 @@ export default function Home() {
                   onClick={() => setShowDashboard(d => !d)}
                   title="실시간 대시보드"
                   aria-label="실시간 대시보드"
-                  className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] cursor-pointer transition-all duration-200 active:scale-95 ${showDashboard ? 'text-[var(--accent-coral)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
+                  className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] cursor-pointer transition-all duration-200 active:scale-95 ${showDashboard ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
                   style={{ border: 'none', background: showDashboard ? 'var(--bg-surface)' : 'transparent' }}
                 >
                   📊
@@ -607,13 +607,16 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1 flex overflow-hidden relative">
+          {/* Content Area — <900px에선 세로 분할(게임 위, 채팅 아래) */}
+          <div className="flex-1 flex max-[900px]:flex-col overflow-hidden relative">
             {/* Chat Panel */}
             <div
-              className="flex-1 flex flex-col min-w-0"
+              className="flex-1 flex flex-col min-w-0 min-h-0"
               style={{
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                // 정적 앰비언트 헤일로 — 온보딩의 그린 코어와 같은 세계라는 신호
+                background:
+                  'radial-gradient(640px 300px at 50% -100px, rgba(34,197,94,0.05), transparent 70%)',
               }}
             >
               {/* Messages */}

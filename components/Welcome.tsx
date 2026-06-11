@@ -51,7 +51,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
           ? 'opacity-0 scale-[1.02] pointer-events-none'
           : 'opacity-0 scale-[0.98] pointer-events-none'
       }`}
-      style={{ background: '#0a0a0a', overflow: 'auto' }}
+      style={{ background: 'var(--bg-deep)', overflow: 'auto' }}
     >
       {/* Ambient aurora */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">

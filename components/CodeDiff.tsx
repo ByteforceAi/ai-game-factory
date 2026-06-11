@@ -109,7 +109,7 @@ export default function CodeDiff({ oldCode, newCode, label, onDone }: CodeDiffPr
           color: 'var(--text-secondary)',
         }}
       >
-        <span style={{ color: 'var(--accent-coral)' }}>⚡</span>
+        <span style={{ color: 'var(--neon-amber)' }}>⚡</span>
         코드 변경사항 — {label}
         {phase === 'done' && (
           <span className="ml-auto text-[var(--accent-green)]">✓ 적용 완료</span>

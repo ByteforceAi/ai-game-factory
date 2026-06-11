@@ -7,26 +7,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        claude: {
-          bg: '#2b2b2b',
-          'bg-secondary': '#343434',
-          'bg-tertiary': '#3d3d3d',
-          surface: '#404040',
-          input: '#393939',
-          sidebar: '#252525',
-          'sidebar-hover': '#303030',
-          'sidebar-active': '#353535',
-          border: '#3a3a3a',
-          'border-light': '#444444',
-          coral: '#e07a5f',
-          orange: '#d4815a',
-          purple: '#9b8ec4',
-          blue: '#6b9bd2',
-          green: '#6bbd7b',
-          'text-primary': '#ececec',
-          'text-secondary': '#a0a0a0',
-          'text-tertiary': '#707070',
-          'text-muted': '#585858',
+        // 브랜드 그린 (CSS 변수 --accent-primary와 동일)
+        brand: {
+          DEFAULT: '#22c55e',
+          dim: 'rgba(34,197,94,0.45)',
         },
         // 공유 게임 플레이어(/play)의 라이트 글래스 카드 팔레트
         glass: {
