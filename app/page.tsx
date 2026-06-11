@@ -207,7 +207,7 @@ export default function Home() {
           type: 'ai',
           text: '',
           response: {
-            text: `${userName}님, 아래 명령어를 **직접 입력**해보세요! ⌨️\n\nAI에게 말하듯이 타이핑하면 코드가 만들어져요.`,
+            text: `${userName}님, 아래 문장을 **직접 입력**해보세요! ⌨️\n\nAI에게 말하듯이 쓰면 코드가 만들어져요.`,
             typingPrompt: prompt, // Special field for terminal-style prompt display
           },
         };
@@ -708,7 +708,7 @@ export default function Home() {
             className="w-[5px] h-[5px] rounded-full animate-log-pulse"
             style={{ background: 'var(--accent-green)' }}
           />
-          <span>{logCount}건 기록됨</span>
+          <span>수업 기록 {logCount}건</span>
         </div>
       )}
     </>

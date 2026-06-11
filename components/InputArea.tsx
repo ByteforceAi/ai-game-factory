@@ -120,8 +120,9 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               rows={1}
-              placeholder="메시지를 입력하세요..."
+              placeholder="AI에게 말 걸어보세요 · 예) 속도 올려줘"
               spellCheck={false}
+              aria-label="AI에게 보낼 메시지"
               style={{
                 flex: 1,
                 background: 'transparent',
@@ -146,6 +147,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
             <button
               onClick={handleSend}
               disabled={!hasText || disabled}
+              aria-label="보내기"
               style={{
                 width: 44,
                 height: 44,

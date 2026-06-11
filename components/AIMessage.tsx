@@ -255,13 +255,13 @@ export default function AIMessage({
                   style={{ borderBottom: '1px solid rgba(34,197,94,0.1)' }}
                 >
                   <div className="w-[6px] h-[6px] rounded-full" style={{ background: 'rgba(34,197,94,0.4)' }} />
-                  <span className="font-mono text-[10px] tracking-[2px] uppercase" style={{ color: 'rgba(34,197,94,0.35)' }}>
-                    input command
+                  <span className="font-mono text-[10px] tracking-[2px]" style={{ color: 'rgba(34,197,94,0.45)' }}>
+                    오늘의 입력 미션
                   </span>
                 </div>
                 <div className="px-5 py-4">
                   <div className="font-mono text-[11px] mb-2" style={{ color: 'rgba(34,197,94,0.3)' }}>
-                    {'>'} 아래 명령어를 입력창에 타이핑하세요:
+                    {'>'} 아래 문장을 입력창에 똑같이 따라 써보세요:
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[15px] font-medium" style={{

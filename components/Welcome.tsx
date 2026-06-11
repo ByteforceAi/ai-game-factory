@@ -82,7 +82,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
             className="text-[2rem] font-light tracking-tight mb-3"
             style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}
           >
-            환영합니다,{' '}
+            반가워요,{' '}
             <strong
               className="font-semibold"
               style={{
@@ -99,7 +99,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
             className="text-[0.95rem] font-light"
             style={{ color: 'rgba(255,255,255,0.5)' }}
           >
-            체험하고 싶은 모듈을 선택하세요
+            오늘은 어떤 걸 만들어볼까요?
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
             <button
               key={cat.id}
               onClick={() => handleCategoryClick(cat.id)}
-              className="px-5 py-2.5 rounded-full text-[0.9rem] cursor-pointer transition-all duration-300"
+              className="pressable px-5 py-2.5 rounded-full text-[0.9rem] cursor-pointer"
               style={{
                 background:
                   selectedCategory === cat.id
@@ -156,11 +156,11 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
         {!selectedCategory && (
           <div
             className="text-center py-16 animate-[fadeInUp_0.6s_ease_forwards]"
-            style={{ color: 'rgba(255,255,255,0.2)' }}
+            style={{ color: 'rgba(255,255,255,0.25)' }}
           >
-            <div className="text-[2rem] mb-3">↑</div>
+            <div className="text-[2rem] mb-3 animate-bounce">↑</div>
             <div className="text-[0.9rem] font-light">
-              위 카테고리를 선택해서 시작하세요
+              위에서 먼저 카테고리를 골라주세요
             </div>
           </div>
         )}
@@ -176,7 +176,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
           </div>
           <button
             onClick={handleDirectInput}
-            className="px-6 py-3 rounded-full text-[0.9rem] cursor-pointer transition-all duration-300 hover:border-[rgba(255,255,255,0.3)]"
+            className="pressable px-6 py-3 rounded-full text-[0.9rem] cursor-pointer hover:border-[rgba(255,255,255,0.3)]"
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -229,6 +229,20 @@ function ModuleCard({
         el.style.transform = 'translateY(0)';
         el.style.background = 'rgba(20,20,25,0.5)';
         el.style.borderColor = 'rgba(255,255,255,0.06)';
+      }}
+      // 눌림 피드백 — 터치/마우스 공통 (inline transform이라 :active로는 못 덮음)
+      onPointerDown={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.transform = 'scale(0.97)';
+        el.style.borderColor = 'rgba(34,197,94,0.35)';
+      }}
+      onPointerUp={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.transform = 'translateY(-2px)';
+      }}
+      onPointerCancel={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.transform = 'translateY(0)';
       }}
     >
       <div

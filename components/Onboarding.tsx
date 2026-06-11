@@ -8,7 +8,7 @@ interface OnboardingProps {
 
 type Stage = 'launch' | 'boot' | 'login';
 
-// ── 부팅: 코어스파크 색상 전환으로 진행도 표현 (텍스트 없음) ──
+// ── 부팅: 코어스파크 색상 전환 + 단계 라벨 (아이들이 진행 의미를 읽도록) ──
 // 교실 환경 제약: 전체 시퀀스가 ~7초를 넘으면 안 됨 (Enter/버튼으로 스킵 가능)
 const BOOT_PHASES: {
   color: string; // gradient primary color
@@ -16,12 +16,13 @@ const BOOT_PHASES: {
   duration: number;
   scale: number;
   blur: number;
+  label: string;
 }[] = [
-  { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 1100, scale: 1,   blur: 8 },   // Cyan — 연결
-  { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 1300, scale: 1.4, blur: 10 },  // Green — 로딩
-  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 1100, scale: 1.8, blur: 12 },  // Purple — 준비
-  { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 1000, scale: 2.2, blur: 14 },  // Orange — 활성화
-  { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 900,  scale: 2.8, blur: 18 },  // White — 완료
+  { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 1100, scale: 1,   blur: 8,  label: 'AI 깨우는 중' },
+  { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 1300, scale: 1.4, blur: 10, label: '코딩 도구 준비' },
+  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 1100, scale: 1.8, blur: 12, label: '게임 엔진 연결' },
+  { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 1000, scale: 2.2, blur: 14, label: '마지막 점검' },
+  { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 900,  scale: 2.8, blur: 18, label: '준비 완료!' },
 ];
 
 export default function Onboarding({ onSubmit }: OnboardingProps) {
@@ -156,10 +157,18 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         </div>
 
         <div
-          className="text-[0.8rem] tracking-[4px] uppercase mb-14 font-mono"
+          className="text-[0.8rem] tracking-[4px] uppercase mb-5 font-mono"
           style={{ color: 'rgba(228,228,231,0.4)' }}
         >
           arena
+        </div>
+
+        {/* 교육용 태그라인 — 첫 화면에서 수업의 정체를 말해준다 */}
+        <div
+          className="text-[0.92rem] font-light mb-14 tracking-[0.5px]"
+          style={{ color: 'rgba(228,228,231,0.55)' }}
+        >
+          AI와 대화하며 배우는 코딩 교실
         </div>
 
         <div
@@ -177,6 +186,30 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             Enter
           </span>
           눌러서 입장
+        </div>
+
+        {/* 3단계 여정 미리보기 — 아이들의 긴장을 푸는 지도 */}
+        <div
+          className="absolute bottom-10 flex items-center gap-2.5 text-[11.5px] font-light"
+          style={{ color: 'rgba(228,228,231,0.35)' }}
+        >
+          {['이름 입력', '만들 것 고르기', 'AI에게 말하기'].map((step, i) => (
+            <span key={step} className="flex items-center gap-2.5">
+              {i > 0 && <span style={{ color: 'rgba(228,228,231,0.15)' }}>—</span>}
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="w-[15px] h-[15px] rounded-full flex items-center justify-center text-[9px] font-mono font-medium"
+                  style={{
+                    background: 'rgba(34,197,94,0.12)',
+                    color: 'rgba(34,197,94,0.8)',
+                  }}
+                >
+                  {i + 1}
+                </span>
+                {step}
+              </span>
+            </span>
+          ))}
         </div>
       </div>
 
@@ -222,10 +255,19 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
           ))}
         </div>
 
+        {/* 단계 라벨 — 색만으로는 모르는 아이들을 위한 한 줄 */}
+        <div
+          key={bootPhaseIdx}
+          className="mt-5 text-[12px] font-light tracking-[1px] animate-[fadeInUp_0.5s_ease]"
+          style={{ color: currentPhase.color, opacity: 0.75 }}
+        >
+          {currentPhase.label}
+        </div>
+
         {/* Skip — classroom must never wait */}
         <button
           onClick={skipBoot}
-          className="absolute bottom-8 right-8 px-4 py-2.5 rounded-full font-mono text-[11px] tracking-[2px] uppercase cursor-pointer transition-all duration-300 hover:bg-[rgba(255,255,255,0.06)]"
+          className="pressable absolute bottom-8 right-8 px-4 py-2.5 rounded-full font-mono text-[11px] tracking-[2px] uppercase cursor-pointer hover:bg-[rgba(255,255,255,0.06)]"
           style={{
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.02)',
@@ -294,11 +336,11 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             </h1>
             <p
               className="text-[0.85rem] font-light mb-8 leading-relaxed"
-              style={{ color: 'rgba(228,228,231,0.4)' }}
+              style={{ color: 'rgba(228,228,231,0.45)' }}
             >
-              대화로 코드를 만들고, 실시간으로 수정하는
+              AI와 대화하며 나만의 게임을 만드는
               <br />
-              AI 코딩 플레이그라운드
+              오늘의 코딩 수업
             </p>
 
             <input
@@ -309,9 +351,10 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="이름을 입력하세요"
+              placeholder="이름 또는 별명 (예: 지우)"
               maxLength={20}
               autoComplete="off"
+              aria-label="학생 이름"
               className="w-full text-center text-[0.95rem] font-light outline-none mb-4 transition-all duration-300"
               style={{
                 background: isFocused ? 'rgba(34,197,94,0.03)' : 'rgba(255,255,255,0.04)',
@@ -328,7 +371,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             <button
               onClick={handleSubmit}
               disabled={!name.trim()}
-              className="gate-btn-shimmer w-full py-3.5 rounded-[10px] text-[0.9rem] font-semibold cursor-pointer transition-all duration-200 hover:shadow-[0_0_30px_rgba(34,197,94,0.25)] hover:-translate-y-px disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="gate-btn-shimmer w-full py-3.5 rounded-[10px] text-[0.9rem] font-semibold cursor-pointer transition-all duration-200 hover:shadow-[0_0_30px_rgba(34,197,94,0.25)] hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               style={{
                 background: '#22c55e',
                 color: '#0a0a0a',
@@ -338,7 +381,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
                 overflow: 'hidden',
               }}
             >
-              입장하기
+              수업 시작하기
             </button>
 
             <div
