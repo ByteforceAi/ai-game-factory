@@ -47,6 +47,13 @@ export default function RootLayout({
           color: 'var(--text-primary)',
         }}
       >
+        {/* 첫 페인트 전에 저장된 테마(app-theme)를 적용 — FOUC 방지 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('app-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}",
+          }}
+        />
         {children}
       </body>
     </html>

@@ -37,6 +37,16 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
   const launched = useRef(false);
   const bootTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // 학교(기관) 에디션 — 교사 패널 설정 우선, env 폴백
+  const [schoolName, setSchoolName] = useState('');
+  useEffect(() => {
+    try {
+      setSchoolName(
+        localStorage.getItem('school-name') || process.env.NEXT_PUBLIC_SCHOOL_NAME || ''
+      );
+    } catch {}
+  }, []);
+
   const currentPhase = BOOT_PHASES[bootPhaseIdx] || BOOT_PHASES[BOOT_PHASES.length - 1];
 
   // ── Launch → Boot (cinematic) → Login ──
@@ -170,6 +180,20 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         >
           arena
         </div>
+
+        {/* 학교 에디션 칩 — 우리 학교 수업이라는 소속감 */}
+        {schoolName && (
+          <div
+            className="px-3.5 py-1.5 rounded-full font-mono text-[10.5px] tracking-[1.5px] mb-4"
+            style={{
+              border: '1px solid rgba(34,197,94,0.25)',
+              background: 'rgba(34,197,94,0.06)',
+              color: 'rgba(34,197,94,0.8)',
+            }}
+          >
+            {schoolName}
+          </div>
+        )}
 
         {/* 교육용 태그라인 — 첫 화면에서 수업의 정체를 말해준다 */}
         <div
@@ -336,6 +360,14 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
               />
             </div>
 
+            {schoolName && (
+              <div
+                className="font-mono text-[10px] tracking-[2px] mb-2"
+                style={{ color: 'rgba(34,197,94,0.6)' }}
+              >
+                {schoolName}
+              </div>
+            )}
             <h1
               className="text-[1.3rem] font-medium mb-1.5 tracking-tight"
               style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}

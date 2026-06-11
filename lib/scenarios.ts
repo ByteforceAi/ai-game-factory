@@ -51,17 +51,13 @@ export const SCENARIOS: Scenario[] = [
     gameId: 'neon-shooter',
     prompt: '우주 슈팅 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님을 위한 **네온 슈터** 게임을 만들어볼게요! 🚀
+      text: `${userName}님이 말한 대로 우주 슈팅 게임을 만들게요! 🚀
 
-Phaser.js 물리엔진 기반의 수직 스크롤 슈팅 게임이에요.
+지금 **물리엔진**을 깔고 있어요 — 총알이 날아가고 적이 부서지는 움직임을 전부 계산해주는 부품이에요.
 
-**주요 기능:**
-• 적 우주선 처치 + 보스전
-• 파워업 아이템 (3연발, 쉴드, 폭탄)
-• 네온 파티클 이펙트
-• 난이도 점진적 상승
+오래 버틸수록 적이 빨라지고, 가끔 **보스**도 등장해요. 파워업을 먹으면 총알이 세 갈래로!
 
-코드를 확인해보세요 👉`,
+완성되면 한 판 해보고, 마음에 안 드는 건 말로 바꿔보세요 👉`,
       artifact: true,
       artifactTitle: 'neon_shooter.js',
       artifactCode: `// 🚀 네온 슈터 — Phaser 3 Arcade Physics
@@ -183,17 +179,13 @@ SCORE: 2400 &nbsp; LEVEL: 3<br><br>
     gameId: 'temple-runner',
     prompt: '3D 러너 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **3D 템플 러너** 게임을 만들었어요! 🏃
+      text: `달리는 3D 게임이요? 좋아요, 바로 만들게요! 🏃
 
-Three.js WebGL 기반의 1인칭 무한 러너예요.
+이번엔 **3D 그래픽**을 써요 — 평평한 화면 속에 진짜 공간이 있는 것처럼 보이게 하는 기술이에요. 신전 속을 끝없이 달리며 장애물을 피하고 코인을 모으면 돼요.
 
-**게임 특징:**
-• 실시간 3D 장애물 회피
-• 코인 수집 + 점수 시스템
-• 속도 점진적 증가
-• 모바일 스와이프 지원
+달릴수록 점점 빨라지는 게 포인트예요. 어디까지 버틸 수 있을까요?
 
-코드를 확인해보세요 👉`,
+완성되면 방향키(태블릿은 스와이프)로 움직여보세요 👉`,
       artifact: true,
       artifactTitle: 'temple_runner.js',
       artifactCode: `// 🏃 3D 템플 러너 — Three.js WebGL
@@ -297,17 +289,13 @@ class TempleRunner {
     gameId: 'tetris',
     prompt: '테트리스 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님을 위한 **클래식 테트리스**를 만들었어요! 🧩
+      text: `클래식 중의 클래식, 테트리스를 만들게요! 🧩
 
-10×20 보드에서 블록을 쌓는 퍼즐 게임이에요.
+비밀 하나 알려줄까요? 테트리스 블록은 모두 **네모 4개**로 이루어져 있어요. 그래서 이름도 '테트라(4)'에서 왔답니다.
 
-**게임 규칙:**
-• 블록을 회전하고 이동시켜 줄을 완성하세요
-• 줄이 완성되면 사라지고 점수 획득
-• 콤보 시 보너스 점수!
-• 레벨업마다 속도 증가
+줄을 가득 채우면 사라지면서 점수가 올라가고, 여러 줄을 한꺼번에 지우면 보너스! 레벨이 오를수록 빨라져요.
 
-코드를 확인해보세요 👉`,
+너무 빠르다 싶으면 "속도 느리게 해줘"라고 말해보세요 👉`,
       artifact: true,
       artifactTitle: 'tetris.js',
       artifactCode: `// 🧩 테트리스 — Canvas 2D
@@ -464,17 +452,13 @@ class Tetris {
     gameId: 'cat-jump',
     prompt: '고양이 점프 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **고양이 점프** 게임이에요! 🐱
+      text: `귀여운 거 좋아하는군요! 고양이 점프 게임을 만들게요 🐱
 
-귀여운 고양이가 끝없이 점프하며 올라가는 게임이에요.
+고양이가 발판을 밟고 폴짝폴짝 끝없이 올라가는 게임이에요. 발판 중에는 움직이는 것도, 밟으면 사라지는 것도 숨어 있어요!
 
-**게임 특징:**
-• 다양한 플랫폼 (일반, 움직이는, 사라지는)
-• 하트 아이템 수집
-• 높이 올라갈수록 난이도 상승
-• 귀여운 이모지 그래픽
+높이 올라갈수록 발판 사이가 넓어져요. 하트를 모으면서 최고 기록에 도전해보세요.
 
-코드를 확인해보세요 👉`,
+점프가 모자라다 싶으면 "점프력 높여줘"라고 해보세요 👉`,
       artifact: true,
       artifactTitle: 'cat_jump.js',
       artifactCode: `// 🐱 고양이 점프 — Canvas 2D
@@ -602,9 +586,13 @@ gameLoop();`,
     gameId: 'neon-platformer',
     prompt: '네온 플랫포머 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **네온 러너** 플랫포머를 만들었어요! ◈
+      text: `네온 불빛 속을 달리는 플랫포머를 만들게요! ◈
 
-더블점프 + 벽타기 + 프로시저럴 맵이 특징이에요. 코드를 확인해보세요 👉`,
+이 게임의 무기는 **더블점프**와 **벽타기**예요 — 공중에서 한 번 더 뛰고, 벽에 붙어 미끄러지면서 더 높은 곳으로 갈 수 있어요.
+
+그리고 맵은 매번 조금씩 달라요. 컴퓨터가 그때그때 새로 짜기 때문이죠!
+
+너무 어려우면 비밀 치트, "무적 모드 켜줘"도 있어요 👉`,
       artifact: true,
       artifactTitle: 'neon_platformer.js',
       artifactCode: `// ◈ 네온 러너 — Phaser 3 Physics
@@ -678,9 +666,13 @@ class PlatformerScene extends Phaser.Scene {
     gameId: 'dot-rpg',
     prompt: '도트 RPG 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님의 **도트 RPG** 모험이 시작돼요! ⚔
+      text: `오, 모험을 떠나고 싶군요! ${userName}님의 도트 RPG를 만들게요 ⚔
 
-NPC 대화, 턴제 전투, 레벨업이 포함된 픽셀 아트 RPG예요. 코드를 확인해보세요 👉`,
+옛날 게임처럼 **픽셀**(작은 네모 점)로 그린 마을이에요. 주민에게 말을 걸면 대화가 열리고, 몬스터를 만나면 차례를 주고받는 전투가 벌어져요.
+
+이기면 경험치를 얻고 레벨업! 공격력과 체력이 쑥쑥 자라요.
+
+전투가 버거우면 "공격력 올려줘"라고 외쳐보세요 👉`,
       artifact: true,
       artifactTitle: 'dot_rpg.js',
       artifactCode: `// ⚔ 도트 RPG — 픽셀아트 RPG 마을
@@ -756,9 +748,13 @@ function startBattle() {
     gameId: 'emoji-catch',
     prompt: '이모지 캐치 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **이모지 캐치** 게임이에요! 🍔
+      text: `맛있는 게임을 만들게요! 이모지 캐치 🍔
 
-떨어지는 이모지를 받아서 점수를 모으세요! 코드를 확인해보세요 👉`,
+하늘에서 햄버거, 피자, 도넛이 비처럼 쏟아져요. 바구니를 움직여 받으면 점수!
+
+그런데 떨어지는 속도가 제각각이라, 어떤 걸 먼저 노릴지 눈이 바빠질 거예요.
+
+더 정신없게 만들고 싶으면 "음식 많이 나오게 해줘"! 👉`,
       artifact: true,
       artifactTitle: 'emoji_catch.js',
       artifactCode: `// 🍔 이모지 캐치 — Canvas 2D
@@ -810,9 +806,13 @@ setInterval(spawnItem, 800);`,
     gameId: 'balloon-pop',
     prompt: '풍선 터뜨리기 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **풍선 팝** 게임이에요! 🎈
+      text: `풍선 팡팡! 60초 타임어택 게임을 만들게요 🎈
 
-60초 안에 풍선을 최대한 많이 터뜨려보세요! 코드를 확인해보세요 👉`,
+알록달록 풍선이 떠오르면 터뜨려서 점수를 모으세요. 쉬지 않고 연달아 터뜨리면 **콤보**가 쌓여서 점수가 훨씬 커져요!
+
+60초는 생각보다 짧아요. 손이 바빠질 준비 됐나요?
+
+시간이 아쉬우면 "시간 늘려줘"라고 해보세요 👉`,
       artifact: true,
       artifactTitle: 'balloon_pop.js',
       artifactCode: `// 🎈 풍선 팝 — Canvas 2D
@@ -870,9 +870,13 @@ setInterval(() => { timeLeft--; }, 1000);`,
     gameId: 'star-catch',
     prompt: '별 모으기 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **별 모으기** 게임이에요! ⭐
+      text: `밤하늘 게임이라니, 낭만적인데요! 별 모으기를 만들게요 ⭐
 
-밤하늘에서 떨어지는 별을 모으세요! 번개는 피해야 해요! 코드를 확인해보세요 👉`,
+구름을 움직여 떨어지는 별을 받으면 점수가 올라가요. 그런데 조심하세요 — 가끔 **번개**가 섞여서 떨어져요!
+
+별만 골라 받는 순발력이 핵심이에요.
+
+별이 너무 빠르면 "속도 느리게 해줘"라고 말해보세요 👉`,
       artifact: true,
       artifactTitle: 'star_catch.js',
       artifactCode: `// ⭐ 별 모으기 — Canvas 2D
@@ -935,9 +939,11 @@ setInterval(spawnStar, 600);`,
     accentColor: '#007AFF',
     prompt: '파이썬으로 구구단 프로그램 만들어줘',
     response: () => ({
-      text: `구구단 프로그램을 만들어볼게요! 파이썬이라는 프로그래밍 언어를 사용할 거예요.
+      text: `구구단 프로그램을 만들게요! 이번엔 **파이썬**을 써요 — 전 세계 프로그래머들이 가장 사랑하는 언어 중 하나예요.
 
-코드를 작성했어요. 오른쪽 패널에서 확인해보세요 👉`,
+핵심은 딱 두 가지예요. "1부터 9까지 반복해!"(for문), 그리고 "곱한 걸 보여줘!"(print). 컴퓨터는 반복을 시켜도 절대 지치지 않거든요.
+
+오른쪽 코드에서 **for**라는 단어를 찾아보세요 — 그게 반복의 마법이에요 👉`,
       artifact: true,
       artifactTitle: 'gugudan.py',
       artifactCode: `# 🔢 구구단 프로그램
@@ -1018,9 +1024,13 @@ x² - 5x + 6 = (x - 2)(x - 3) = 0
     gameId: 'gugudan-3d',
     prompt: '3D 구구단 학습 게임 만들어줘',
     response: (userName) => ({
-      text: `${userName}님을 위한 **3D 구구단 학습 게임**을 만들었어요! 🧊
+      text: `구구단을 게임으로 배워볼까요? 3D 구구단을 만들게요! 🧊
 
-Three.js로 만든 3D 공간에서 구구단을 학습하는 게임이에요. 코드를 확인해보세요 👉`,
+3D 공간에 큐브들이 떠 있어요. 2×3이면 큐브가 2줄로 3개씩 — **곱셈이 눈에 보이는** 거예요!
+
+탐색 → 세기 → 패턴 → 퀴즈, 4단계로 점점 깊어져요. 퀴즈까지 통과하면 진짜 구구단 마스터!
+
+다른 단이 궁금하면 "다른 단 보여줘"라고 하세요 👉`,
       artifact: true,
       artifactTitle: 'gugudan_3d.js',
       artifactCode: `// 🧊 3D 구구단 — Three.js WebGL
@@ -1127,9 +1137,13 @@ class GugudanGame {
     gameId: 'moon-orbit',
     prompt: '달의 공전 시뮬레이션 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **달의 공전** 시뮬레이션을 만들었어요! 🌙
+      text: `달 시뮬레이션, 멋진 선택이에요! 🌙
 
-Three.js로 만든 3D 우주에서 달의 궤도를 관찰할 수 있어요. 코드를 확인해보세요 👉`,
+진짜 달처럼 **타원 궤도**로 지구를 도는 3D 우주를 만들고 있어요. 달이 우리에게 늘 같은 면만 보여주는 비밀(조석 고정)까지 그대로 담았어요.
+
+천천히 돌려보면서 보름달이 되는 순간을 찾아보세요.
+
+더 가까이 보고 싶으면 "줌인 해줘"! 👉`,
       artifact: true,
       artifactTitle: 'moon_orbit.js',
       artifactCode: `// 🌙 달의 공전 — Three.js WebGL
@@ -1241,7 +1255,9 @@ It's nice to meet you!
     accentColor: '#AF52DE',
     prompt: '우주를 여행하는 고양이 이야기 만들어줘',
     response: () => ({
-      text: `재미있는 이야기를 만들어봤어요! 오른쪽 패널에서 읽어보세요 ✨`,
+      text: `이야기를 하나 지어봤어요 — 별을 먹는 고양이 '나비' 이야기예요 ✨
+
+오른쪽에서 천천히 읽어보세요. 다 읽고 나면, 그 다음 장면을 상상해서 이어 써보는 것도 재미있을 거예요!`,
       artifact: true,
       artifactTitle: '우주 고양이 이야기',
       artifactCode: `# 🐱🚀 별을 먹는 고양이, 나비
@@ -1298,9 +1314,13 @@ It's nice to meet you!
     gameId: 'farm-garden',
     prompt: '힐링 농장 시뮬레이션 만들어줘',
     response: (userName) => ({
-      text: `${userName}님만의 **마음의 텃밭**을 만들었어요! 🌿
+      text: `${userName}님만의 텃밭을 가꿔볼까요? 🌿
 
-Three.js 3D 힐링 농장에서 작물을 키워보세요. 코드를 확인해보세요 👉`,
+3D 농장에 씨앗을 심고, 물을 주고, 무럭무럭 자라는 걸 지켜보는 힐링 게임이에요. 작물마다 자라는 속도가 달라서 기다리는 재미가 있어요.
+
+다 자란 작물을 수확하면 골드가 모이고, 그걸로 더 좋은 씨앗을 살 수 있죠.
+
+비가 오면 물 주기가 편해져요 — "비 오게 해줘"라고 말해보세요 👉`,
       artifact: true,
       artifactTitle: 'farm_garden.js',
       artifactCode: `// 🌿 마음의 텃밭 — Three.js WebGL
@@ -1419,9 +1439,13 @@ class FarmGarden {
     accentColor: '#0A84FF',
     prompt: '파도 시뮬레이션 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **파도 시뮬레이션**을 만들었어요! 🌊
+      text: `파도를 만들게요! 🌊
 
-사인파 기반의 물리 파도를 관찰할 수 있어요. 코드를 확인해보세요 👉`,
+바다의 파도는 사실 **사인파**라는 부드러운 수학 곡선 여러 개가 겹쳐진 거예요. 곡선이 겹치고 겹치면 진짜 바다처럼 출렁이게 되죠.
+
+코드 속 숫자(높이·속도)를 바꾸면 잔잔한 호수도, 폭풍의 바다도 만들 수 있어요.
+
+수학이 움직이는 모습, 직접 관찰해보세요 👉`,
       artifact: true,
       artifactTitle: 'wave_sim.js',
       artifactCode: `// 🌊 파도 시뮬레이션 — Canvas 2D
@@ -1479,9 +1503,11 @@ drawWave();`,
     accentColor: '#FF6B35',
     prompt: '생태계 시뮬레이션 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **생태계 시뮬레이션**을 만들었어요! 🦊
+      text: `자연의 균형을 실험해볼까요? 생태계 시뮬레이션이에요 🦊
 
-포식자-피식자 관계를 시뮬레이션해요. 코드를 확인해보세요 👉`,
+여우(포식자)와 토끼(피식자)를 풀어놓으면 신기한 일이 벌어져요 — 토끼가 늘면 여우도 늘고, 여우가 너무 많아지면 토끼가 줄고… 자연은 시소처럼 끊임없이 **균형**을 찾아가요.
+
+만약 여우가 전부 사라지면 토끼는 마냥 행복할까요? 직접 확인해보세요 👉`,
       artifact: true,
       artifactTitle: 'ecosystem.js',
       artifactCode: `// 🦊 생태계 시뮬레이션 — Canvas 2D
@@ -1610,9 +1636,11 @@ simulate();`,
     accentColor: '#5AC8FA',
     prompt: '날씨 시뮬레이션 만들어줘',
     response: (userName) => ({
-      text: `${userName}님, **날씨 시뮬레이션**을 만들었어요! 🌤
+      text: `날씨를 직접 만들어보는 기분, 어때요? 🌤
 
-기압, 온도, 습도에 따른 날씨 변화를 시뮬레이션해요. 코드를 확인해보세요 👉`,
+**기압·온도·습도** — 이 세 가지 숫자가 만나서 오늘의 날씨가 정해져요. 기압이 낮아지고 습도가 올라가면? 비구름이 모여들죠.
+
+숫자를 조금씩 바꾸면서 맑음이 비로 변하는 순간을 찾아보세요. 기상청이 하는 일을 미니 버전으로 체험하는 거예요 👉`,
       artifact: true,
       artifactTitle: 'weather_sim.js',
       artifactCode: `// 🌤 날씨 시뮬레이션 — Canvas 2D
@@ -1758,16 +1786,16 @@ export function findResponse(text: string, userName: string): ScenarioResponse {
 
 function getDefaultResponse(userName: string): ScenarioResponse {
   return {
-    text: `${userName}님, 무엇이든 물어보세요! 😊
+    text: `${userName}님, 좋아요 — 뭐든 말해보세요! 😊
 
-제가 도와줄 수 있는 것들이에요:
+이런 문장이면 바로 만들어드릴 수 있어요:
 
-• 🎮 **게임** — 슈팅, 러너, 테트리스 등 다양한 게임
-• 📐 **수학** — 구구단, 방정식 풀이
-• 🔬 **과학** — AI 설명, 우주 이야기
-• 🌍 **시뮬레이션** — 농장, 파도, 생태계, 날씨
+• 🎮 "우주 슈팅 게임 만들어줘" / "테트리스 만들어줘"
+• 📐 "구구단 게임 만들어줘"
+• 🔬 "달 시뮬레이션 보여줘"
+• 🌍 "농장 게임 만들어줘"
 
-왼쪽 카드에서 원하는 체험을 선택하거나, 직접 질문해보세요!`,
+게임 목록으로 돌아가려면 "다른 게임 보여줘"라고 하면 돼요!`,
   };
 }
 

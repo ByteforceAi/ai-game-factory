@@ -30,6 +30,8 @@ function InstructorContent() {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [skipSim, setSkipSim] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [appTheme, setAppTheme] = useState<'dark' | 'gov'>('dark');
 
   // Check PIN from URL on mount
   useEffect(() => {
@@ -41,6 +43,8 @@ function InstructorContent() {
     setSelectedGameId(localStorage.getItem('instructor-override'));
     setSkipSim(localStorage.getItem('instructor-skip') === 'true');
     setStudentName(localStorage.getItem('student-name') || '');
+    setSchoolName(localStorage.getItem('school-name') || '');
+    setAppTheme(localStorage.getItem('app-theme') === 'gov' ? 'gov' : 'dark');
   }, [searchParams]);
 
   const handlePinSubmit = () => {
@@ -82,13 +86,35 @@ function InstructorContent() {
     }
   };
 
+  const handleSchoolChange = (name: string) => {
+    setSchoolName(name);
+    if (name.trim()) {
+      localStorage.setItem('school-name', name.trim());
+    } else {
+      localStorage.removeItem('school-name');
+    }
+  };
+
+  const handleThemeChange = (theme: 'dark' | 'gov') => {
+    setAppTheme(theme);
+    if (theme === 'gov') {
+      localStorage.setItem('app-theme', 'gov');
+    } else {
+      localStorage.removeItem('app-theme');
+    }
+  };
+
   const handleClearAll = () => {
     localStorage.removeItem('instructor-override');
     localStorage.removeItem('instructor-skip');
     localStorage.removeItem('student-name');
+    localStorage.removeItem('school-name');
+    localStorage.removeItem('app-theme');
     setSelectedGameId(null);
     setSkipSim(false);
     setStudentName('');
+    setSchoolName('');
+    setAppTheme('dark');
   };
 
   // ── PIN Gate ──
@@ -375,7 +401,7 @@ function InstructorContent() {
               color: '#64748b',
               marginTop: '2px',
             }}>
-              {skipSim ? '빠르게 게임으로 진행합니다' : '전체 코드 생성 시뮬레이션을 보여줍니다'}
+              {skipSim ? '부팅 연출 없이 바로 이름 입력으로 갑니다' : '기본 부팅 연출(약 7초)을 보여줍니다'}
             </div>
           </div>
         </button>
@@ -433,6 +459,89 @@ function InstructorContent() {
         )}
       </Section>
 
+      {/* ── 4. School Name ── */}
+      <Section title="4. 학교(기관)명 설정" subtitle="시작 화면과 입장 카드에 학교명이 표시됩니다">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            placeholder="예: 해강초등학교"
+            value={schoolName}
+            onChange={(e) => handleSchoolChange(e.target.value)}
+            maxLength={30}
+            style={{
+              flex: 1,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              color: '#e2e8f0',
+              fontSize: '14px',
+              outline: 'none',
+              fontFamily: "'JetBrains Mono', monospace",
+              transition: 'border-color 0.2s',
+            }}
+          />
+          {schoolName && (
+            <button
+              onClick={() => handleSchoolChange('')}
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                color: '#ef4444',
+                fontSize: '11px',
+                cursor: 'pointer',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 600,
+              }}
+            >
+              삭제
+            </button>
+          )}
+        </div>
+        {schoolName && (
+          <div style={{
+            marginTop: '8px',
+            fontSize: '12px',
+            color: '#22c55e',
+          }}>
+            미리보기: <strong>{schoolName} AI 코딩 교실</strong>
+          </div>
+        )}
+      </Section>
+
+      {/* ── 5. Theme ── */}
+      <Section title="5. 화면 테마" subtitle="공공기관 테마는 수업(채팅) 화면에 적용됩니다 — 시작 연출은 다크 유지 (베타)">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {([
+            { id: 'dark' as const, label: '🌌 다크 (기본)', desc: '딥스페이스' },
+            { id: 'gov' as const, label: '🏛 공공기관 라이트', desc: '국정 파랑 · KRDS풍' },
+          ]).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => handleThemeChange(t.id)}
+              style={{
+                flex: 1,
+                background: appTheme === t.id ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${appTheme === t.id ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: '12px',
+                padding: '14px 12px',
+                color: appTheme === t.id ? '#22c55e' : '#94a3b8',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.2s',
+              }}
+            >
+              <div>{t.label}</div>
+              <div style={{ fontSize: '10px', fontWeight: 400, marginTop: '4px', opacity: 0.7 }}>{t.desc}</div>
+            </button>
+          ))}
+        </div>
+      </Section>
+
       {/* ── Current Status ── */}
       <Section title="현재 상태" subtitle="">
         <div style={{
@@ -445,8 +554,10 @@ function InstructorContent() {
           color: '#94a3b8',
         }}>
           <StatusRow label="선택된 게임" value={selectedGameData ? `${selectedGameData.icon} ${selectedGameData.title}` : '—'} active={!!selectedGameId} />
-          <StatusRow label="시뮬레이션" value={skipSim ? '3초 스킵' : '45초 풀 연출'} active={skipSim} />
+          <StatusRow label="부팅 연출" value={skipSim ? '생략' : '기본 (약 7초)'} active={skipSim} />
           <StatusRow label="수강생 이름" value={studentName || '—'} active={!!studentName} />
+          <StatusRow label="학교명" value={schoolName || '—'} active={!!schoolName} />
+          <StatusRow label="화면 테마" value={appTheme === 'gov' ? '🏛 공공기관 라이트' : '🌌 다크'} active={appTheme === 'gov'} />
         </div>
       </Section>
 

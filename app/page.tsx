@@ -145,7 +145,7 @@ export default function Home() {
           type: 'ai',
           text: '',
           response: {
-            text: `🏆 **게임 오버!** 점수: **${score}점**\n\n잘 했어요! 다시 도전하거나 다른 게임을 해볼까요?`,
+            text: `🏆 **게임 끝!** 점수: **${score}점**\n\n잘했어요! 한 판 더 도전할까요, 아니면 게임을 좀 바꿔볼까요?`,
             suggestions: [
               { icon: '🔄', label: '다시 시작해줘', prompt: '다시 시작해줘' },
               { icon: '🎮', label: '다른 게임 보여줘', prompt: '다른 게임 보여줘' },

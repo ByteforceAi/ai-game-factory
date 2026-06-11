@@ -14,9 +14,15 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cardsVisible, setCardsVisible] = useState(false);
+  const [schoolName, setSchoolName] = useState('');
 
   useEffect(() => {
     const t = setTimeout(() => setActive(true), 50);
+    try {
+      setSchoolName(
+        localStorage.getItem('school-name') || process.env.NEXT_PUBLIC_SCHOOL_NAME || ''
+      );
+    } catch {}
     return () => clearTimeout(t);
   }, []);
 
@@ -81,6 +87,14 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
               boxShadow: '0 0 10px rgba(34,197,94,0.5)',
             }}
           />
+          {schoolName && (
+            <div
+              className="font-mono text-[10.5px] tracking-[2px] mb-3"
+              style={{ color: 'rgba(34,197,94,0.55)' }}
+            >
+              {schoolName} · AI 코딩 교실
+            </div>
+          )}
           <h1
             className="text-[2rem] font-light tracking-tight mb-3"
             style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}

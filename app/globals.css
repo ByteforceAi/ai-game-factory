@@ -73,6 +73,47 @@ textarea, input, button, select, a {
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ============================================
+   공공기관 테마 (KRDS풍 라이트) — data-theme="gov"
+   국정 파랑 + 화이트, NEIS류 행정 시스템의 단정함.
+   토큰 기반인 수업(채팅) 화면에 우선 적용 — 시작 연출(온보딩/웰컴)은
+   아트디렉션상 다크 유지 (다음 증분에서 라이트 변형 예정).
+   ============================================ */
+[data-theme='gov'] {
+  --bg-deep: #eef1f5;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fa;
+  --bg-tertiary: #eef1f4;
+  --bg-surface: #e7ecf1;
+  --bg-input: #f2f4f6;
+  --bg-sidebar: #f7f8fa;
+  --bg-sidebar-hover: #eef1f4;
+  --bg-sidebar-active: #e2e8ee;
+  --bg-bubble-user: #eaf1f9;
+
+  --text-primary: #1c2430;
+  --text-secondary: #4c5868;
+  --text-tertiary: #6e7a88;
+  --text-muted: #8a95a1;
+
+  --border: #d7dde4;
+  --border-light: #c5cdd7;
+
+  --accent-primary: #0b50a0; /* 국정 파랑 */
+  --accent-primary-dim: rgba(11, 80, 160, 0.5);
+  --accent-primary-glow: rgba(11, 80, 160, 0.18);
+  --accent-green: #0b50a0;
+}
+
+/* gov 라이트 배경용 코드 하이라이트 (기본 팔레트는 다크 전용) */
+[data-theme='gov'] .syn-keyword { color: #7c3aed; }
+[data-theme='gov'] .syn-string { color: #15803d; }
+[data-theme='gov'] .syn-number { color: #c2410c; }
+[data-theme='gov'] .syn-comment { color: #94a3b8; }
+[data-theme='gov'] .syn-function { color: #1d4ed8; }
+[data-theme='gov'] .syn-tag { color: #be123c; }
+[data-theme='gov'] .syn-attr { color: #a16207; }
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
