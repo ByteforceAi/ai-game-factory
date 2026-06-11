@@ -13,6 +13,31 @@ interface ArtifactPanelProps {
   onClose: () => void;
 }
 
+// ── Code X-Ray: 코드 줄 ↔ 게임 요소 하이라이트 연결 ──
+// hover는 데스크톱 전용이라 탭(터치)도 같은 효과 + 1.5초 자동 해제
+function attachXRay(div: HTMLDivElement, xm: { target: string; label: string }) {
+  div.style.cursor = 'pointer';
+  div.title = xm.label;
+  const send = (msg: object) => {
+    const iframe = document.querySelector('iframe');
+    iframe?.contentWindow?.postMessage(msg, '*');
+  };
+  const on = () => {
+    div.style.background = 'rgba(99,102,241,0.08)';
+    send({ type: 'XRAY_HIGHLIGHT', target: xm.target, label: xm.label });
+  };
+  const off = () => {
+    div.style.background = 'transparent';
+    send({ type: 'XRAY_CLEAR' });
+  };
+  div.addEventListener('mouseenter', on);
+  div.addEventListener('mouseleave', off);
+  div.addEventListener('click', () => {
+    on();
+    setTimeout(off, 1500);
+  });
+}
+
 export default function ArtifactPanel({
   open,
   title,
@@ -65,32 +90,9 @@ export default function ArtifactPanel({
       const highlighted = syntaxHighlight(lines[i]);
       div.innerHTML = `<span style="display:inline-block;width:32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span>${highlighted}`;
 
-      // ── Code X-Ray: hover → highlight game element ──
-      const lineText = lines[i];
-      const xrayMatch = matchXRayTarget(lineText);
-      if (xrayMatch) {
-        div.style.cursor = 'pointer';
-        div.title = xrayMatch.label;
-        div.addEventListener('mouseenter', () => {
-          div.style.background = 'rgba(99,102,241,0.08)';
-          // Send highlight to game iframe
-          const iframe = document.querySelector('iframe');
-          if (iframe?.contentWindow) {
-            iframe.contentWindow.postMessage({
-              type: 'XRAY_HIGHLIGHT',
-              target: xrayMatch.target,
-              label: xrayMatch.label,
-            }, '*');
-          }
-        });
-        div.addEventListener('mouseleave', () => {
-          div.style.background = 'transparent';
-          const iframe = document.querySelector('iframe');
-          if (iframe?.contentWindow) {
-            iframe.contentWindow.postMessage({ type: 'XRAY_CLEAR' }, '*');
-          }
-        });
-      }
+      // ── Code X-Ray: hover/tap → highlight game element ──
+      const xrayMatch = matchXRayTarget(lines[i]);
+      if (xrayMatch) attachXRay(div, xrayMatch);
 
       body.appendChild(div);
       body.scrollTop = body.scrollHeight;
@@ -135,26 +137,9 @@ export default function ArtifactPanel({
           const num = String(idx + 1).padStart(3, ' ');
           div.innerHTML = `<span style="display:inline-block;width:32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span>${syntaxHighlight(line)}`;
 
-          // X-Ray hover on static view too
+          // X-Ray hover/tap on static view too
           const xm = matchXRayTarget(line);
-          if (xm) {
-            div.style.cursor = 'pointer';
-            div.title = xm.label;
-            div.addEventListener('mouseenter', () => {
-              div.style.background = 'rgba(99,102,241,0.08)';
-              const iframe = document.querySelector('iframe');
-              if (iframe?.contentWindow) {
-                iframe.contentWindow.postMessage({ type: 'XRAY_HIGHLIGHT', target: xm.target, label: xm.label }, '*');
-              }
-            });
-            div.addEventListener('mouseleave', () => {
-              div.style.background = 'transparent';
-              const iframe = document.querySelector('iframe');
-              if (iframe?.contentWindow) {
-                iframe.contentWindow.postMessage({ type: 'XRAY_CLEAR' }, '*');
-              }
-            });
-          }
+          if (xm) attachXRay(div, xm);
 
           body.appendChild(div);
         });
@@ -209,7 +194,7 @@ export default function ArtifactPanel({
       >
         {/* Header */}
         <div
-          className="h-11 flex items-center justify-between px-3 pl-4 flex-shrink-0"
+          className="h-12 flex items-center justify-between px-3 pl-4 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--text-primary)]">
@@ -239,7 +224,8 @@ export default function ArtifactPanel({
 
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-md flex items-center justify-center text-base text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+              aria-label="패널 닫기"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-base text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
               style={{ border: 'none', background: 'transparent' }}
             >
               ✕
@@ -276,7 +262,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded text-xs cursor-pointer transition-all duration-200 ${
+      className={`px-3.5 py-2 rounded text-[13px] cursor-pointer transition-all duration-200 active:scale-95 ${
         isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
       }`}
       style={{
@@ -315,7 +301,7 @@ function CopyButton({ code }: { code: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="h-7 px-2 rounded-md flex items-center justify-center gap-1 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+      className="h-10 px-3 rounded-md flex items-center justify-center gap-1 text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
       style={{ border: 'none', background: 'transparent', fontFamily: 'var(--font-body)' }}
       title="코드 복사"
     >

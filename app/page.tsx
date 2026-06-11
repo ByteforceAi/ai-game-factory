@@ -533,29 +533,44 @@ export default function Home() {
 
       {/* PHASE 2: Chat App */}
       <div
-        className={`flex w-full h-screen transition-opacity duration-500 ${
+        className={`flex w-full h-dvh transition-opacity duration-500 ${
           phase === 2
             ? 'opacity-100 pointer-events-auto'
             : 'opacity-0 pointer-events-none'
         }`}
       >
-        {/* Sidebar */}
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed((c) => !c)}
-          onNewChat={handleNewChat}
-          chatTitle={chatTitle}
-        />
+        {/* Sidebar — 900px 미만에선 본문을 밀지 않는 드로어로 전환 */}
+        {!sidebarCollapsed && (
+          <div
+            className="hidden max-[900px]:block fixed inset-0 z-30 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setSidebarCollapsed(true)}
+          />
+        )}
+        <div
+          className={
+            !sidebarCollapsed
+              ? 'max-[900px]:fixed max-[900px]:inset-y-0 max-[900px]:left-0 max-[900px]:z-40 max-[900px]:shadow-2xl'
+              : ''
+          }
+        >
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((c) => !c)}
+            onNewChat={handleNewChat}
+            chatTitle={chatTitle}
+          />
+        </div>
 
         {/* Main */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Topbar */}
-          <div className="h-11 flex items-center justify-between px-4 flex-shrink-0">
+          <div className="h-12 flex items-center justify-between px-3 md:px-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               {sidebarCollapsed && (
                 <button
                   onClick={() => setSidebarCollapsed(false)}
-                  className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+                  aria-label="사이드바 열기"
+                  className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
                   style={{ border: 'none', background: 'transparent' }}
                 >
                   ☰
@@ -572,7 +587,8 @@ export default function Home() {
                 <button
                   onClick={() => setShowDashboard(d => !d)}
                   title="실시간 대시보드"
-                  className={`w-8 h-8 rounded-claude-sm flex items-center justify-center text-[14px] cursor-pointer transition-all duration-200 ${showDashboard ? 'text-[var(--accent-coral)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
+                  aria-label="실시간 대시보드"
+                  className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] cursor-pointer transition-all duration-200 active:scale-95 ${showDashboard ? 'text-[var(--accent-coral)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
                   style={{ border: 'none', background: showDashboard ? 'var(--bg-surface)' : 'transparent' }}
                 >
                   📊
@@ -582,17 +598,11 @@ export default function Home() {
               <button
                 onClick={() => setShowTimeline(true)}
                 title="학습 타임라인"
-                className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-[14px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
+                aria-label="학습 타임라인"
+                className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
                 style={{ border: 'none', background: 'transparent' }}
               >
                 🎬
-              </button>
-              <button
-                title="공유"
-                className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-[15px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200"
-                style={{ border: 'none', background: 'transparent' }}
-              >
-                ⤴
               </button>
             </div>
           </div>
@@ -608,7 +618,7 @@ export default function Home() {
             >
               {/* Messages */}
               <div className="flex-1 overflow-y-auto">
-                <div className="max-w-[680px] w-full mx-auto px-6 py-5 pb-10 flex flex-col gap-6">
+                <div className="max-w-[680px] w-full mx-auto px-4 md:px-6 py-5 pb-10 flex flex-col gap-6">
                   {messages.map((msg) =>
                     msg.type === 'user' ? (
                       <div key={msg.id}>

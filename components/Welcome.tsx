@@ -139,7 +139,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
 
         {/* Card Grid — appears on category click with stagger */}
         {selectedCategory && (
-          <div className="grid grid-cols-3 gap-2.5 mb-8">
+          <div className="grid grid-cols-3 max-[720px]:grid-cols-2 gap-2.5 mb-8">
             {filteredScenarios.map((scenario, idx) => (
               <ModuleCard
                 key={scenario.id}

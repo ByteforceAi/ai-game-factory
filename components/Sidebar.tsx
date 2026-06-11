@@ -25,11 +25,12 @@ export default function Sidebar({
       }}
     >
       {/* Top */}
-      <div className="p-3 flex items-center justify-between">
+      <div className="p-2.5 flex items-center justify-between">
         <button
           onClick={onToggle}
           title="사이드바 접기"
-          className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer"
+          aria-label="사이드바 접기"
+          className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] hover:text-[var(--text-primary)] active:scale-95 transition-all duration-200 cursor-pointer"
           style={{ border: 'none', background: 'transparent' }}
         >
           ☰
@@ -37,7 +38,8 @@ export default function Sidebar({
         <button
           onClick={onNewChat}
           title="새 대화"
-          className="w-8 h-8 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer"
+          aria-label="새 대화"
+          className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-sidebar-hover)] hover:text-[var(--text-primary)] active:scale-95 transition-all duration-200 cursor-pointer"
           style={{ border: 'none', background: 'transparent' }}
         >
           ✎
