@@ -62,6 +62,16 @@ export default function Home() {
     if (window.innerWidth < 900) setSidebarCollapsed(true);
   }, []);
 
+  // Session restore — 새로고침해도 부팅/로그인 반복 없이 이어가기
+  // sessionStorage라서 탭을 닫으면 초기화됨 (공용 태블릿에서 다음 학생에게 안 넘어감)
+  useEffect(() => {
+    const saved = sessionStorage.getItem('vibe-student-name');
+    if (saved) {
+      setUserName(saved);
+      setPhase(1);
+    }
+  }, []);
+
   // ── Artifact state ──
   const [artifactOpen, setArtifactOpen] = useState(false);
   const [artifactTitle, setArtifactTitle] = useState('');
@@ -87,13 +97,14 @@ export default function Home() {
 
   // Expose log functions + init audio + listen for game over
   useEffect(() => {
+    // 수업 기록 추출용 콘솔 헬퍼 — 반환값만 쓰고 콘솔 출력은 dev에서만
     (window as any).getLog = () => {
-      console.table(messageLogRef.current);
+      if (process.env.NODE_ENV !== 'production') console.table(messageLogRef.current);
       return messageLogRef.current;
     };
     (window as any).exportLog = () => {
       const data = JSON.stringify(messageLogRef.current, null, 2);
-      console.log(data);
+      if (process.env.NODE_ENV !== 'production') console.log(data);
       return data;
     };
 
@@ -157,6 +168,7 @@ export default function Home() {
   const handleNameSubmit = useCallback((name: string) => {
     setUserName(name);
     setPhase(1);
+    try { sessionStorage.setItem('vibe-student-name', name); } catch {}
     timeline.reset();
     timeline.record({ type: 'system', label: `학생 "${name}" 입장` });
   }, []);

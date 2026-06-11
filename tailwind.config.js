@@ -28,9 +28,19 @@ module.exports = {
           'text-tertiary': '#707070',
           'text-muted': '#585858',
         },
+        // 공유 게임 플레이어(/play)의 라이트 글래스 카드 팔레트
+        glass: {
+          accent: '#007AFF',
+          indigo: '#5856D6',
+          bg: '#F2F2F7',
+          text: '#1D1D1F',
+          'text-secondary': '#6E6E73',
+          'text-muted': '#98989D',
+        },
       },
       fontFamily: {
-        sans: ['Noto Sans KR', 'Inter', '-apple-system', 'sans-serif'],
+        sans: ['Pretendard', 'Noto Sans KR', '-apple-system', 'sans-serif'],
+        display: ['Space Grotesk', 'Pretendard', 'Noto Sans KR', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {

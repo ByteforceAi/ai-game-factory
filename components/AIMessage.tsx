@@ -127,13 +127,16 @@ export default function AIMessage({
 
   return (
     <div className="flex gap-3 items-start animate-msg-in">
-      {/* Avatar — Core spark orb (matches boot visual) */}
+      {/* Avatar — Core spark orb (matches boot visual)
+          무한 애니메이션은 응답 중에만. 완료된 메시지마다 GPU 애니메이션이 누적되면 안 됨 */}
       <div
         className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5"
         style={{
           background: 'radial-gradient(circle, #22c55e, #22c55e88, transparent)',
           boxShadow: '0 0 12px rgba(34,197,94,0.3), 0 0 4px rgba(34,197,94,0.5)',
-          animation: 'breatheCore 2.5s ease-in-out infinite alternate',
+          animation: phase !== 'done' ? 'breatheCore 2.5s ease-in-out infinite alternate' : 'none',
+          transform: phase === 'done' ? 'scale(0.9)' : undefined,
+          transition: 'transform 0.6s ease',
         }}
       />
 

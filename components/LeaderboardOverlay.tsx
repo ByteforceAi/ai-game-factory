@@ -147,7 +147,7 @@ export default function LeaderboardOverlay({
                   <button
                     onClick={submitScore}
                     disabled={!name.trim()}
-                    className="px-4 py-2.5 bg-glass-accent text-white text-[14px] font-semibold rounded-[10px] disabled:opacity-30 hover:bg-[#0071E3] transition-colors"
+                    className="px-4 py-2.5 bg-glass-accent text-white text-[14px] font-semibold rounded-[10px] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#0071E3] transition-colors"
                   >
                     등록
                   </button>

@@ -69,14 +69,14 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
       <div className="max-w-[680px] mx-auto">
         {/* Vibe Prompt Input — aurora glow */}
         <div className="relative" style={{ borderRadius: 30 }}>
-          {/* Aurora glow background */}
+          {/* Aurora glow background — 흐름 애니메이션은 사용 중일 때만 (대기 시 GPU 휴식) */}
           <div
             className="absolute rounded-[30px]"
             style={{
               inset: isFocused ? -2 : 4,
               background: 'linear-gradient(90deg, #00f3ff, #bc13fe, #ff007f, #ff9500, #00f3ff)',
               backgroundSize: '300% 300%',
-              animation: `gradientFlow ${isFocused ? '3s' : '6s'} linear infinite`,
+              animation: isFocused || hasText ? 'gradientFlow 3s linear infinite' : 'none',
               filter: `blur(${isFocused ? 20 : 10}px)`,
               opacity: isFocused ? 0.7 : 0.12,
               transition: 'all 0.4s cubic-bezier(0.25,1,0.5,1)',

@@ -1,17 +1,20 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-/* Kill all browser default focus outlines */
+/* Mouse/touch focus: quiet. Keyboard focus: visible ring (a11y). */
 textarea, input, button, select, a {
-  outline: none !important;
   -webkit-tap-highlight-color: transparent;
 }
-textarea:focus, input:focus, button:focus {
-  outline: none !important;
-  box-shadow: none;
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--accent-primary-dim);
+  outline-offset: 2px;
 }
 
 /* ============================================
@@ -47,8 +50,19 @@ textarea:focus, input:focus, button:focus {
   --accent-blue: #6b9bd2;
   --accent-green: #6bbd7b;
 
+  /* Brand — green cursor identity + neon spectrum */
+  --bg-deep: #0a0a0a;
+  --accent-primary: #22c55e;
+  --accent-primary-dim: rgba(34, 197, 94, 0.45);
+  --accent-primary-glow: rgba(34, 197, 94, 0.3);
+  --neon-cyan: #00f3ff;
+  --neon-magenta: #bc13fe;
+  --neon-pink: #ff007f;
+  --neon-amber: #ff9500;
+
   /* Typography */
-  --font-body: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+  --font-body: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', 'Pretendard', 'Noto Sans KR', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Radius */
@@ -91,8 +105,7 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
-::selection { background: rgba(224, 122, 95, 0.3); color: var(--text-primary); }
-*:focus-visible { outline: 2px solid rgba(224, 122, 95, 0.5); outline-offset: 2px; }
+::selection { background: rgba(34, 197, 94, 0.25); color: var(--text-primary); }
 
 /* ============================================
    KEYFRAME ANIMATIONS (used by DOM manipulation)
@@ -209,5 +222,17 @@ html, body {
     position: absolute !important;
     inset: 0 !important;
     z-index: 50 !important;
+  }
+}
+
+/* ============================================
+   MOTION SENSITIVITY — collapse all animation
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

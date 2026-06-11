@@ -9,6 +9,7 @@ interface OnboardingProps {
 type Stage = 'launch' | 'boot' | 'login';
 
 // ── 부팅: 코어스파크 색상 전환으로 진행도 표현 (텍스트 없음) ──
+// 교실 환경 제약: 전체 시퀀스가 ~7초를 넘으면 안 됨 (Enter/버튼으로 스킵 가능)
 const BOOT_PHASES: {
   color: string; // gradient primary color
   glow: string;  // box-shadow color
@@ -16,11 +17,11 @@ const BOOT_PHASES: {
   scale: number;
   blur: number;
 }[] = [
-  { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 3500, scale: 1,   blur: 8 },   // Cyan — 연결
-  { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 4000, scale: 1.4, blur: 10 },  // Green — 로딩
-  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 3500, scale: 1.8, blur: 12 },  // Purple — 준비
-  { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 3000, scale: 2.2, blur: 14 },  // Orange — 활성화
-  { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 2500, scale: 2.8, blur: 18 },  // White — 완료
+  { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 1100, scale: 1,   blur: 8 },   // Cyan — 연결
+  { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 1300, scale: 1.4, blur: 10 },  // Green — 로딩
+  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 1100, scale: 1.8, blur: 12 },  // Purple — 준비
+  { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 1000, scale: 2.2, blur: 14 },  // Orange — 활성화
+  { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 900,  scale: 2.8, blur: 18 },  // White — 완료
 ];
 
 export default function Onboarding({ onSubmit }: OnboardingProps) {
@@ -33,6 +34,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const launched = useRef(false);
+  const bootTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const currentPhase = BOOT_PHASES[bootPhaseIdx] || BOOT_PHASES[BOOT_PHASES.length - 1];
 
@@ -42,34 +44,57 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
     launched.current = true;
     setStage('boot');
 
-    // Schedule phase transitions
-    let cumDelay = 800; // initial pause
+    // Schedule phase transitions (collect ids so skip can cancel)
+    let cumDelay = 600; // initial pause
     BOOT_PHASES.forEach((phase, i) => {
       const d = cumDelay;
-      setTimeout(() => {
+      bootTimersRef.current.push(setTimeout(() => {
         setBootPhaseIdx(i);
         setBootProgress(Math.round(((i + 1) / BOOT_PHASES.length) * 100));
-      }, d);
+      }, d));
       cumDelay += phase.duration;
     });
 
     // Core spark explosion → Login
-    setTimeout(() => {
+    bootTimersRef.current.push(setTimeout(() => {
       setSparkExplode(true);
-      setTimeout(() => {
+      bootTimersRef.current.push(setTimeout(() => {
         setStage('login');
         setTimeout(() => inputRef.current?.focus(), 300);
-      }, 800);
-    }, cumDelay + 400);
+      }, 800));
+    }, cumDelay + 300));
   }, []);
+
+  // ── Skip boot: cancel pending phases, jump to login ──
+  const skipBoot = useCallback(() => {
+    bootTimersRef.current.forEach(clearTimeout);
+    bootTimersRef.current = [];
+    setSparkExplode(true);
+    setTimeout(() => {
+      setStage('login');
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }, 300);
+  }, []);
+
+  // Enter 연타 대응: stage 클로저 재등록을 기다리면 두 번째 Enter를 놓친다.
+  // launched.current는 launch() 안에서 동기로 뒤집히므로 연타 판별 기준으로 안전.
+  const stageRef = useRef<Stage>('launch');
+  stageRef.current = stage;
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && stage === 'launch') launch();
+      if (e.key !== 'Enter') return;
+      if (!launched.current) launch();
+      else if (stageRef.current === 'launch' || stageRef.current === 'boot') skipBoot();
     };
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [stage, launch]);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [launch, skipBoot]);
+
+  // Cancel pending boot timers on unmount
+  useEffect(() => () => bootTimersRef.current.forEach(clearTimeout), []);
 
   const handleSubmit = () => {
     const trimmed = name.trim();
@@ -139,14 +164,14 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
 
         <div
           className="flex items-center gap-3 text-[0.85rem] tracking-[1px] animate-[pulseText_2.5s_ease_infinite]"
-          style={{ color: 'rgba(228,228,231,0.2)' }}
+          style={{ color: 'rgba(228,228,231,0.5)' }}
         >
           <span
             className="px-3 py-1.5 rounded-[5px] font-mono text-[0.8rem]"
             style={{
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.03)',
-              color: 'rgba(228,228,231,0.4)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'rgba(228,228,231,0.65)',
             }}
           >
             Enter
@@ -196,6 +221,19 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             />
           ))}
         </div>
+
+        {/* Skip — classroom must never wait */}
+        <button
+          onClick={skipBoot}
+          className="absolute bottom-8 right-8 px-4 py-2.5 rounded-full font-mono text-[11px] tracking-[2px] uppercase cursor-pointer transition-all duration-300 hover:bg-[rgba(255,255,255,0.06)]"
+          style={{
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.02)',
+            color: 'rgba(228,228,231,0.5)',
+          }}
+        >
+          건너뛰기 — Enter
+        </button>
       </div>
 
       {/* ═══ STAGE: LOGIN (Gate) ═══ */}
