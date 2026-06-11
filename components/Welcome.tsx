@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { SCENARIOS, CATEGORIES, type Scenario } from '@/lib/scenarios';
+import { playTick, playSelect } from '@/lib/sounds';
 
 interface WelcomeProps {
   userName: string;
@@ -21,6 +22,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
 
   const handleCategoryClick = (catId: string) => {
     if (selectedCategory === catId) return;
+    playTick();
     setCardsVisible(false);
     setSelectedCategory(catId);
     // Stagger delay before showing cards
@@ -28,6 +30,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
   };
 
   const handleCardClick = (scenario: Scenario) => {
+    playSelect();
     setFadeOut(true);
     // Transition to chat with typing prompt (student must type it)
     setTimeout(() => onStartChat(undefined, scenario.prompt), 400);
@@ -180,7 +183,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.4)',
+              color: 'rgba(255,255,255,0.55)',
               fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
               backdropFilter: 'blur(10px)',
             }}

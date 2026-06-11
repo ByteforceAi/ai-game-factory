@@ -13,8 +13,36 @@ export function initAudio() {
   getCtx();
 }
 
+// ── 음소거 — 교실에서 30대가 동시에 울리면 수업이 무너진다 ──
+// localStorage 접근은 SSR 크래시 방지를 위해 호출 시점에 지연 로드
+let muted = false;
+let mutedLoaded = false;
+
+function loadMuted() {
+  if (mutedLoaded) return;
+  mutedLoaded = true;
+  try { muted = localStorage.getItem('vibe-muted') === '1'; } catch {}
+}
+
+export function isMuted(): boolean {
+  loadMuted();
+  return muted;
+}
+
+export function setMuted(m: boolean) {
+  muted = m;
+  mutedLoaded = true;
+  try { localStorage.setItem('vibe-muted', m ? '1' : '0'); } catch {}
+}
+
+function silenced(): boolean {
+  loadMuted();
+  return muted;
+}
+
 /** Short mechanical click for code typing */
 export function playTick() {
+  if (silenced()) return;
   try {
     const c = getCtx();
     const osc = c.createOscillator();
@@ -32,6 +60,7 @@ export function playTick() {
 
 /** Analysis step ping — clean sine tone */
 export function playPing() {
+  if (silenced()) return;
   try {
     const c = getCtx();
     const osc = c.createOscillator();
@@ -49,6 +78,7 @@ export function playPing() {
 
 /** Completion chord — C-E-G ascending */
 export function playComplete() {
+  if (silenced()) return;
   try {
     const c = getCtx();
     [523, 659, 784].forEach((freq, i) => {
@@ -67,25 +97,9 @@ export function playComplete() {
   } catch {}
 }
 
-/** Glitch/error buzz */
-export function playGlitch() {
-  try {
-    const c = getCtx();
-    const osc = c.createOscillator();
-    const gain = c.createGain();
-    osc.connect(gain);
-    gain.connect(c.destination);
-    osc.frequency.value = 180;
-    osc.type = 'sawtooth';
-    gain.gain.setValueAtTime(0.04, c.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.15);
-    osc.start(c.currentTime);
-    osc.stop(c.currentTime + 0.15);
-  } catch {}
-}
-
 /** Whoosh — filtered noise sweep for transitions */
 export function playWhoosh() {
+  if (silenced()) return;
   try {
     const c = getCtx();
     const len = c.sampleRate * 0.25;
@@ -112,76 +126,9 @@ export function playWhoosh() {
   } catch {}
 }
 
-/* ============================================
-   AMBIENT DRONE — for code generation phase
-   ============================================ */
-let ambientOsc1: OscillatorNode | null = null;
-let ambientOsc2: OscillatorNode | null = null;
-let ambientGain: GainNode | null = null;
-
-export function playAmbient() {
-  try {
-    const c = getCtx();
-    if (ambientGain) return; // already playing
-
-    ambientGain = c.createGain();
-    ambientGain.gain.setValueAtTime(0, c.currentTime);
-    ambientGain.gain.linearRampToValueAtTime(0.06, c.currentTime + 2);
-    ambientGain.connect(c.destination);
-
-    // Deep pad drone
-    ambientOsc1 = c.createOscillator();
-    ambientOsc1.type = 'sine';
-    ambientOsc1.frequency.setValueAtTime(55, c.currentTime);
-    ambientOsc1.frequency.linearRampToValueAtTime(58, c.currentTime + 20);
-    ambientOsc1.frequency.linearRampToValueAtTime(52, c.currentTime + 40);
-    ambientOsc1.connect(ambientGain);
-    ambientOsc1.start();
-
-    // Ethereal high shimmer
-    ambientOsc2 = c.createOscillator();
-    ambientOsc2.type = 'triangle';
-    ambientOsc2.frequency.setValueAtTime(440, c.currentTime);
-    ambientOsc2.frequency.linearRampToValueAtTime(466, c.currentTime + 15);
-    ambientOsc2.frequency.linearRampToValueAtTime(415, c.currentTime + 30);
-
-    const filter = c.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, c.currentTime);
-    filter.Q.setValueAtTime(5, c.currentTime);
-
-    const shimmerGain = c.createGain();
-    shimmerGain.gain.setValueAtTime(0.02, c.currentTime);
-
-    ambientOsc2.connect(filter);
-    filter.connect(shimmerGain);
-    shimmerGain.connect(ambientGain);
-    ambientOsc2.start();
-  } catch {}
-}
-
-export function stopAmbient() {
-  try {
-    const c = getCtx();
-    if (!ambientGain) return;
-
-    ambientGain.gain.linearRampToValueAtTime(0.001, c.currentTime + 1.5);
-
-    const osc1 = ambientOsc1;
-    const osc2 = ambientOsc2;
-    ambientOsc1 = null;
-    ambientOsc2 = null;
-    ambientGain = null;
-
-    setTimeout(() => {
-      try { osc1?.stop(); } catch {}
-      try { osc2?.stop(); } catch {}
-    }, 1600);
-  } catch {}
-}
-
 /** Chip select click — crisp pop */
 export function playSelect() {
+  if (silenced()) return;
   try {
     const c = getCtx();
     const osc = c.createOscillator();

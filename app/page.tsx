@@ -19,7 +19,7 @@ import { getGameHtml } from '@/lib/gameLoader';
 import { matchChatCommand, getVibeConfig } from '@/lib/vibeCommands';
 import { getGameExtensionsScript } from '@/lib/gameExtensions';
 import { VISUAL_THEMES, applyVisualTheme } from '@/lib/visualThemes';
-import { initAudio, playTick, playPing, playComplete } from '@/lib/sounds';
+import { initAudio, playPing, playComplete, playWhoosh, isMuted, setMuted } from '@/lib/sounds';
 import { scorePrompt, type PromptScore } from '@/lib/promptScoring';
 import { timeline } from '@/lib/timelineRecorder';
 import PromptLevel from '@/components/PromptLevel';
@@ -93,6 +93,16 @@ export default function Home() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
 
+  // ── 효과음 음소거 (UI 사운드 한정, localStorage 유지) ──
+  const [soundMuted, setSoundMuted] = useState(false);
+  useEffect(() => { setSoundMuted(isMuted()); }, []);
+  const toggleMute = useCallback(() => {
+    setSoundMuted((m) => {
+      setMuted(!m);
+      return !m;
+    });
+  }, []);
+
   // ── Input ref (for typing animation) ──
   const inputAreaRef = useRef<InputAreaHandle>(null);
 
@@ -114,12 +124,14 @@ export default function Home() {
       return data;
     };
 
-    // Init audio on first interaction
-    const handleFirstClick = () => {
+    // Init audio on first interaction — 키보드로만 입장하는 학생도 커버 (Enter 입장)
+    const handleFirstInteraction = () => {
       initAudio();
-      window.removeEventListener('click', handleFirstClick);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
     };
-    window.addEventListener('click', handleFirstClick);
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('keydown', handleFirstInteraction);
 
     // Listen for game over postMessage from iframe (with dedup)
     let gameOverHandled = false;
@@ -149,7 +161,8 @@ export default function Home() {
     window.addEventListener('message', handleMessage);
 
     return () => {
-      window.removeEventListener('click', handleFirstClick);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
       window.removeEventListener('message', handleMessage);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -503,6 +516,7 @@ export default function Home() {
       setArtifactPreview(preview || '');
       setArtifactGameHtml(gameHtmlArg || '');
       setArtifactOpen(true);
+      playWhoosh(); // 패널 슬라이드와 함께 전환음
     },
     []
   );
@@ -623,6 +637,16 @@ export default function Home() {
                 style={{ border: 'none', background: 'transparent' }}
               >
                 🎬
+              </button>
+              {/* Sound mute toggle — 교실 일괄 음소거용 */}
+              <button
+                onClick={toggleMute}
+                title={soundMuted ? '효과음 켜기' : '효과음 끄기'}
+                aria-label={soundMuted ? '효과음 켜기' : '효과음 끄기'}
+                className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] hover:bg-[var(--bg-tertiary)] active:scale-95 cursor-pointer transition-all duration-200 ${soundMuted ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                style={{ border: 'none', background: 'transparent' }}
+              >
+                {soundMuted ? '🔇' : '🔊'}
               </button>
             </div>
           </div>

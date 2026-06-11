@@ -105,6 +105,9 @@ html, body {
 
 ::selection { background: rgba(34, 197, 94, 0.25); color: var(--text-primary); }
 
+/* 입력 힌트 가독성 — 브라우저 기본값은 딥 다크에서 너무 어두움 */
+::placeholder { color: var(--text-tertiary); opacity: 1; }
+
 /* ============================================
    KEYFRAME ANIMATIONS (used by DOM manipulation)
    ============================================ */
