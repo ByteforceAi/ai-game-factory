@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { store } from '@/lib/kvStore';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import PlayClient from './PlayClient';
@@ -8,7 +8,7 @@ interface PageProps {
 }
 
 async function getGame(id: string) {
-  const raw = await kv.get(`game:${id}`) as string | null;
+  const raw = await store.get(`game:${id}`) as string | null;
   if (!raw) return null;
   return typeof raw === 'string' ? JSON.parse(raw) : raw;
 }

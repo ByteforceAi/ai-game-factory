@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { store } from '@/lib/kvStore';
 
 export async function GET() {
   try {
     // Get latest 30 game IDs from sorted set (newest first)
-    const ids = await kv.zrange('gallery:recent', 0, 29, { rev: true }) as string[];
+    const ids = await store.zrange('gallery:recent', 0, 29, { rev: true }) as string[];
 
     if (!ids || ids.length === 0) {
       return NextResponse.json({ games: [] });
@@ -13,7 +13,7 @@ export async function GET() {
     // Fetch game data for each ID
     const games = await Promise.all(
       ids.map(async (id) => {
-        const raw = await kv.get(`game:${id}`) as string | null;
+        const raw = await store.get(`game:${id}`) as string | null;
         if (!raw) return null;
         const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
         return {

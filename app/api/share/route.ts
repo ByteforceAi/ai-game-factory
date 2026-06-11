@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { store } from '@/lib/kvStore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,11 +27,11 @@ export async function POST(request: NextRequest) {
       createdAt: Date.now(),
     };
 
-    // Store in KV with 30-day TTL
-    await kv.set(`game:${id}`, JSON.stringify(gameData), { ex: 30 * 24 * 60 * 60 });
+    // Store with 30-day TTL (인메모리 폴백에선 TTL 미적용)
+    await store.set(`game:${id}`, JSON.stringify(gameData), { ex: 30 * 24 * 60 * 60 });
 
     // Add to gallery sorted set (score = timestamp)
-    await kv.zadd('gallery:recent', { score: Date.now(), member: id });
+    await store.zadd('gallery:recent', { score: Date.now(), member: id });
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     const url = `${baseUrl}/play/${id}`;

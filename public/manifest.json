@@ -1,12 +1,11 @@
 {
-  "name": "AI Game Factory",
-  "short_name": "AI게임",
-  "description": "AI로 게임을 만드는 플랫폼",
-  "start_url": "/m",
+  "name": "바이브코딩 아레나 — AI 코딩 교실",
+  "short_name": "바이브코딩",
+  "description": "AI와 대화하며 나만의 게임을 만드는 코딩 수업",
+  "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0a0a0a",
-  "theme_color": "#007AFF",
+  "theme_color": "#0a0a0a",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -25,5 +24,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["games", "entertainment"]
+  "categories": ["education", "games"]
 }

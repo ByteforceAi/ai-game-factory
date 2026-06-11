@@ -43,6 +43,14 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
   const launch = useCallback(() => {
     if (launched.current) return;
     launched.current = true;
+
+    // 교사 패널 설정: 부팅 연출 통째로 생략 (수업 템포 우선)
+    if (localStorage.getItem('instructor-skip') === 'true') {
+      setStage('login');
+      setTimeout(() => inputRef.current?.focus(), 300);
+      return;
+    }
+
     setStage('boot');
 
     // Schedule phase transitions (collect ids so skip can cancel)

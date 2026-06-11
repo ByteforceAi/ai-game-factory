@@ -24,8 +24,10 @@ export const metadata: Metadata = {
     '아레나',
   ],
   robots: { index: false, follow: false },
+  manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/icons/icon-192.png' }],
   },
 };
 

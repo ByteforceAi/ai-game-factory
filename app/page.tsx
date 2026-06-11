@@ -64,11 +64,17 @@ export default function Home() {
 
   // Session restore — 새로고침해도 부팅/로그인 반복 없이 이어가기
   // sessionStorage라서 탭을 닫으면 초기화됨 (공용 태블릿에서 다음 학생에게 안 넘어감)
+  // 교사 패널(/instructor)이 지정한 student-name(localStorage)은 프리셋으로 승계
   useEffect(() => {
     const saved = sessionStorage.getItem('vibe-student-name');
-    if (saved) {
-      setUserName(saved);
+    const preset = localStorage.getItem('student-name');
+    const name = saved || preset;
+    if (name) {
+      setUserName(name);
       setPhase(1);
+      if (!saved) {
+        try { sessionStorage.setItem('vibe-student-name', name); } catch {}
+      }
     }
   }, []);
 
@@ -193,6 +199,20 @@ export default function Home() {
     },
     [userName, addLog]
   );
+
+  // 교사 강제 게임(instructor-override): 이름 확정 후 1회만 자동 시작.
+  // 1회 제한이라 학생이 '다른 게임 보여줘'로 빠져나올 수 있음 — 재강제는 새로고침.
+  const overrideAppliedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== 1 || !userName || overrideAppliedRef.current) return;
+    const override = localStorage.getItem('instructor-override');
+    if (!override) return;
+    const scenario = SCENARIOS.find((s) => s.gameId === override && s.prompt);
+    if (!scenario) return;
+    overrideAppliedRef.current = true;
+    const t = setTimeout(() => handleStartChat(undefined, scenario.prompt), 800);
+    return () => clearTimeout(t);
+  }, [phase, userName, handleStartChat]);
 
   // After phase transition, show AI guide message with the prompt to type
   useEffect(() => {
@@ -694,22 +714,36 @@ export default function Home() {
         onClose={() => setShowTimeline(false)}
       />
 
-      {/* Log indicator */}
+      {/* Log indicator — 탭하면 수업 기록 JSON 다운로드 (교사가 순회하며 수거) */}
       {phase === 2 && (
-        <div
-          className="fixed bottom-3 right-3 flex items-center gap-1.5 z-10"
+        <button
+          onClick={() => {
+            const data = JSON.stringify(messageLogRef.current, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `수업기록_${userName || '학생'}_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          title="수업 기록 다운로드 (JSON)"
+          aria-label="수업 기록 다운로드"
+          className="pressable fixed bottom-3 right-3 flex items-center gap-1.5 z-10 px-2.5 py-1.5 rounded-full cursor-pointer hover:bg-[var(--bg-tertiary)]"
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '10px',
             color: 'var(--text-muted)',
+            border: 'none',
+            background: 'transparent',
           }}
         >
           <div
             className="w-[5px] h-[5px] rounded-full animate-log-pulse"
             style={{ background: 'var(--accent-green)' }}
           />
-          <span>수업 기록 {logCount}건</span>
-        </div>
+          <span>수업 기록 {logCount}건 ⤓</span>
+        </button>
       )}
     </>
   );

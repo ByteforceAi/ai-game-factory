@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { kv } from '@vercel/kv';
+import { store } from '@/lib/kvStore';
 
 export interface LeaderboardEntry {
   name: string;
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const key = `lb:${gameId}`;
-    const entries = (await kv.get<LeaderboardEntry[]>(key)) || [];
+    const entries = (await store.get<LeaderboardEntry[]>(key)) || [];
 
     return Response.json({ leaderboard: entries });
   } catch (error) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const key = `lb:${gameId}`;
-    const current = (await kv.get<LeaderboardEntry[]>(key)) || [];
+    const current = (await store.get<LeaderboardEntry[]>(key)) || [];
 
     // Add new entry
     const newEntry: LeaderboardEntry = {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     // Keep top N
     const trimmed = current.slice(0, MAX_ENTRIES);
-    await kv.set(key, trimmed);
+    await store.set(key, trimmed);
 
     // Find the new entry's rank
     const rank = trimmed.findIndex(

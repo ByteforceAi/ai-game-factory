@@ -4,7 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DEMO_GAMES } from '@/lib/demoGames';
 
-const CORRECT_PIN = '0608';
+// 빌드 시 NEXT_PUBLIC_INSTRUCTOR_PIN으로 교체 가능 (기관/반별 PIN 운영)
+// 클라이언트 노출되는 소프트 락 — 학생 접근 차단용이지 보안 경계가 아님
+const CORRECT_PIN = process.env.NEXT_PUBLIC_INSTRUCTOR_PIN || '0608';
 
 export default function InstructorPage() {
   return (
@@ -478,8 +480,8 @@ function InstructorContent() {
         textAlign: 'center',
         lineHeight: 1.6,
       }}>
-        설정은 이 브라우저의 localStorage에 저장됩니다.<br />
-        수강생 기기에서 /instructor?pin=0608 으로 접근하여 설정하세요.
+        설정은 이 브라우저(이 기기)에만 저장됩니다.<br />
+        수강생 기기에서 /instructor?pin=발급받은PIN 으로 접근해 설정하세요.
       </div>
     </div>
   );
