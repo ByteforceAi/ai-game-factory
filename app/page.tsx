@@ -611,7 +611,7 @@ export default function Home() {
                 </button>
               )}
               <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}>
-                <div className="w-2 h-3 rounded-[1px]" style={{ background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.3)' }} />
+                <div className="w-2 h-3 rounded-[1px]" style={{ background: 'var(--accent-primary)', boxShadow: '0 0 8px var(--accent-primary-glow)' }} />
                 바이브코딩 아레나
               </div>
             </div>
@@ -658,9 +658,9 @@ export default function Home() {
               className="flex-1 flex flex-col min-w-0 min-h-0"
               style={{
                 transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                // 정적 앰비언트 헤일로 — 온보딩의 그린 코어와 같은 세계라는 신호
+                // 정적 앰비언트 헤일로 — 온보딩의 그린 코어와 같은 세계라는 신호 (gov에선 국정 파랑)
                 background:
-                  'radial-gradient(640px 300px at 50% -100px, rgba(34,197,94,0.05), transparent 70%)',
+                  'radial-gradient(640px 300px at 50% -100px, var(--ambient-halo), transparent 70%)',
               }}
             >
               {/* Messages */}

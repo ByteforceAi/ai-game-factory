@@ -69,9 +69,10 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
       <div className="max-w-[680px] mx-auto">
         {/* Vibe Prompt Input — aurora glow */}
         <div className="relative" style={{ borderRadius: 30 }}>
-          {/* Aurora glow background — 흐름 애니메이션은 사용 중일 때만 (대기 시 GPU 휴식) */}
+          {/* Aurora glow background — 흐름 애니메이션은 사용 중일 때만 (대기 시 GPU 휴식)
+              gov 라이트 테마에선 CSS로 숨김 (.input-aurora) */}
           <div
-            className="absolute rounded-[30px]"
+            className="input-aurora absolute rounded-[30px]"
             style={{
               inset: isFocused ? -2 : 4,
               background: 'linear-gradient(90deg, #00f3ff, #bc13fe, #ff007f, #ff9500, #00f3ff)',
@@ -88,13 +89,13 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
           <div
             className="relative flex items-end z-[1]"
             style={{
-              background: isFocused ? 'rgba(20,20,25,0.8)' : 'rgba(15,15,20,0.6)',
+              background: isFocused ? 'var(--glass-bg-focus)' : 'var(--glass-bg)',
               backdropFilter: 'blur(25px)',
               WebkitBackdropFilter: 'blur(25px)',
-              border: `1px solid ${isFocused ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+              border: `1px solid ${isFocused ? 'var(--glass-border-focus)' : 'var(--glass-border)'}`,
               borderRadius: 24,
               padding: '8px 10px 8px 24px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)',
+              boxShadow: 'var(--glass-shadow)',
               transition: 'all 0.3s ease',
             }}
           >
@@ -102,8 +103,8 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
             <div
               className="mr-3 flex items-center justify-center flex-shrink-0 mb-2.5 transition-all duration-300"
               style={{
-                color: isFocused ? '#00f3ff' : 'rgba(255,255,255,0.4)',
-                filter: isFocused ? 'drop-shadow(0 0 8px #00f3ff)' : 'none',
+                color: isFocused ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                filter: isFocused ? 'drop-shadow(0 0 8px var(--accent-primary-glow))' : 'none',
               }}
             >
               <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -131,7 +132,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 boxShadow: 'none',
                 WebkitAppearance: 'none',
                 resize: 'none',
-                color: '#fff',
+                color: 'var(--text-primary)',
                 fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
                 fontWeight: 300,
                 fontSize: '1.05rem',
@@ -139,7 +140,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 maxHeight: 120,
                 minHeight: 40,
                 padding: '10px 0',
-                caretColor: '#22c55e',
+                caretColor: 'var(--accent-primary)',
               }}
             />
 
@@ -162,11 +163,11 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 border: 'none',
                 outline: 'none',
                 background: hasText
-                  ? '#fff'
-                  : 'rgba(255,255,255,0.06)',
+                  ? 'var(--send-bg-active)'
+                  : 'var(--bg-surface)',
                 boxShadow: hasText
-                  ? '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(188,19,254,0.3)'
-                  : '0 0 0 1px rgba(255,255,255,0.06)',
+                  ? 'var(--send-glow)'
+                  : '0 0 0 1px var(--border)',
                 transform: hasText ? 'scale(1.05)' : 'scale(1)',
                 transition: 'all 0.3s cubic-bezier(0.25,1,0.5,1)',
                 opacity: !hasText ? 0.5 : 1,
@@ -181,7 +182,7 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
-                  stroke: hasText ? '#000' : 'rgba(255,255,255,0.25)',
+                  stroke: hasText ? 'var(--send-fg-active)' : 'var(--text-muted)',
                   transform: hasText ? 'translateY(-2px)' : 'none',
                   transition: 'all 0.3s ease',
                 }}

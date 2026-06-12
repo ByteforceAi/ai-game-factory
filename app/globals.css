@@ -56,6 +56,22 @@ textarea, input, button, select, a {
   --neon-pink: #ff007f;
   --neon-amber: #ff9500;
 
+  /* 시네마틱 스테이지 — 온보딩 연출용, 테마와 무관하게 다크 유지 */
+  --bg-stage: #0a0a0a;
+
+  /* 테마 가변 표면 토큰 — Welcome/입력창이 gov 라이트를 따라가게 */
+  --gradient-hero-from: #22c55e;
+  --gradient-hero-to: #00f3ff;
+  --ambient-halo: rgba(34, 197, 94, 0.05);
+  --glass-bg: rgba(15, 15, 20, 0.6);
+  --glass-bg-focus: rgba(20, 20, 25, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-focus: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  --send-bg-active: #ffffff;
+  --send-fg-active: #000000;
+  --send-glow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 40px rgba(188, 19, 254, 0.3);
+
   /* Typography */
   --font-body: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
   --font-display: 'Space Grotesk', 'Pretendard', 'Noto Sans KR', sans-serif;
@@ -103,6 +119,24 @@ textarea, input, button, select, a {
   --accent-primary-dim: rgba(11, 80, 160, 0.5);
   --accent-primary-glow: rgba(11, 80, 160, 0.18);
   --accent-green: #0b50a0;
+
+  /* gov 라이트용 표면 토큰 */
+  --gradient-hero-from: #0b50a0;
+  --gradient-hero-to: #1d4ed8;
+  --ambient-halo: rgba(11, 80, 160, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-focus: rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(11, 80, 160, 0.18);
+  --glass-border-focus: rgba(11, 80, 160, 0.4);
+  --glass-shadow: 0 10px 30px rgba(23, 43, 77, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  --send-bg-active: #0b50a0;
+  --send-fg-active: #ffffff;
+  --send-glow: 0 4px 16px rgba(11, 80, 160, 0.35);
+}
+
+/* gov 라이트에선 네온 오로라 글로우를 끈다 — 라이트 배경과 충돌 */
+[data-theme='gov'] .input-aurora {
+  display: none;
 }
 
 /* gov 라이트 배경용 코드 하이라이트 (기본 팔레트는 다크 전용) */

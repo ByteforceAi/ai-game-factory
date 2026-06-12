@@ -83,14 +83,14 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
           <div
             className="w-2 h-2 rounded-full mx-auto mb-4 animate-[pulseText_2s_infinite_alternate]"
             style={{
-              background: '#22c55e',
-              boxShadow: '0 0 10px rgba(34,197,94,0.5)',
+              background: 'var(--accent-primary)',
+              boxShadow: '0 0 10px var(--accent-primary-glow)',
             }}
           />
           {schoolName && (
             <div
               className="font-mono text-[10.5px] tracking-[2px] mb-3"
-              style={{ color: 'rgba(34,197,94,0.55)' }}
+              style={{ color: 'var(--accent-primary-dim)' }}
             >
               {schoolName} · AI 코딩 교실
             </div>
@@ -103,7 +103,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
             <strong
               className="font-semibold"
               style={{
-                background: 'linear-gradient(to right, #22c55e, #00f3ff)',
+                background: 'linear-gradient(to right, var(--gradient-hero-from), var(--gradient-hero-to))',
                 WebkitBackgroundClip: 'text',
                 color: 'transparent',
               }}
@@ -114,7 +114,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
           </h1>
           <p
             className="text-[0.95rem] font-light"
-            style={{ color: 'rgba(255,255,255,0.5)' }}
+            style={{ color: 'var(--text-secondary)' }}
           >
             오늘은 어떤 걸 만들어볼까요?
           </p>
@@ -130,22 +130,22 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
               style={{
                 background:
                   selectedCategory === cat.id
-                    ? 'rgba(0,243,255,0.08)'
-                    : 'rgba(255,255,255,0.03)',
+                    ? 'var(--accent-primary-glow)'
+                    : 'var(--bg-tertiary)',
                 border: `1px solid ${
                   selectedCategory === cat.id
-                    ? 'rgba(0,243,255,0.3)'
-                    : 'rgba(255,255,255,0.08)'
+                    ? 'var(--accent-primary-dim)'
+                    : 'var(--border)'
                 }`,
                 color:
                   selectedCategory === cat.id
-                    ? '#fff'
-                    : 'rgba(255,255,255,0.5)',
+                    ? 'var(--text-primary)'
+                    : 'var(--text-secondary)',
                 fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
                 backdropFilter: 'blur(10px)',
                 boxShadow:
                   selectedCategory === cat.id
-                    ? '0 0 20px rgba(0,243,255,0.1)'
+                    ? '0 0 20px var(--accent-primary-glow)'
                     : 'none',
               }}
             >
@@ -173,7 +173,7 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
         {!selectedCategory && (
           <div
             className="text-center py-16 animate-[fadeInUp_0.6s_ease_forwards]"
-            style={{ color: 'rgba(255,255,255,0.25)' }}
+            style={{ color: 'var(--text-muted)' }}
           >
             <div className="text-[2rem] mb-3 animate-bounce">↑</div>
             <div className="text-[0.9rem] font-light">
@@ -184,20 +184,20 @@ export default function Welcome({ userName, onStartChat }: WelcomeProps) {
 
         {/* Bottom: direct input */}
         <div className="text-center mt-4">
-          <div className="flex items-center justify-center mb-4" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+          <div className="flex items-center justify-center mb-4" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
             <span className="px-4 text-[0.75rem] tracking-[2px] uppercase font-mono">
               or type your own
             </span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
           </div>
           <button
             onClick={handleDirectInput}
-            className="pressable px-6 py-3 rounded-full text-[0.9rem] cursor-pointer hover:border-[rgba(255,255,255,0.3)]"
+            className="pressable px-6 py-3 rounded-full text-[0.9rem] cursor-pointer hover:border-[var(--accent-primary-dim)]"
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.55)',
+              background: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-light)',
+              color: 'var(--text-secondary)',
               fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
               backdropFilter: 'blur(10px)',
             }}
@@ -227,8 +227,8 @@ function ModuleCard({
       onClick={onClick}
       className="module-card-hover group relative text-left rounded-[12px] cursor-pointer overflow-hidden transition-all duration-400"
       style={{
-        background: 'rgba(20,20,25,0.5)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--bg-tertiary)',
+        border: '1px solid var(--border)',
         padding: '14px 16px',
         fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
         opacity: visible ? 1 : 0,
@@ -238,20 +238,20 @@ function ModuleCard({
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.transform = 'translateY(-2px)';
-        el.style.background = 'rgba(30,30,40,0.7)';
-        el.style.borderColor = 'rgba(34,197,94,0.15)';
+        el.style.background = 'var(--bg-surface)';
+        el.style.borderColor = 'var(--accent-primary-dim)';
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.transform = 'translateY(0)';
-        el.style.background = 'rgba(20,20,25,0.5)';
-        el.style.borderColor = 'rgba(255,255,255,0.06)';
+        el.style.background = 'var(--bg-tertiary)';
+        el.style.borderColor = 'var(--border)';
       }}
       // 눌림 피드백 — 터치/마우스 공통 (inline transform이라 :active로는 못 덮음)
       onPointerDown={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.transform = 'scale(0.97)';
-        el.style.borderColor = 'rgba(34,197,94,0.35)';
+        el.style.borderColor = 'var(--accent-primary)';
       }}
       onPointerUp={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -263,8 +263,8 @@ function ModuleCard({
       }}
     >
       <div
-        className="text-[0.85rem] font-medium tracking-tight transition-colors duration-300 group-hover:text-[#22c55e]"
-        style={{ color: '#fff' }}
+        className="text-[0.85rem] font-medium tracking-tight transition-colors duration-300 group-hover:text-[var(--accent-primary)]"
+        style={{ color: 'var(--text-primary)' }}
       >
         {scenario.title}
       </div>
