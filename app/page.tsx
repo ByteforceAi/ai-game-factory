@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Onboarding from '@/components/Onboarding';
@@ -10,6 +10,7 @@ import AIMessage from '@/components/AIMessage';
 import ArtifactPanel from '@/components/ArtifactPanel';
 import {
   findResponse,
+  findScenario,
   createLogEntry,
   SCENARIOS,
   type LogEntry,
@@ -100,6 +101,27 @@ export default function Home() {
     setSoundMuted((m) => {
       setMuted(!m);
       return !m;
+    });
+  }, []);
+
+  // ── 화면 테마 (다크 ↔ 공공기관 라이트) — 상단바에서 즉시 전환 ──
+  const [appTheme, setAppTheme] = useState<'dark' | 'gov'>('dark');
+  useEffect(() => {
+    setAppTheme(document.documentElement.getAttribute('data-theme') === 'gov' ? 'gov' : 'dark');
+  }, []);
+  const toggleTheme = useCallback(() => {
+    setAppTheme((prev) => {
+      const next = prev === 'gov' ? 'dark' : 'gov';
+      try {
+        if (next === 'gov') {
+          localStorage.setItem('app-theme', 'gov');
+          document.documentElement.setAttribute('data-theme', 'gov');
+        } else {
+          localStorage.removeItem('app-theme');
+          document.documentElement.removeAttribute('data-theme');
+        }
+      } catch {}
+      return next;
     });
   }, []);
 
@@ -256,14 +278,16 @@ export default function Home() {
   const doSendMessage = useCallback(
     (text: string) => {
       if (isStreaming) return;
-      setIsStreaming(true);
-      setShowHints(false);
-      inputAreaRef.current?.clear();
 
-      // Prevent double-sends via rapid clicking
+      // Prevent double-sends — setIsStreaming(true) 이전에 가드해야
+      // 연타 시 입력창이 영구 잠기는 데드락이 없다
       const sendTime = Date.now();
       if ((window as any).__lastSendTime && sendTime - (window as any).__lastSendTime < 500) return;
       (window as any).__lastSendTime = sendTime;
+
+      setIsStreaming(true);
+      setShowHints(false);
+      inputAreaRef.current?.clear();
 
       // Update chat title with first message
       if (messages.length === 0) {
@@ -297,7 +321,15 @@ export default function Home() {
       }
 
       // ── "다른 게임" handler — go back to welcome ──
-      if (lower.includes('다른') && (lower.includes('게임') || lower.includes('보여'))) {
+      // '다른 단 보여줘'(구구단 vibe) 등 오발 방지: 명시적 문구 + '만들' 제외
+      if (
+        (lower.includes('다른 게임') ||
+          lower.includes('딴 게임') ||
+          lower.includes('게임 목록') ||
+          lower.includes('처음으로') ||
+          lower.includes('메인으로')) &&
+        !lower.includes('만들')
+      ) {
         // CRITICAL: Kill iframe audio/game BEFORE switching
         const iframes = document.querySelectorAll('iframe');
         iframes.forEach((iframe) => {
@@ -380,16 +412,22 @@ export default function Home() {
       // ── Check for visual theme request (works even without activeGameId) ──
       {
         const lower = text.toLowerCase();
-        const themeKeywords: [string[], string][] = [
-          [['네온', 'neon'], 'mood-neon-nights'],
-          [['사이버펑크', 'cyber'], 'theme-cyberpunk'],
-          [['베이퍼', 'vapor'], 'theme-vaporwave'],
-          [['레트로', 'retro'], 'mood-retro-arcade'],
-          [['눈', 'snow'], 'overlay-snow'],
-          [['비', 'rain', '비가'], 'overlay-rain'],
-          [['스캔', 'scanline', 'crt'], 'effect-scanlines'],
-          [['매트릭스', 'matrix'], 'theme-matrix'],
-        ];
+        // '네온 플랫포머 게임 만들어줘' 같은 생성 요청을 가로채지 않도록 의도 가드
+        const wantsTheme =
+          ['테마', '효과', '배경', '분위기', '스타일'].some((k) => lower.includes(k)) &&
+          !lower.includes('만들');
+        const themeKeywords: [string[], string][] = wantsTheme
+          ? [
+              [['네온', 'neon'], 'mood-neon-nights'],
+              [['사이버펑크', 'cyber'], 'theme-cyberpunk'],
+              [['베이퍼', 'vapor'], 'theme-vaporwave'],
+              [['레트로', 'retro'], 'fx-crt'],
+              [['눈', 'snow'], 'ov-snow'],
+              [['비', 'rain', '비가'], 'ov-rain'],
+              [['스캔', 'scanline', 'crt'], 'fx-scanlines'],
+              [['매트릭스', 'matrix'], 'theme-matrix'],
+            ]
+          : [];
         for (const [keywords, themeId] of themeKeywords) {
           if (keywords.some((k) => lower.includes(k))) {
             const theme = VISUAL_THEMES.find((t) => t.id === themeId);
@@ -414,9 +452,9 @@ export default function Home() {
 
                 // Weather overlays — canvas-based particles that show OVER the game
                 if (iframe.contentWindow) {
-                  if (themeId === 'overlay-rain') {
+                  if (themeId === 'ov-rain') {
                     iframe.contentWindow.postMessage({ type: 'WEATHER_START', weatherType: 'rain' }, '*');
-                  } else if (themeId === 'overlay-snow') {
+                  } else if (themeId === 'ov-snow') {
                     iframe.contentWindow.postMessage({ type: 'WEATHER_START', weatherType: 'snow' }, '*');
                   }
                 }
@@ -448,8 +486,9 @@ export default function Home() {
       }
 
       // ── Normal scenario response ──
+      // findScenario로 일원화 — 키워드 매칭("테트리스해줘")도 게임 부착/제안칩이 열린다
       const response = findResponse(text, userName);
-      const matchedScenario = SCENARIOS.find((s) => s.prompt === text);
+      const matchedScenario = findScenario(text);
       if (matchedScenario?.gameId) {
         const gameHtml = getGameHtml(matchedScenario.gameId);
         if (gameHtml) {
@@ -605,7 +644,6 @@ export default function Home() {
                   onClick={() => setSidebarCollapsed(false)}
                   aria-label="사이드바 열기"
                   className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-lg text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
-                  style={{ border: 'none', background: 'transparent' }}
                 >
                   ☰
                 </button>
@@ -622,8 +660,7 @@ export default function Home() {
                   onClick={() => setShowDashboard(d => !d)}
                   title="실시간 대시보드"
                   aria-label="실시간 대시보드"
-                  className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] cursor-pointer transition-all duration-200 active:scale-95 ${showDashboard ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'} hover:bg-[var(--bg-tertiary)]`}
-                  style={{ border: 'none', background: showDashboard ? 'var(--bg-surface)' : 'transparent' }}
+                  className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] cursor-pointer transition-all duration-200 active:scale-95 ${showDashboard ? 'text-[var(--accent-primary)] bg-[var(--bg-surface)]' : 'text-[var(--text-secondary)] bg-transparent'} hover:bg-[var(--bg-tertiary)]`}
                 >
                   📊
                 </button>
@@ -634,9 +671,17 @@ export default function Home() {
                 title="학습 타임라인"
                 aria-label="학습 타임라인"
                 className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
-                style={{ border: 'none', background: 'transparent' }}
               >
                 🎬
+              </button>
+              {/* Theme toggle — 다크 ↔ 공공기관 라이트 즉시 전환 */}
+              <button
+                onClick={toggleTheme}
+                title={appTheme === 'gov' ? '다크 테마로 전환' : '공공기관 라이트 테마로 전환'}
+                aria-label={appTheme === 'gov' ? '다크 테마로 전환' : '공공기관 라이트 테마로 전환'}
+                className="w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
+              >
+                {appTheme === 'gov' ? '🌌' : '🏛'}
               </button>
               {/* Sound mute toggle — 교실 일괄 음소거용 */}
               <button
@@ -644,7 +689,6 @@ export default function Home() {
                 title={soundMuted ? '효과음 켜기' : '효과음 끄기'}
                 aria-label={soundMuted ? '효과음 켜기' : '효과음 끄기'}
                 className={`w-10 h-10 rounded-claude-sm flex items-center justify-center text-[15px] hover:bg-[var(--bg-tertiary)] active:scale-95 cursor-pointer transition-all duration-200 ${soundMuted ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
-                style={{ border: 'none', background: 'transparent' }}
               >
                 {soundMuted ? '🔇' : '🔊'}
               </button>
@@ -753,13 +797,12 @@ export default function Home() {
           }}
           title="수업 기록 다운로드 (JSON)"
           aria-label="수업 기록 다운로드"
-          className="pressable fixed bottom-3 right-3 flex items-center gap-1.5 z-10 px-2.5 py-1.5 rounded-full cursor-pointer hover:bg-[var(--bg-tertiary)]"
+          className="pressable fixed bottom-3 right-3 flex items-center gap-1.5 z-10 px-2.5 py-1.5 rounded-full cursor-pointer bg-transparent hover:bg-[var(--bg-tertiary)]"
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '10px',
             color: 'var(--text-muted)',
             border: 'none',
-            background: 'transparent',
           }}
         >
           <div

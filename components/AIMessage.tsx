@@ -41,21 +41,21 @@ export default function AIMessage({
 
       if (hasArtifact) {
         // ── Phase 1a: Thinking dots (brief) ──
-        await sleep(800 + Math.random() * 400);
+        await sleep(500 + Math.random() * 300);
         if (cancelRef.current) return;
 
         // ── Phase 1b: Build sequence (드르륵 준비) ──
         setPhase('building');
         for (let i = 0; i < BUILD_LINES.length; i++) {
-          await sleep(400 + Math.random() * 300);
+          await sleep(220 + Math.random() * 160);
           if (cancelRef.current) return;
           setBuildLines(prev => [...prev, BUILD_LINES[i]]);
         }
-        await sleep(600);
+        await sleep(350);
         if (cancelRef.current) return;
       } else {
         // Text-only: normal thinking dots
-        await sleep(1000 + Math.random() * 800);
+        await sleep(600 + Math.random() * 400);
         if (cancelRef.current) return;
       }
 
@@ -83,7 +83,7 @@ export default function AIMessage({
         if (inTag) continue;
 
         visibleCount++;
-        if (visibleCount % 2 === 0) {
+        if (visibleCount % 3 === 0) {
           if (visibleCount % 20 === 0) playTick();
           el.innerHTML =
             output +
@@ -92,7 +92,7 @@ export default function AIMessage({
             block: 'end',
             behavior: 'smooth',
           });
-          await sleep(25 + Math.random() * 20);
+          await sleep(12 + Math.random() * 8);
         }
       }
 
@@ -132,9 +132,10 @@ export default function AIMessage({
       <div
         className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5"
         style={{
-          background: 'radial-gradient(circle, #22c55e, #22c55e88, transparent)',
-          boxShadow: '0 0 12px rgba(34,197,94,0.3), 0 0 4px rgba(34,197,94,0.5)',
-          animation: phase !== 'done' ? 'breatheCore 2.5s ease-in-out infinite alternate' : 'none',
+          background:
+            'radial-gradient(circle, var(--accent-primary), var(--accent-primary-dim), transparent)',
+          boxShadow: '0 0 12px var(--accent-primary-glow)',
+          animation: phase !== 'done' ? 'breatheAvatar 2.5s ease-in-out infinite alternate' : 'none',
           transform: phase === 'done' ? 'scale(0.9)' : undefined,
           transition: 'transform 0.6s ease',
         }}
@@ -163,8 +164,8 @@ export default function AIMessage({
           <div
             className="rounded-lg px-4 py-3 font-mono text-[11px] leading-[2]"
             style={{
-              background: 'rgba(0,0,0,0.4)',
-              border: '1px solid rgba(34,197,94,0.1)',
+              background: 'var(--terminal-bg-soft)',
+              border: '1px solid var(--terminal-border)',
             }}
           >
             {buildLines.map((line, i) => (
@@ -174,11 +175,11 @@ export default function AIMessage({
                 style={{
                   opacity: 0,
                   color: line.includes('✓')
-                    ? 'rgba(34,197,94,0.7)'
-                    : 'rgba(34,197,94,0.35)',
+                    ? 'var(--terminal-done)'
+                    : 'var(--terminal-text-dim)',
                 }}
               >
-                <span style={{ color: 'rgba(34,197,94,0.2)', marginRight: 8 }}>{'>'}</span>
+                <span style={{ color: 'var(--terminal-label)', marginRight: 8 }}>{'>'}</span>
                 {line}
               </div>
             ))}
@@ -190,7 +191,7 @@ export default function AIMessage({
                     key={i}
                     className="w-[4px] h-[4px] rounded-full animate-dot-bounce"
                     style={{
-                      background: 'rgba(34,197,94,0.3)',
+                      background: 'var(--terminal-text-dim)',
                       animationDelay: `${i * 0.15}s`,
                     }}
                   />
@@ -245,37 +246,35 @@ export default function AIMessage({
               <div
                 className="mt-4 rounded-xl overflow-hidden"
                 style={{
-                  background: 'rgba(0,0,0,0.5)',
-                  border: '1px solid rgba(34,197,94,0.15)',
-                  boxShadow: '0 0 20px rgba(34,197,94,0.05)',
+                  background: 'var(--terminal-bg)',
+                  border: '1px solid var(--terminal-border)',
                 }}
               >
                 <div
                   className="flex items-center gap-2 px-4 py-2"
-                  style={{ borderBottom: '1px solid rgba(34,197,94,0.1)' }}
+                  style={{ borderBottom: '1px solid var(--terminal-border)' }}
                 >
-                  <div className="w-[6px] h-[6px] rounded-full" style={{ background: 'rgba(34,197,94,0.4)' }} />
-                  <span className="font-mono text-[10px] tracking-[2px]" style={{ color: 'rgba(34,197,94,0.45)' }}>
+                  <div className="w-[6px] h-[6px] rounded-full" style={{ background: 'var(--terminal-label)' }} />
+                  <span className="font-mono text-[10px] tracking-[2px]" style={{ color: 'var(--terminal-label)' }}>
                     오늘의 입력 미션
                   </span>
                 </div>
                 <div className="px-5 py-4">
-                  <div className="font-mono text-[11px] mb-2" style={{ color: 'rgba(34,197,94,0.3)' }}>
+                  <div className="font-mono text-[12px] mb-2" style={{ color: 'var(--terminal-text-dim)' }}>
                     {'>'} 아래 문장을 입력창에 똑같이 따라 써보세요:
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[15px] font-medium" style={{
-                      color: 'rgba(34,197,94,0.85)',
-                      textShadow: '0 0 10px rgba(34,197,94,0.3)',
+                      color: 'var(--terminal-text)',
+                      textShadow: 'var(--terminal-glow)',
                     }}>
                       {response.typingPrompt}
                     </span>
                     <span
                       className="inline-block w-[8px] h-[18px] rounded-[1px]"
                       style={{
-                        background: 'rgba(34,197,94,0.6)',
+                        background: 'var(--terminal-text)',
                         animation: 'cursorBlink .8s step-end infinite',
-                        boxShadow: '0 0 6px rgba(34,197,94,0.3)',
                       }}
                     />
                   </div>

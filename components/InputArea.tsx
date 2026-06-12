@@ -23,6 +23,8 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasText = text.trim().length > 0;
+  // 스트리밍 중(disabled)엔 버튼도 시각적으로 꺼져야 '아직 차례가 아님'이 읽힌다
+  const canSend = hasText && !disabled;
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -59,6 +61,9 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      // 한글 IME 조합 중 Enter는 글자 확정용 — 이때 전송하면 마지막 음절이
+      // 빈 입력창에 다시 찍히는 고전 버그가 난다
+      if (e.nativeEvent.isComposing) return;
       e.preventDefault();
       handleSend();
     }
@@ -147,8 +152,9 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
             {/* Send button — glass when empty, lit when typing */}
             <button
               onClick={handleSend}
-              disabled={!hasText || disabled}
+              disabled={!canSend}
               aria-label="보내기"
+              className={`pressable enabled:hover:brightness-110 ${canSend ? 'scale-105' : 'scale-100'}`}
               style={{
                 width: 44,
                 height: 44,
@@ -159,18 +165,16 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: hasText ? 'pointer' : 'default',
+                cursor: canSend ? 'pointer' : 'default',
                 border: 'none',
-                outline: 'none',
-                background: hasText
+                background: canSend
                   ? 'var(--send-bg-active)'
                   : 'var(--bg-surface)',
-                boxShadow: hasText
+                boxShadow: canSend
                   ? 'var(--send-glow)'
                   : '0 0 0 1px var(--border)',
-                transform: hasText ? 'scale(1.05)' : 'scale(1)',
                 transition: 'all 0.3s cubic-bezier(0.25,1,0.5,1)',
-                opacity: !hasText ? 0.5 : 1,
+                opacity: !canSend ? 0.5 : 1,
               }}
             >
               <svg
@@ -182,8 +186,8 @@ const InputArea = forwardRef<InputAreaHandle, InputAreaProps>(function InputArea
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
-                  stroke: hasText ? 'var(--send-fg-active)' : 'var(--text-muted)',
-                  transform: hasText ? 'translateY(-2px)' : 'none',
+                  stroke: canSend ? 'var(--send-fg-active)' : 'var(--text-muted)',
+                  transform: canSend ? 'translateY(-2px)' : 'none',
                   transition: 'all 0.3s ease',
                 }}
               >

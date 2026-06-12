@@ -106,24 +106,29 @@ export default function LiveDashboard({ gameId, open, onClose }: LiveDashboardPr
     <div
       className="absolute top-12 right-3 z-50 w-[220px] rounded-claude-lg overflow-hidden animate-msg-in"
       style={{
+        // 게임 화면 위 HUD — 테마와 무관하게 다크 글래스로 자급자족
+        // (토큰을 쓰면 gov 라이트에서 다크-온-다크로 깨짐)
         background: 'rgba(30,30,30,0.95)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid var(--border)',
+        border: '1px solid rgba(255,255,255,0.14)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
       >
-        <span className="text-[11px] font-semibold text-[var(--text-secondary)] tracking-wider uppercase">
+        <span className="text-[11px] font-semibold tracking-wider uppercase" style={{ color: '#c8cdd3' }}>
           📊 Live Dashboard
         </span>
         <button
           onClick={onClose}
-          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm cursor-pointer"
-          style={{ border: 'none', background: 'transparent' }}
+          aria-label="대시보드 닫기"
+          className="text-sm cursor-pointer bg-transparent border-none"
+          style={{ color: '#9aa1a9' }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#ffffff'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#9aa1a9'; }}
         >
           ✕
         </button>
@@ -136,7 +141,7 @@ export default function LiveDashboard({ gameId, open, onClose }: LiveDashboardPr
           return (
             <div key={v.key}>
               <div className="flex items-center justify-between text-[11px] mb-1">
-                <span className="text-[var(--text-secondary)]">
+                <span style={{ color: '#c8cdd3' }}>
                   {v.icon} {v.label}
                 </span>
                 <span
@@ -148,7 +153,7 @@ export default function LiveDashboard({ gameId, open, onClose }: LiveDashboardPr
               </div>
               <div
                 className="h-[6px] rounded-full overflow-hidden"
-                style={{ background: 'var(--bg-surface)' }}
+                style={{ background: 'rgba(255,255,255,0.12)' }}
               >
                 <div
                   className="h-full rounded-full transition-all duration-500 ease-out"
@@ -166,8 +171,8 @@ export default function LiveDashboard({ gameId, open, onClose }: LiveDashboardPr
 
       {/* Hint */}
       <div
-        className="px-3 py-2 text-[9px] text-[var(--text-muted)]"
-        style={{ borderTop: '1px solid var(--border)' }}
+        className="px-3 py-2 text-[9px]"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.1)', color: '#9aa1a9' }}
       >
         채팅으로 수정하면 실시간 반영됩니다
       </div>

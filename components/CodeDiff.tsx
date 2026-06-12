@@ -70,12 +70,12 @@ export default function CodeDiff({ oldCode, newCode, label, onDone }: CodeDiffPr
 
       if (d.type === 'removed') {
         div.style.background = 'rgba(239,68,68,0.12)';
-        div.style.color = '#fca5a5';
+        div.style.color = 'var(--diff-removed-fg)';
         div.style.borderLeft = '3px solid #ef4444';
         div.textContent = `- ${d.text}`;
       } else if (d.type === 'added') {
         div.style.background = 'rgba(34,197,94,0.12)';
-        div.style.color = '#86efac';
+        div.style.color = 'var(--diff-added-fg)';
         div.style.borderLeft = '3px solid #22c55e';
         div.textContent = `+ ${d.text}`;
       } else {

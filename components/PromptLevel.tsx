@@ -19,7 +19,7 @@ export default function PromptLevel({ score, level, feedback, tip }: PromptLevel
 
   if (score <= 0) return null;
 
-  const starColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#6366f1'];
+  const starColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#818cf8'];
   const color = starColors[Math.min(score - 1, 4)];
 
   return (

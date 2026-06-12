@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -17,10 +17,11 @@ const BOOT_PHASES: {
   scale: number;
   blur: number;
   label: string;
+  labelColor?: string; // 스파크 색이 어두워 글자용 밝은 변형이 필요한 단계만
 }[] = [
   { color: '#00f3ff', glow: 'rgba(0,243,255,0.4)',   duration: 1100, scale: 1,   blur: 8,  label: 'AI 깨우는 중' },
   { color: '#22c55e', glow: 'rgba(34,197,94,0.4)',    duration: 1300, scale: 1.4, blur: 10, label: '코딩 도구 준비' },
-  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 1100, scale: 1.8, blur: 12, label: '게임 엔진 연결' },
+  { color: '#bc13fe', glow: 'rgba(188,19,254,0.4)',   duration: 1100, scale: 1.8, blur: 12, label: '게임 엔진 연결', labelColor: '#d8b4fe' },
   { color: '#ff9500', glow: 'rgba(255,149,0,0.4)',    duration: 1000, scale: 2.2, blur: 14, label: '마지막 점검' },
   { color: '#ffffff', glow: 'rgba(255,255,255,0.5)',   duration: 900,  scale: 2.8, blur: 18, label: '준비 완료!' },
 ];
@@ -169,14 +170,14 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
 
         <div
           className="text-[2.4rem] font-semibold tracking-tight mb-2.5"
-          style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}
+          style={{ fontFamily: 'var(--font-display)' }}
         >
           바이브<span style={{ color: '#22c55e' }}>코딩</span>
         </div>
 
         <div
           className="text-[0.8rem] tracking-[4px] uppercase mb-5 font-mono"
-          style={{ color: 'rgba(228,228,231,0.4)' }}
+          style={{ color: 'rgba(228,228,231,0.55)' }}
         >
           arena
         </div>
@@ -205,7 +206,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
 
         <div
           className="flex items-center gap-3 text-[0.85rem] tracking-[1px] animate-[pulseText_2.5s_ease_infinite]"
-          style={{ color: 'rgba(228,228,231,0.5)' }}
+          style={{ color: 'rgba(228,228,231,0.6)' }}
         >
           <span
             className="px-3 py-1.5 rounded-[5px] font-mono text-[0.8rem]"
@@ -223,11 +224,11 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         {/* 3단계 여정 미리보기 — 아이들의 긴장을 푸는 지도 */}
         <div
           className="absolute bottom-10 flex items-center gap-2.5 text-[11.5px] font-light"
-          style={{ color: 'rgba(228,228,231,0.35)' }}
+          style={{ color: 'rgba(228,228,231,0.55)' }}
         >
           {['이름 입력', '만들 것 고르기', 'AI에게 말하기'].map((step, i) => (
             <span key={step} className="flex items-center gap-2.5">
-              {i > 0 && <span style={{ color: 'rgba(228,228,231,0.15)' }}>—</span>}
+              {i > 0 && <span style={{ color: 'rgba(228,228,231,0.35)' }}>—</span>}
               <span className="flex items-center gap-1.5">
                 <span
                   className="w-[15px] h-[15px] rounded-full flex items-center justify-center text-[9px] font-mono font-medium"
@@ -291,7 +292,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
         <div
           key={bootPhaseIdx}
           className="mt-5 text-[12px] font-light tracking-[1px] animate-[fadeInUp_0.5s_ease]"
-          style={{ color: currentPhase.color, opacity: 0.75 }}
+          style={{ color: currentPhase.labelColor ?? currentPhase.color, opacity: 0.85 }}
         >
           {currentPhase.label}
         </div>
@@ -303,7 +304,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
           style={{
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.02)',
-            color: 'rgba(228,228,231,0.5)',
+            color: 'rgba(228,228,231,0.6)',
           }}
         >
           건너뛰기 — Enter
@@ -363,20 +364,20 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             {schoolName && (
               <div
                 className="font-mono text-[10px] tracking-[2px] mb-2"
-                style={{ color: 'rgba(34,197,94,0.6)' }}
+                style={{ color: 'rgba(34,197,94,0.9)' }}
               >
                 {schoolName}
               </div>
             )}
             <h1
               className="text-[1.3rem] font-medium mb-1.5 tracking-tight"
-              style={{ fontFamily: "'Space Grotesk', 'Noto Sans KR', sans-serif" }}
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               바이브코딩 아레나
             </h1>
             <p
               className="text-[0.85rem] font-light mb-8 leading-relaxed"
-              style={{ color: 'rgba(228,228,231,0.45)' }}
+              style={{ color: 'rgba(228,228,231,0.62)' }}
             >
               AI와 대화하며 나만의 게임을 만드는
               <br />
@@ -411,10 +412,11 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
             <button
               onClick={handleSubmit}
               disabled={!name.trim()}
-              className="gate-btn-shimmer w-full py-3.5 rounded-[10px] text-[0.9rem] font-semibold cursor-pointer transition-all duration-200 hover:shadow-[0_0_30px_rgba(34,197,94,0.25)] hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="gate-btn-shimmer w-full py-3.5 rounded-[10px] text-[0.9rem] font-semibold cursor-pointer transition-all duration-200 hover:shadow-[0_0_30px_rgba(34,197,94,0.25)] hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               style={{
-                background: '#22c55e',
-                color: '#0a0a0a',
+                // opacity-30 방식은 라벨까지 뭉개서 '검은 슬랩'이 됨 — 비활성도 항상 읽히게
+                background: name.trim() ? '#22c55e' : 'rgba(34,197,94,0.15)',
+                color: name.trim() ? '#0a0a0a' : 'rgba(228,228,231,0.55)',
                 border: 'none',
                 fontFamily: 'var(--font-body)',
                 position: 'relative',
@@ -426,7 +428,7 @@ export default function Onboarding({ onSubmit }: OnboardingProps) {
 
             <div
               className="mt-5 font-mono text-[10px] tracking-[2px] uppercase"
-              style={{ color: 'rgba(228,228,231,0.2)' }}
+              style={{ color: 'rgba(228,228,231,0.45)' }}
             >
               powered by byteforce
             </div>

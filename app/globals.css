@@ -36,11 +36,11 @@ textarea, input, button, select, a {
   --bg-bubble-user: #1e2329;
   --bg-bubble-ai: transparent;
 
-  /* Text */
+  /* Text — tertiary/muted는 모든 다크 표면에서 WCAG 4.5:1 이상으로 산출된 값 */
   --text-primary: #eef0f2;
   --text-secondary: #9aa1a9;
-  --text-tertiary: #6b7278;
-  --text-muted: #565c63;
+  --text-tertiary: #8d949d;
+  --text-muted: #828a94;
 
   /* Border */
   --border: #21262c;
@@ -71,6 +71,23 @@ textarea, input, button, select, a {
   --send-bg-active: #ffffff;
   --send-fg-active: #000000;
   --send-glow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 40px rgba(188, 19, 254, 0.3);
+
+  /* 액센트 위에 올라가는 글자색 (선택 탭/솔리드 버튼) */
+  --on-accent: #0a0a0a;
+
+  /* 터미널 박스(입력 미션·빌드 시퀀스) — 양 테마에서 '불투명 다크 콘솔' 유지 */
+  --terminal-bg: rgba(0, 0, 0, 0.5);
+  --terminal-bg-soft: rgba(0, 0, 0, 0.4);
+  --terminal-border: rgba(34, 197, 94, 0.15);
+  --terminal-text: rgba(34, 197, 94, 0.95);
+  --terminal-text-dim: rgba(34, 197, 94, 0.75);
+  --terminal-label: rgba(34, 197, 94, 0.75);
+  --terminal-done: #22c55e;
+  --terminal-glow: 0 0 10px rgba(34, 197, 94, 0.3);
+
+  /* 코드 diff 글자색 (배경 틴트는 공용) */
+  --diff-added-fg: #86efac;
+  --diff-removed-fg: #fca5a5;
 
   /* Typography */
   --font-body: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
@@ -132,6 +149,21 @@ textarea, input, button, select, a {
   --send-bg-active: #0b50a0;
   --send-fg-active: #ffffff;
   --send-glow: 0 4px 16px rgba(11, 80, 160, 0.35);
+
+  --on-accent: #ffffff;
+
+  /* gov: 터미널은 네이비 콘솔로 — 라이트 배경 위 반투명 검정은 회색판이 됨 */
+  --terminal-bg: #0f172a;
+  --terminal-bg-soft: #16233e;
+  --terminal-border: #c5cdd7;
+  --terminal-text: #4ade80;
+  --terminal-text-dim: #94a3b8;
+  --terminal-label: #86efac;
+  --terminal-done: #4ade80;
+  --terminal-glow: none;
+
+  --diff-added-fg: #166534;
+  --diff-removed-fg: #b91c1c;
 }
 
 /* gov 라이트에선 네온 오로라 글로우를 끈다 — 라이트 배경과 충돌 */
@@ -273,6 +305,12 @@ html, body {
   100% { opacity: 1; }
 }
 
+/* AI 아바타 호흡 — 토큰 기반이라 gov(파랑)에서도 올바른 색으로 빛남 */
+@keyframes breatheAvatar {
+  0% { transform: scale(0.92); box-shadow: 0 0 8px var(--accent-primary-glow); }
+  100% { transform: scale(1.08); box-shadow: 0 0 18px var(--accent-primary-glow); }
+}
+
 /* Noise texture overlay for launch/boot screens */
 .noise-bg {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
@@ -284,7 +322,7 @@ html, body {
 .syn-keyword { color: #c792ea; }
 .syn-string { color: #c3e88d; }
 .syn-number { color: #f78c6c; }
-.syn-comment { color: #546e7a; font-style: italic; }
+.syn-comment { color: #78909c; font-style: italic; }
 .syn-function { color: #82aaff; }
 .syn-tag { color: #f07178; }
 .syn-attr { color: #ffcb6b; }
@@ -295,11 +333,17 @@ html, body {
    채팅+입력창이 아래. "게임 보며 말로 수정"이 태블릿에서도 성립.
    ============================================ */
 @media (max-width: 900px) {
-  .artifact-panel-open {
+  /* 닫힘 상태에도 order/height를 고정해 죽은 띠·순간이동 제거,
+     열림 전환은 width 대신 height로 부드럽게 */
+  .artifact-panel {
     width: 100% !important;
-    height: min(52dvh, 560px);
+    height: 0;
     flex: 0 0 auto;
     order: -1; /* 채팅보다 위 */
+    transition: height 0.45s var(--ease-out) !important;
+  }
+  .artifact-panel-open {
+    height: min(52dvh, 560px);
     border-bottom: 1px solid var(--border);
   }
   /* 세로 모드에선 좌측 그라데이션 엣지 대신 하단 보더 사용 */

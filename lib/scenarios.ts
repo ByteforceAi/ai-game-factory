@@ -1746,41 +1746,53 @@ export const HINT_CHIPS = [
   { icon: '📐', label: '수학', prompt: '이차방정식 x²-5x+6=0 풀어줘' },
 ] as const;
 
-// ── 시나리오 매칭 함수 ──
-export function findResponse(text: string, userName: string): ScenarioResponse {
-  const t = text.toLowerCase();
+// ── 시나리오 매칭 ──
+// norm: 공백·대소문자 변형 흡수 ("테트리스해줘", "우주 슈팅게임" 등 재타이핑 변형 대응)
+const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '');
 
-  // 시나리오 ID로 직접 매칭 (카드 클릭 시)
-  const directMatch = SCENARIOS.find((s) => s.prompt === text);
-  if (directMatch) return directMatch.response(userName);
+// 키워드는 전부 공백 없는 형태로 (norm된 입력과 비교)
+// 순서 중요: 위에서부터 선매칭. 별칭은 초등 최빈출 요청 실측 기반.
+const KEYWORD_MAP: [string[], string][] = [
+  [['ai', '인공지능', '뭐야'], 'ai-explain'],
+  [['구구단게임', '곱셈게임', '수학게임', '큐브'], 'gugudan-3d'],
+  [['코드', '파이썬', '프로그램', '구구단', '코딩'], 'gugudan-code'],
+  [['수학', '방정식', '풀어'], 'equation'],
+  [['영어', '자기소개', 'english'], 'english-intro'],
+  [['마인크래프트', '마크', '로블록스', 'rpg', '알피지', '롤플레잉', '용사', '모험', '던전', '도트'], 'dot-rpg'],
+  [['슈팅', '슛팅', '슈터', '총', '우주', '좀비', '비행기', '전투기', '전쟁'], 'neon-shooter'],
+  [['공룡', '자동차', '레이싱', '경주', '카트', '러너', '달리기', '3d'], 'temple-runner'],
+  [['플랫포머', '플랫폼', '더블점프', '벽타기'], 'neon-platformer'],
+  [['테트리스', '태트리스', '블록', '퍼즐'], 'tetris'],
+  [['고양이', '강아지', '멍멍이', '햄스터', '펫', '점프', '캣'], 'cat-jump'],
+  [['이모지', '햄버거', '피자', '받기', '바구니', '뱀게임', '사과게임', '과일', '요리', '음식'], 'emoji-catch'],
+  [['풍선', '팝', '터뜨'], 'balloon-pop'],
+  [['별', '모으기', '캐치'], 'star-catch'],
+  [['달', '공전', '궤도', '천문'], 'moon-orbit'],
+  [['농장', '텃밭', '힐링', '재배'], 'farm-garden'],
+  [['파도', '물결', '바다'], 'wave-sim'],
+  [['생태계', '포식', '동물'], 'ecosystem'],
+  [['날씨', '기상', '구름', '일기예보', '비가오', '비와', '비내려', '비오'], 'weather-sim'],
+  [['동화', '이야기', '스토리', '옛날'], 'space-story'],
+];
 
-  // 키워드 매칭
-  const keywordMap: [string[], string][] = [
-    [['ai', '인공지능', '뭐야'], 'ai-explain'],
-    [['코드', '파이썬', '프로그램', '구구단', '코딩'], 'gugudan-code'],
-    [['동화', '이야기', '고양이', '우주'], 'space-story'],
-    [['수학', '방정식', '풀어'], 'equation'],
-    [['영어', '자기소개', 'english'], 'english-intro'],
-    [['슈팅', '슈터', '총'], 'neon-shooter'],
-    [['러너', '달리기', '3d'], 'temple-runner'],
-    [['테트리스', '블록', '퍼즐'], 'tetris'],
-    [['고양이', '점프', '캣'], 'cat-jump'],
-    [['풍선', '팝', '터뜨'], 'balloon-pop'],
-    [['별', '모으기', '캐치'], 'star-catch'],
-    [['달', '공전', '궤도', '천문'], 'moon-orbit'],
-    [['농장', '텃밭', '힐링', '재배'], 'farm-garden'],
-    [['파도', '물결', '바다'], 'wave-sim'],
-    [['생태계', '포식', '동물'], 'ecosystem'],
-    [['날씨', '기상', '비', '구름'], 'weather-sim'],
-  ];
+// 시나리오 단위 매칭 — page.tsx가 게임 부착(gameId/제안칩)에도 같은 결과를 쓰도록 export
+export function findScenario(text: string): Scenario | null {
+  const t = norm(text);
+  const direct = SCENARIOS.find((s) => norm(s.prompt) === t);
+  if (direct) return direct;
 
-  for (const [keywords, id] of keywordMap) {
+  for (const [keywords, id] of KEYWORD_MAP) {
     if (keywords.some((kw) => t.includes(kw))) {
       const scenario = SCENARIOS.find((s) => s.id === id);
-      if (scenario) return scenario.response(userName);
+      if (scenario) return scenario;
     }
   }
+  return null;
+}
 
+export function findResponse(text: string, userName: string): ScenarioResponse {
+  const scenario = findScenario(text);
+  if (scenario) return scenario.response(userName);
   return getDefaultResponse(userName);
 }
 

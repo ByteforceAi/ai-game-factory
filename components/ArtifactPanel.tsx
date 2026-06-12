@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { syntaxHighlight } from '@/lib/scenarios';
@@ -73,7 +73,7 @@ export default function ArtifactPanel({
     const streamNext = () => {
       if (cancelRef.current || i >= lines.length) {
         if (!cancelRef.current && i >= lines.length && gameHtml) {
-          setTimeout(() => switchTabRef.current('play'), 800);
+          setTimeout(() => switchTabRef.current('play'), 500);
         }
         return;
       }
@@ -88,7 +88,9 @@ export default function ArtifactPanel({
 
       const num = String(i + 1).padStart(3, ' ');
       const highlighted = syntaxHighlight(lines[i]);
-      div.innerHTML = `<span style="display:inline-block;width:32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span>${highlighted}`;
+      // flex 거터 + pre-wrap: 들여쓰기 보존(코딩 교육 필수) + 줄바꿈 시 연속행 정렬
+      div.style.display = 'flex';
+      div.innerHTML = `<span style="flex:0 0 32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span><span style="flex:1;min-width:0;white-space:pre-wrap;word-break:break-word">${highlighted}</span>`;
 
       // ── Code X-Ray: hover/tap → highlight game element ──
       const xrayMatch = matchXRayTarget(lines[i]);
@@ -97,7 +99,7 @@ export default function ArtifactPanel({
       body.appendChild(div);
       body.scrollTop = body.scrollHeight;
       i++;
-      setTimeout(streamNext, 35 + Math.random() * 25);
+      setTimeout(streamNext, 8 + Math.random() * 7);
     };
 
     const timer = setTimeout(streamNext, 100);
@@ -135,7 +137,8 @@ export default function ArtifactPanel({
           div.style.borderRadius = '3px';
           div.style.transition = 'background 0.15s';
           const num = String(idx + 1).padStart(3, ' ');
-          div.innerHTML = `<span style="display:inline-block;width:32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span>${syntaxHighlight(line)}`;
+          div.style.display = 'flex';
+          div.innerHTML = `<span style="flex:0 0 32px;text-align:right;color:var(--text-muted);margin-right:16px;user-select:none;font-size:12px">${num}</span><span style="flex:1;min-width:0;white-space:pre-wrap;word-break:break-word">${syntaxHighlight(line)}</span>`;
 
           // X-Ray hover/tap on static view too
           const xm = matchXRayTarget(line);
@@ -167,7 +170,7 @@ export default function ArtifactPanel({
 
   return (
     <div
-      className={`overflow-hidden relative ${open ? 'artifact-panel-open' : ''}`}
+      className={`artifact-panel overflow-hidden relative ${open ? 'artifact-panel-open' : ''}`}
       style={{
         width: open ? '50%' : 0,
         transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -197,9 +200,9 @@ export default function ArtifactPanel({
           className="h-12 flex items-center justify-between px-3 pl-4 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--text-primary)]">
+          <div className="flex-1 min-w-0 flex items-center gap-2 text-[13px] font-medium text-[var(--text-primary)]">
             <div
-              className="w-5 h-5 rounded flex items-center justify-center text-[10px] text-white"
+              className="w-5 h-5 rounded flex-shrink-0 flex items-center justify-center text-[10px] text-white"
               style={{
                 background: 'linear-gradient(135deg, #22c55e, #15803d)',
                 boxShadow: '0 0 8px rgba(34,197,94,0.25)',
@@ -207,10 +210,10 @@ export default function ArtifactPanel({
             >
               ◆
             </div>
-            <span>{title}</span>
+            <span className="truncate">{title}</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex-shrink-0 flex items-center gap-2">
             <div
               className="flex items-center gap-0 p-0.5"
               style={{ background: 'var(--bg-primary)', borderRadius: 6 }}
@@ -229,7 +232,6 @@ export default function ArtifactPanel({
               onClick={onClose}
               aria-label="패널 닫기"
               className="w-10 h-10 rounded-md flex items-center justify-center text-base text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] active:scale-95 cursor-pointer transition-all duration-200"
-              style={{ border: 'none', background: 'transparent' }}
             >
               ✕
             </button>
@@ -308,7 +310,7 @@ function CopyButton({ code }: { code: string }) {
       style={{ border: 'none', background: 'transparent', fontFamily: 'var(--font-body)' }}
       title="코드 복사"
     >
-      {copied ? '✓ 복사됨' : '📋 복사'}
+      {copied ? '✓ 복사됨' : <>📋<span className="max-[480px]:hidden"> 복사</span></>}
     </button>
   );
 }
