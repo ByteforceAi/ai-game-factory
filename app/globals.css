@@ -327,6 +327,10 @@ html, body {
 .syn-tag { color: #f07178; }
 .syn-attr { color: #ffcb6b; }
 
+/* 아티팩트 패널 데스크톱 분할은 컴포넌트 인라인 flex로 제어
+   (width 인라인은 flex-basis로 안 잡혀 채팅 grow가 패널을 0으로
+   흡수 = 검은 화면의 숨은 원인. flex 인라인 + 모바일 !important로 고정) */
+
 /* ============================================
    RESPONSIVE (< 900px) — 게임+채팅 동시 사용
    전체화면 점유 대신 상하 분할: 게임이 위(52dvh),
@@ -334,11 +338,11 @@ html, body {
    ============================================ */
 @media (max-width: 900px) {
   /* 닫힘 상태에도 order/height를 고정해 죽은 띠·순간이동 제거,
-     열림 전환은 width 대신 height로 부드럽게 */
+     열림 전환은 flex 대신 height로 (세로 분할). flex-basis는 무력화 */
   .artifact-panel {
     width: 100% !important;
     height: 0;
-    flex: 0 0 auto;
+    flex: 0 0 auto !important;
     order: -1; /* 채팅보다 위 */
     transition: height 0.45s var(--ease-out) !important;
   }

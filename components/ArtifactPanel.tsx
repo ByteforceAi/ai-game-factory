@@ -159,6 +159,15 @@ export default function ArtifactPanel({
         iframe.sandbox.add('allow-scripts');
         iframe.sandbox.add('allow-same-origin');
         iframe.srcdoc = gameHtml;
+        // 안전벨트: iframe이 width 트랜지션으로 0→실크기가 되므로,
+        // 로드 후 resize를 몇 번 쏴 0×0에 굳은 캔버스를 깨운다
+        iframe.onload = () => {
+          [60, 250, 550].forEach((t) =>
+            setTimeout(() => {
+              try { iframe.contentWindow?.dispatchEvent(new Event('resize')); } catch {}
+            }, t)
+          );
+        };
         body.appendChild(iframe);
       }
     },
@@ -172,8 +181,10 @@ export default function ArtifactPanel({
     <div
       className={`artifact-panel overflow-hidden relative ${open ? 'artifact-panel-open' : ''}`}
       style={{
-        width: open ? '50%' : 0,
-        transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+        // 데스크톱(>900) 가로 50% 분할 — grow0 shrink0로 채팅이 못 흡수하게 고정.
+        // flex-basis 트랜지션은 패널을 0에 묶어버려(검은 화면 원인) 제거 — 즉시 전환.
+        // 모바일(<900)은 globals.css의 flex:0 0 auto !important가 이겨 height 분할로 전환.
+        flex: open ? '0 0 50%' : '0 0 0%',
       }}
     >
       {/* Animated Gradient Border — 브랜드 그린→시안 플로우 */}

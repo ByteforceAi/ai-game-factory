@@ -549,6 +549,33 @@ export function getGameExtensionsScript(): string {
     }
   });
 
+  /* ========================================
+     RENDER SIZE SELF-HEAL
+     iframe이 레이아웃되기 전(window 0×0)에 init된 게임은
+     renderer.setSize/canvas가 0으로 굳어 검은 화면이 된다.
+     게임 자체 resize 핸들러를 재발동시켜 실제 크기로 복구.
+     (Three.js 게임 전반 + 패널 리사이즈·회전·상하분할 전환 대응)
+     ======================================== */
+  function vibeKickResize() {
+    try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+  }
+  // iframe width 트랜지션(~0.5s)·레이아웃 안정화까지 여러 번 깨운다
+  [50, 180, 400, 700, 1100].forEach(function(t) { setTimeout(vibeKickResize, t); });
+  // 컨테이너 크기 변화 자동 추적 (패널 리사이즈·기기 회전·태블릿 상하분할)
+  if (window.ResizeObserver) {
+    var vibeLastW = 0, vibeLastH = 0;
+    try {
+      var vibeRO = new ResizeObserver(function() {
+        var w = document.documentElement.clientWidth;
+        var h = document.documentElement.clientHeight;
+        if ((w && w !== vibeLastW) || (h && h !== vibeLastH)) {
+          vibeLastW = w; vibeLastH = h; vibeKickResize();
+        }
+      });
+      vibeRO.observe(document.documentElement);
+    } catch (e) {}
+  }
+
 })();
 `;
 }
